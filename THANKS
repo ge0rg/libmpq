@@ -1,0 +1,14 @@
+mpq-tools and libmpq was originaly created by Maik Broemme <mbroemme@plusserver.de>
+and the source is based on many sources from other people.
+
+	» Ladislav Zezula <ladik@zezula.net>
+	» Marko Friedemann <marko.friedemann@bmx-chemnitz.de>
+	» Tom Amigo <tomamigo@apexmail.com>
+	» ShadowFlare <BlakFlare@hiotmail.com>
+	» Justin Olbrantz (Quantam) <omega@dragonfire.net>
+
+All this people have done a great job on reverse enigineering and
+analyzing the MPQ archive format. Special thanks goes to Ladislav
+Zezula the creator of the well known "stormlib" and Marko Friedemann
+for porting this source to linux. Justin for the really informative
+"Inside MoPaQ" article and all others I forgot :)

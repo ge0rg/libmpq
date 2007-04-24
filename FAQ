@@ -1,0 +1,63 @@
+FAQ - Frequently Asked Questions
+================================
+
+Q: What is libmpq/mpq-tools?
+A: libmpq is a library for manipulating MoPaQ mpq archives mostly used
+   used by Blizzard in their games. mpq-tools are utilities using
+   libmpq.
+
+Q: What can i do with libmpq/mpq-tools?
+A: With libmpq you can write applications which can extract and
+   create mpq archives or delete files within those. mpq-tools
+   is a package which demonstrates this functionality.
+
+Q: Is it possible to extract files with their filenames?
+A: Yes, since version 0.3.0 of libmpq you can use namebased or
+   numberbased extraction. Notice: You need a corresponding listfile
+   for that archive.
+
+Q: Is it legal?
+A: Yes, i think so. I have no idea why it should not, all informations
+   about the fileformat are available.
+
+Q: Is there a description of the functions?
+A: Not yet :(
+
+Q: Can i help?
+A: Yes, help is needed, not only with developing, also with testing.
+   A good point to start is using a recent CVS version of mpq-tools.
+   and trying to use it with every mpq archive you could get :)
+
+Q: Where can i found recent CVS version?
+A: Here: http://babelize.org/cgi-bin/cvsweb.cgi/
+
+Q: Where can i subscribe to the mailing lists?
+A: Here: http://www.babelize.org/ml.php
+   
+Q: Can you give a small example to demonstrate the usage?
+A: Of course :-) The example below takes first parameter
+   as mpq archive and extracts first file from it.
+
+   /*
+    *  Compile with:
+    *
+    *  gcc mpq-example.c -o mpq-example -lmpq -I/usr/local/include/libmpq
+    */
+
+   #include <linux/limits.h>
+   #include "libmpq/mpq.h"
+
+   int main(int argc, char **argv) {
+           char listfile[PATH_MAX] = "/usr/local/share/libmpq/db/diablo2/setup.mpq.conf"
+           mpq_archive *mpq_a;
+
+           mpq_a = malloc(sizeof(mpq_archive));
+           memset(mpq_a, 0, sizeof(mpq_archive));
+
+           libmpq_archive_open(mpq_a, argv[1]);
+           libmpq_listfile_open(mpq_a, listfile);
+           libmpq_file_extract(mpq_a, 1);
+           libmpq_archive_close(mpq_a);
+
+           free(mpq_a);
+   }
