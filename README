@@ -1,0 +1,41 @@
+Introduction
+============
+
+libmpq is a library which can be easily used in own applications
+and a set of tools for manipulating mpq archives. At this moment
+mpq-tools is able to show you file informations and extracting
+files by their corresponding number and name. The filenames will
+be identified through a listfile database.
+
+MPQ, or MoPaQ, is a proprietary archive format created by
+Mike O'Brien, the man hailed as Blizzard's multiplayer engine
+genius, back in 1996 as a general purpose archive for use with
+Diablo, and named narcissistically for its creator
+"Mike O'brien PaCK". The copyrights to it, however, are held by
+Havas Interactive, Blizzard's parent company. The archive format
+is used by many Blizzard titles like Diablo, Diablo 2, Starcraft,
+Warcraft 2: BNE or a newer version in Warcraft 3.
+
+Manual
+======
+
+Not yet written, for an example on how to use libmpq look at the
+`FAQ' file.
+
+Reporting Bugs
+==============
+
+Bug reports for libmpq should be send to the libmpq user mailing
+list.
+
+	babelize-users@babelize.org
+
+The discussion list `babelize-users@babelize.org' often contains
+information about new ports of libmpq, or discussions of new
+features or behavior changes that people would like. For humon
+readability mark bug reports with [BUG] in the subject.
+
+Enjoy!
+
+Maik Broemme <mbroemme@plusserver.de>
+http://www.babelize.org/
