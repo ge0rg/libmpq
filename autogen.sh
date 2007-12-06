@@ -8,6 +8,7 @@ directory=`dirname $0`
 touch $directory/configure.ac
 
 # Regenerate configuration files
+libtoolize --copy
 aclocal
 autoheader
 automake --foreign --add-missing --copy
