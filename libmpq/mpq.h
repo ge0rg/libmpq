@@ -1,7 +1,7 @@
 /*
  *  mpq.h -- some default types and defines.
  *
- *  Copyright (C) 2003 Maik Broemme <mbroemme@plusserver.de>
+ *  Copyright (c) 2003-2007 Maik Broemme <mbroemme@plusserver.de>
  *
  *  This source was adepted from the C++ version of StormLib.h and
  *  StormPort.h included in stormlib. The C++ version belongs to
@@ -23,37 +23,52 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *
- *  $Id: mpq.h,v 1.8 2004/02/12 00:45:50 mbroemme Exp $
  */
 
 #ifndef _MPQ_H
 #define _MPQ_H
 
-#include <linux/limits.h>
+/* generic includes. */
+#include <limits.h>
 
-#define LIBMPQ_MAJOR_VERSION		0		/* Major version number... maybe sometimes we reach version 1 :) */
-#define LIBMPQ_MINOR_VERSION		3		/* Minor version number - increased only for small changes */
-#define LIBMPQ_PATCH_VERSION		0		/* Patchlevel - changed on bugfixes etc... */
+/* define return value if nothing failed. */
+#define LIBMPQ_SUCCESS				0		/* return value for all functions which success. */
 
-#define LIBMPQ_TOOLS_SUCCESS		0		/* return value for all functions which success */
-#define LIBMPQ_TOOLS_BUFSIZE		0x500		/* buffer size for the decryption engine */
+/* define archive errors. */
+#define LIBMPQ_ARCHIVE_ERROR_OPEN		-1		/* open error on archive file. */
+#define LIBMPQ_ARCHIVE_ERROR_CLOSE		-2		/* close error on archive file. */
+#define LIBMPQ_ARCHIVE_ERROR_FORMAT		-3		/* archive format errror. */
+#define LIBMPQ_ARCHIVE_ERROR_HASHTABLE		-4		/* hashtable in archive if broken. */
+#define LIBMPQ_ARCHIVE_ERROR_BLOCKTABLE		-5		/* blocktable in archive if broken. */
+#define LIBMPQ_ARCHIVE_ERROR_MALLOC		-6		/* memory allocation error for archive. */
 
-#define LIBMPQ_EFILE			-1		/* error on file operation */
-#define LIBMPQ_EFILE_FORMAT		-2		/* bad file format */
-#define LIBMPQ_EFILE_CORRUPT		-3		/* file corrupt */
-#define LIBMPQ_EFILE_NOT_FOUND		-4		/* file in archive not found */
-#define LIBMPQ_EFILE_READ		-5		/* Read error in archive */
-#define LIBMPQ_EALLOCMEM		-6		/* maybe not enough memory? :) */
-#define LIBMPQ_EFREEMEM			-7		/* can not free memory */
-#define LIBMPQ_EINV_RANGE		-8		/* Given filenumber is out of range */
-#define LIBMPQ_EHASHTABLE		-9		/* error in reading hashtable */
-#define LIBMPQ_EBLOCKTABLE		-10		/* error in reading blocktable */
+/* define file errors. */
+#define LIBMPQ_FILE_ERROR_OPEN			-1		/* open error on file. */
+#define LIBMPQ_FILE_ERROR_CLOSE			-2		/* close error on file. */
+#define LIBMPQ_FILE_ERROR_CORRUPT		-3		/* file is corrupt in archive. */
+#define LIBMPQ_FILE_ERROR_EXIST			-4		/* file does not exist in archive. */
+#define LIBMPQ_FILE_ERROR_RANGE			-5		/* filenumber is out of range. */
+#define LIBMPQ_FILE_ERROR_MALLOC		-6		/* memory allocation error for file. */
 
-#define LIBMPQ_ID_MPQ			0x1A51504D	/* MPQ archive header ID ('MPQ\x1A') */
-#define LIBMPQ_HEADER_W3M		0x6D9E4B86	/* special value used by W3M Map Protector */
-#define LIBMPQ_FLAG_PROTECTED		0x00000002	/* Set on protected MPQs (like W3M maps) */
-#define LIBMPQ_HASH_ENTRY_DELETED	0xFFFFFFFE	/* Block index for deleted hash entry */
+/* define generic mpq archive information. */
+#define LIBMPQ_MPQ_HEADER_ID			0x1A51504D	/* mpq archive header ('MPQ\x1A') */
+#define LIBMPQ_MPQ_HEADER_W3M			0x6D9E4B86	/* special value used by w3m map protector. */
+#define LIBMPQ_MPQ_FLAG_PROTECTED		0x00000002	/* required for protected mpq archives, like w3m maps. */
+#define LIBMPQ_MPQ_HASH_DELETED			0xFFFFFFFE	/* block index for deleted hash entry. */
+
+/* define generic values for returning archive information. */
+#define LIBMPQ_ARCHIVE_SIZE			1		/* mpq archive size. */
+#define LIBMPQ_ARCHIVE_HASHTABLE_SIZE		2		/* mpq archive hashtable size. */
+#define LIBMPQ_ARCHIVE_BLOCKTABLE_SIZE		3		/* mpq archive blocktable size. */
+#define LIBMPQ_ARCHIVE_BLOCKSIZE		4		/* mpq archive blocksize. */
+#define LIBMPQ_ARCHIVE_NUMFILES			5		/* number of files in the mpq archive */
+#define LIBMPQ_ARCHIVE_COMPRESSED_SIZE		6		/* compressed archive size. */
+#define LIBMPQ_ARCHIVE_UNCOMPRESSED_SIZE	7		/* uncompressed archive size. */
+
+/* define generic values for returning file information. */
+#define LIBMPQ_FILE_COMPRESSED_SIZE		1		/* compressed filesize of the given file in archive. */
+#define LIBMPQ_FILE_UNCOMPRESSED_SIZE		2		/* uncompressed filesize of the given file in archive. */
+#define LIBMPQ_FILE_COMPRESSION_TYPE		3		/* compression type of the given file in archive.*/
 
 #define LIBMPQ_FILE_COMPRESS_PKWARE	0x00000100	/* Compression made by PKWARE Data Compression Library */
 #define LIBMPQ_FILE_COMPRESS_MULTI	0x00000200	/* Multiple compressions */
@@ -61,28 +76,9 @@
 #define LIBMPQ_FILE_EXISTS		0x80000000	/* Set if file exists, reset when the file was deleted */
 #define LIBMPQ_FILE_ENCRYPTED		0x00010000	/* Indicates whether file is encrypted */
 
-#define LIBMPQ_FILE_COMPRESSED_SIZE	1		/* MPQ compressed filesize of given file */
-#define LIBMPQ_FILE_UNCOMPRESSED_SIZE	2		/* MPQ uncompressed filesize of given file */
-#define LIBMPQ_FILE_COMPRESSION_TYPE	3		/* MPQ compression type of given file */
-#define LIBMPQ_FILE_TYPE_INT		4		/* file is given by number */
-#define LIBMPQ_FILE_TYPE_CHAR		5		/* file is given by name */
-
-#define LIBMPQ_MPQ_ARCHIVE_SIZE		1		/* MPQ archive size */
-#define LIBMPQ_MPQ_HASHTABLE_SIZE	2		/* MPQ archive hashtable size */
-#define LIBMPQ_MPQ_BLOCKTABLE_SIZE	3		/* MPQ archive blocktable size */
-#define LIBMPQ_MPQ_BLOCKSIZE		4		/* MPQ archive blocksize */
-#define LIBMPQ_MPQ_NUMFILES		5		/* Number of files in the MPQ archive */
-#define LIBMPQ_MPQ_COMPRESSED_SIZE	6		/* Compressed archive size */
-#define LIBMPQ_MPQ_UNCOMPRESSED_SIZE	7		/* Uncompressed archive size */
-
 #define LIBMPQ_HUFF_DECOMPRESS		0		/* Defines that we want to decompress using huffman trees. */
 
-#define LIBMPQ_CONF_EFILE_OPEN		-1		/* error if a specific listfile was forced and could not be opened. */
-#define LIBMPQ_CONF_EFILE_CORRUPT	-2		/* listfile seems to be corrupt */
-#define LIBMPQ_CONF_EFILE_LIST_CORRUPT	-3		/* listfile seems correct, but filelist is broken */
-#define LIBMPQ_CONF_EFILE_NOT_FOUND	-4		/* error if no matching listfile found */
-#define LIBMPQ_CONF_EFILE_VERSION	-5		/* libmpq version does not match required listfile version */
-
+/* define true and false, because not all systems have them. */
 #ifndef FALSE
 #define FALSE 0
 #endif
@@ -90,112 +86,111 @@
 #define TRUE 1
 #endif
 
+/* define min, because not all systems have it. */
 #ifndef min
 #define min(a, b) ((a < b) ? a : b)
 #endif
 
-typedef unsigned int	mpq_buffer[LIBMPQ_TOOLS_BUFSIZE];
+/* the decryption buffer. */
+typedef unsigned int	mpq_buffer[0x500];
+
+/* table for decompression functions. */
 typedef int		(*DECOMPRESS)(char *, int *, char *, int);
 typedef struct {
-	unsigned long	mask;		/* Decompression bit */
-	DECOMPRESS	decompress;	/* Decompression function */
+	unsigned int	mask;			/* Decompression bit */
+	DECOMPRESS	decompress;		/* Decompression function */
 } decompress_table;
 
-/* MPQ file header */
+/* mpq archive header. */
 typedef struct {
-	unsigned int	id;		/* The 0x1A51504D ('MPQ\x1A') signature */
-	unsigned int	offset;		/* Offset of the first file (Relative to MPQ start) */
-	unsigned int	archivesize;	/* Size of MPQ archive */
-	unsigned short	offsetsc;	/* 0000 for SC and BW */
-	unsigned short	blocksize;	/* Size of file block is (0x200 << blockSize) */
-	unsigned int	hashtablepos;	/* File position of hashTable */
-	unsigned int	blocktablepos;	/* File position of blockTable. Each entry has 16 bytes */
-	unsigned int	hashtablesize;	/* Number of entries in hash table */
-	unsigned int	blocktablesize;	/* Number of entries in the block table */
+	unsigned int	id;			/* the 0x1A51504D ('MPQ\x1A') signature. */
+	unsigned int	offset;			/* offset of the first file (relative to mpq start). */
+	unsigned int	archivesize;		/* size of mpq archive. */
+	unsigned short	offsetsc;		/* 0000 for starcraft and broodwar. */
+	unsigned short	blocksize;		/* size of file block is (0x200 << blocksize). */
+	unsigned int	hashtablepos;		/* file position of mpq_hash. */
+	unsigned int	blocktablepos;		/* file position of mpq_block, each entry has 16 bytes. */
+	unsigned int	hashtablesize;		/* number of entries in hash table. */
+	unsigned int	blocktablesize;		/* number of entries in the block table. */
 } __attribute__ ((packed)) mpq_header;
 
 
-/* Hash entry. All files in the archive are searched by their hashes. */
+/* hash entry, all files in the archive are searched by their hashes. */
 typedef struct {
-	unsigned int	name1;		/* The first two unsigned ints */
-	unsigned int	name2;		/* are the encrypted file name */
-	unsigned int	locale;		/* Locale information. */
-	unsigned int	blockindex;	/* Index to file description block */
+	unsigned int	name1;			/* the first two unsigned ints are the encrypted file. */
+	unsigned int	name2;			/* the first two unsigned ints are the encrypted file. */
+	unsigned int	locale;			/* locale information. */
+	unsigned int	blockindex;		/* index to file description block. */
 } mpq_hash;
 
-/* File description block contains informations about the file */
+/* file description block contains informations about the file. */
 typedef struct {
-	unsigned int	filepos;	/* Block file starting position in the archive */
-	unsigned int	csize;		/* Compressed file size */
-	unsigned int	fsize;		/* Uncompressed file size */
-	unsigned int	flags;		/* Flags */
+	unsigned int	filepos;		/* block file starting position in the archive. */
+	unsigned int	csize;			/* compressed file size. */
+	unsigned int	fsize;			/* uncompressed file size. */
+	unsigned int	flags;			/* flags. */
 } mpq_block;
 
-/* File handle structure used since Diablo 1.00 (0x38 bytes) */
+/* file structure used since diablo 1.00 (0x38 bytes). */
 typedef struct {
-	unsigned char	filename[PATH_MAX];	/* filename of the actual file in the archive */
-	int		fd;		/* File handle */
-	unsigned int	seed;		/* Seed used for file decrypt */
-	unsigned int	filepos;	/* Current file position */
+	unsigned char	filename[PATH_MAX];	/* filename of the actual file in the archive. */
+	int		fd;			/* file handle. */
+	unsigned int	seed;			/* seed used for file decrypt. */
+	unsigned int	filepos;		/* current file position. */
 	unsigned int	offset;
-	unsigned int	nblocks;	/* Number of blocks in the file (incl. the last noncomplete one) */
-	unsigned int	*blockpos;	/* Position of each file block (only for compressed files) */
-	int		blockposloaded;	/* TRUE if block positions loaded */
-	unsigned int	offset2;	/* (Number of bytes somewhere ?) */
-	mpq_hash	*mpq_h;		/* Hash table entry */
-	mpq_block	*mpq_b;		/* File block pointer */
+	unsigned int	nblocks;		/* number of blocks in the file (incl. the last noncomplete one). */
+	unsigned int	*blockpos;		/* position of each file block (only for compressed files). */
+	int		blockposloaded;		/* true if block positions loaded. */
+	unsigned int	offset2;		/* number of bytes somewhere? */
+	mpq_hash	*mpq_h;			/* hash table entry. */
+	mpq_block	*mpq_b;			/* file block pointer. */
 
-	/* Non-Storm.dll members */
-
-	unsigned int	accessed;	/* Was something from the file already read? */
+	/* non file structure related members. */
+	unsigned int	accessed;		/* was something from the file already read? */
 } mpq_file;
 
-/* List handle structure */
+/* filelist structure. */
 typedef struct {
-	unsigned char	mpq_version[10];	/* libmpq version required by the listfile */
-	unsigned char	mpq_name[PATH_MAX];	/* mpq archive name without full path */
-	unsigned char	mpq_type[20];		/* mpq archive type */
-	unsigned char	mpq_game[40];		/* blizzard title the file matches */
-	unsigned char	mpq_game_version[10];	/* game version */
-	unsigned char	**mpq_files;		/* filelist */
+	unsigned char	**mpq_files;		/* filelist. */
 } mpq_list;
 
-/* Archive handle structure used since Diablo 1.00 */
+/* archive structure used since diablo 1.00 by blizzard. */
 typedef struct {
-	unsigned char	filename[PATH_MAX];	/* Opened archive file name */
-	int		fd;		/* File handle */
-	unsigned int	blockpos;	/* Position of loaded block in the file */
-	unsigned int	blocksize;	/* Size of file block */
-	unsigned char	*blockbuf;	/* Buffer (cache) for file block */
-	unsigned int	bufpos;		/* Position in block buffer */
-	unsigned int	mpqpos;		/* MPQ archive position in the file */
-	unsigned int	filepos;	/* Current file pointer */
-	unsigned int	openfiles;	/* Number of open files + 1 */
-	mpq_buffer	buf;		/* MPQ buffer */
-	mpq_header	*header;	/* MPQ file header */
-	mpq_hash	*hashtable;	/* Hash table */
-	mpq_block	*blocktable;	/* Block table */
+	unsigned char	filename[PATH_MAX];	/* archive file name. */
+	int		fd;			/* file handle. */
+	unsigned int	blockpos;		/* position of loaded block in the file. */
+	unsigned int	blocksize;		/* size of file block. */
+	unsigned char	*blockbuf;		/* buffer (cache) for file block. */
+	unsigned int	bufpos;			/* position in block buffer. */
+	unsigned int	mpqpos;			/* archive position in the file. */
+	unsigned int	filepos;		/* current file pointer. */
+	unsigned int	openfiles;		/* number of open files + 1. */
+	mpq_buffer	buf;			/* mpq buffer. */
+	mpq_header	*header;		/* mpq file header. */
+	mpq_hash	*hashtable;		/* hash table. */
+	mpq_block	*blocktable;		/* block table. */
 
-	/* Non-Storm.dll members */
-
-	mpq_list	*mpq_l;		/* Handle to file list from database */
-
-	unsigned int	flags;		/* See LIBMPQ_TOOLS_FLAG_XXXXX */
-	unsigned int	maxblockindex;	/* The highest block table entry */
+	/* non archive structure related members. */
+	mpq_list	*mpq_l;			/* handle to filelist (in most cases this is the last file in the archive). */
+	unsigned int	flags;			/* see LIBMPQ_MPQ_FLAG_XXX for more details. */
+	unsigned int	maxblockindex;		/* the highest block table entry. */
 } mpq_archive;
 
-extern char *libmpq_version();
-extern int libmpq_archive_open(mpq_archive *mpq_a, unsigned char *mpq_filename);
-extern int libmpq_archive_close(mpq_archive *mpq_a);
-extern int libmpq_archive_info(mpq_archive *mpq_a, unsigned int infotype);
-extern int libmpq_file_extract(mpq_archive *mpq_a, const int number);
-extern int libmpq_file_info(mpq_archive *mpq_a, unsigned int infotype, const int number);
-extern char *libmpq_file_name(mpq_archive *mpq_a, const int number);
-extern int libmpq_file_number(mpq_archive *mpq_a, const char *name);
-extern int libmpq_file_check(mpq_archive *mpq_a, void *file, int type);
-extern int libmpq_listfile_open(mpq_archive *mpq_a, char file[PATH_MAX]);
-extern int libmpq_listfile_close(mpq_archive *mpq_a);
+/* generic information about library. */
+extern char *libmpq__version();
 
+/* generic mpq archive information. */
+extern int libmpq__archive_open(mpq_archive *mpq_a, unsigned char *mpq_filename);
+extern int libmpq__archive_close(mpq_archive *mpq_a);
+extern int libmpq__archive_info(mpq_archive *mpq_a, unsigned int infotype);
+
+/* generic file information. */
+extern int libmpq__file_info(mpq_archive *mpq_a, unsigned int infotype, const int number);
+extern char *libmpq__file_name(mpq_archive *mpq_a, const int number);
+extern int libmpq__file_number(mpq_archive *mpq_a, const char *name);
+extern int libmpq__file_extract(mpq_archive *mpq_a, const int number);
+
+/* generic decompression functions. */
 extern int libmpq_pkzip_decompress(char *out_buf, int *out_length, char *in_buf, int in_length);
 extern int libmpq_zlib_decompress(char *out_buf, int *out_length, char *in_buf, int in_length);
 extern int libmpq_huff_decompress(char *out_buf, int *out_length, char *in_buf, int in_length);
@@ -204,11 +199,11 @@ extern int libmpq_wave_decompress_mono(char *out_buf, int *out_length, char *in_
 extern int libmpq_multi_decompress(char *out_buf, int *pout_length, char *in_buf, int in_length);
 
 static decompress_table dcmp_table[] = {
-	{0x08, libmpq_pkzip_decompress},		/* Decompression with Pkware Data Compression Library */
-	{0x02, libmpq_zlib_decompress},			/* Decompression with the "zlib" library */
-	{0x01, libmpq_huff_decompress},			/* Huffmann decompression */
-	{0x80, libmpq_wave_decompress_stereo},		/* WAVE decompression for stereo waves */
-	{0x40, libmpq_wave_decompress_mono}		/* WAVE decompression for mono waves */
+	{0x08, libmpq_pkzip_decompress},	/* decompression with pkware data compression library. */
+	{0x02, libmpq_zlib_decompress},		/* decompression with the zlib library. */
+	{0x01, libmpq_huff_decompress},		/* huffmann decompression. */
+	{0x80, libmpq_wave_decompress_stereo},	/* wave decompression for stereo waves. */
+	{0x40, libmpq_wave_decompress_mono}	/* wave decompression for mono waves. */
 };
 
-#endif					/* _MPQ_H */
+#endif						/* _MPQ_H */
