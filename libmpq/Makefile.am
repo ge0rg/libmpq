@@ -1,17 +1,18 @@
-# The input Makefile for the main mpq-tools
+# minimum required automake 1.6
+AUTOMAKE_OPTIONS		= 1.6
 
-lib_LTLIBRARIES		= libmpq.la
-noinst_HEADERS		= explode.h huffman.h wave.h common.h
+# library information and headers which should not be installed.
+lib_LTLIBRARIES			= libmpq.la
+noinst_HEADERS			= explode.h huffman.h wave.h
 
-# The directory where the include files will be installed.
-libmpq_includedir	= $(includedir)/libmpq
+# directory where the include files will be installed.
+libmpq_includedir		= $(includedir)/libmpq
 
-# Which header files to install.
-libmpq_include_HEADERS	= mpq.h
+# header files to install.
+libmpq_include_HEADERS		= mpq.h
 
-libmpq_la_SOURCES	= $(GENERAL_SRCS)
-libmpq_la_LDFLAGS	= -release $(LIBMPQ_VERSION)
-libmpq_la_LIBADD	= @Z_LIBS@
+libmpq_la_SOURCES		= $(GENERAL_SRCS)
+libmpq_la_LDFLAGS		= -release $(PACKAGE_VERSION)
 
 GENERAL_SRCS =			\
 	common.c		\
@@ -19,5 +20,4 @@ GENERAL_SRCS =			\
 	extract.c		\
 	explode.c		\
 	mpq.c			\
-	parser.c		\
 	wave.c
