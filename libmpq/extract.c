@@ -2,7 +2,7 @@
  *  extract.c -- global extracting function for all known file compressions
  *               in a MPQ archive.
  *
- *  Copyright (C) 2003 Maik Broemme <mbroemme@plusserver.de>
+ *  Copyright (c) 2003-2007 Maik Broemme <mbroemme@plusserver.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,15 +19,14 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
+/* generic includes. */
 #include <stdlib.h>
-#ifdef HAVE_LIBZ
-#include <zlib.h>
-#endif
+#include <string.h>
 
+/* zlib includes. */
+#include <zlib.h>
+
+/* libmpq includes. */
 #include "mpq.h"
 #include "explode.h"
 #include "huffman.h"
@@ -115,7 +114,6 @@ int libmpq_wave_decompress_stereo(char *out_buf, int *out_length, char *in_buf, 
 }
 
 int libmpq_zlib_decompress(char *out_buf, int *out_length, char *in_buf, int in_length) {
-#ifdef HAVE_LIBZ
 	z_stream z;					/* Stream information for zlib */
 	int result;
 
@@ -138,10 +136,6 @@ int libmpq_zlib_decompress(char *out_buf, int *out_length, char *in_buf, int in_
 		inflateEnd(&z);
 	}
 	return result;
-#else
-	memset(out_buf, '0', *out_length);
-	return 0;
-#endif
 }
 
 /*
