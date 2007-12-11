@@ -1,16 +1,15 @@
-# The input Makefile for the main mpq-tools
+# minimum required automake 1.6
+AUTOMAKE_OPTIONS		= 1.6
 
-# Why does automake build libtool files for binaries if the
-# source tree includes a shared library?
-
-CFLAGS = -DLIBMPQ_LISTDB_PATH=\"$(datadir)/libmpq/db\" @CFLAGS@
-
+# the main programs.
 bin_PROGRAMS			= mpq-extract mpq-info
 
+# sources for mpq-extract program.
 mpq_extract_SOURCES		= mpq-extract.c
 mpq_extract_LDADD		= ../libmpq/libmpq.la
 mpq_extract_DEPENDENCIES	= ../libmpq/libmpq.la
 
+# sources for mpq-info program.
 mpq_info_SOURCES		= mpq-info.c
 mpq_info_LDADD			= ../libmpq/libmpq.la
 mpq_info_DEPENDENCIES		= ../libmpq/libmpq.la
