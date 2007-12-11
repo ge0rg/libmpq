@@ -1,7 +1,7 @@
 /*
  *  mpq-info.c -- functions for information about the given mpq archive.
  *
- *  Copyright (C) 2003 Maik Broemme <mbroemme@plusserver.de>
+ *  Copyright (c) 2003-2007 Maik Broemme <mbroemme@plusserver.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,173 +18,192 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/* generic includes. */
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <getopt.h>
+#include <string.h>
+
+/* libmpq includes. */
 #include "libmpq/mpq.h"
-#include "mpq-info.h"
 
-static int mpq_info_usage(unsigned int status, char *program_name) {
-	if (status != 0) {
-		fprintf(stderr, "Usage: %s [option]... [mpq-archive]...\n", program_name);
-		fprintf(stderr, "Try `%s --help' for more information.\n", program_name);
-	} else {
-		printf("%s %i.%i.%i - shows information about the given mpq-archive.\n", program_name, MPQ_INFO_MAJOR_VERSION, MPQ_INFO_MINOR_VERSION, MPQ_INFO_PATCH_VERSION);
-		printf("Usage: %s [option]... [mpq-archive]...\n", program_name);
-		printf("Example: %s d2speech.mpq\n", program_name);
-		printf("\n");
-		printf("Main operation mode:\n");
-		printf("  -h, --help                display this help and exit\n");
-		printf("  -v, --version             print version information and exit\n");
-		printf("\n");
-		printf("Report bugs to <mbroemme@plusserver.de>\n");
-	}
+/* zlib includes. */
+#include <zlib.h>
+
+/* mpq-tools configuration includes. */
+#include "config.h"
+
+/* the command line option struct. */
+static struct {
+	unsigned int	file;		/* number of archives to check. */
+	unsigned int	count;		/* number of last archive. */
+} mpq_info__options;
+
+/* define new print functions for error. */
+#define ERROR(...) fprintf(stderr, __VA_ARGS__);
+
+/* define new print functions for notification. */
+#define NOTICE(...) printf(__VA_ARGS__);
+
+/* this function show the usage. */
+static int mpq_info__usage(char *program_name) {
+
+	/* show the help. */
+	NOTICE("Usage: %s [OPTION] [ARCHIVE]...\n", program_name);
+	NOTICE("Displays information of a mpq-archive. (Example: %s d2speech.mpq)\n", program_name);
+	NOTICE("\n");
+	NOTICE("  -h, --help		shows this help screen\n");
+	NOTICE("  -v, --version		shows the version information\n");
+	NOTICE("\n");
+	NOTICE("Please report bugs to the appropriate authors, which can be found in the\n");
+	NOTICE("version information. All other things can be send to <%s>\n", PACKAGE_BUGREPORT);
+
+	/* if no error was found, return zero. */
 	return 0;
 }
 
-static char *mpq_info_version(char *program_name) {
-	static char version[200];
-	static char temp[200];
+/* this function shows the version information. */
+static int mpq_info__version(char *program_name) {
 
-	snprintf(temp, sizeof(temp), "%s %i.%i.%i (%s)", program_name, MPQ_INFO_MAJOR_VERSION, MPQ_INFO_MINOR_VERSION, MPQ_INFO_PATCH_VERSION, OS);
-	strncat(version, temp, sizeof(version));
+	/* show the version. */
+	NOTICE("%s (mopaq) %s (zlib %s)\n", program_name, libmpq__version(), zlibVersion());
+	NOTICE("Written by %s\n", PACKAGE_BUGREPORT);
+	NOTICE("\n");
+	NOTICE("This is free software; see the source for copying conditions.  There is NO\n");
+	NOTICE("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
 
-	snprintf(temp, sizeof(temp), " libmpq/%s", libmpq_version());
-	strncat(version, temp, sizeof(version));
-
-#ifdef HAVE_LIBZ
-	snprintf(temp, sizeof(temp), " zlib/%s", zlibVersion());
-	strncat(version, temp, sizeof(version));
-#endif
-
-	return version;
-}
-
-static int mpq_info_show_version(char *program_name) {
-	fprintf(stderr, "%s\n", mpq_info_version(program_name));
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Copyright (C) 2003-2004 Maik Broemme <mbroemme@plusserver.de>\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "This program comes with ABSOLUTELY NO WARRANTY. You may redistribute\n");
-	fprintf(stderr, "copies of this program under the terms of the GNU General Public License.\n");
+	/* if no error was found, return zero. */
 	return 0;
 }
 
-static int mpq_info_archive_info(mpq_info_options_s *mpq_info_options, unsigned char *filename) {
+/* this function shows some archive information. */
+static int mpq_info__archive_info(unsigned char *mpq_filename) {
+
+	/* some common variables. */
 	unsigned int result = 0;
-	unsigned int csize = 0;
-	unsigned int fsize = 0;
-	float ratio = 0;
 	mpq_archive *mpq_a;
 
+	/* allocate memory for the mpq-archive. */
 	mpq_a = malloc(sizeof(mpq_archive));
 	memset(mpq_a, 0, sizeof(mpq_archive));
 
-	result = libmpq_archive_open(mpq_a, filename);
+	/* open the mpq-archive. */
+	result = libmpq__archive_open(mpq_a, mpq_filename);
+
+	/* check if open was successful. */
 	if (!result) {
-		printf("archive number:          %i/%i\n", mpq_info_options->last_file, mpq_info_options->filenumber);
-		printf("archive name:            %s\n", filename);
-		if (mpq_a->flags == 0) {
-			printf("archive type:            unprotected\n");
-		} else {
-			printf("archive type:            protected\n");
-		}
-		printf("archive size:            %i\n", libmpq_archive_info(mpq_a, LIBMPQ_MPQ_ARCHIVE_SIZE));
-		printf("archive hashtable size:  %i\n", libmpq_archive_info(mpq_a, LIBMPQ_MPQ_HASHTABLE_SIZE));
-		printf("archive blocktable size: %i\n", libmpq_archive_info(mpq_a, LIBMPQ_MPQ_BLOCKTABLE_SIZE));
-		printf("archive blocksize:       %i\n", libmpq_archive_info(mpq_a, LIBMPQ_MPQ_BLOCKSIZE));
-		printf("files in archive:        %i\n", libmpq_archive_info(mpq_a, LIBMPQ_MPQ_NUMFILES));
-		csize = libmpq_archive_info(mpq_a, LIBMPQ_MPQ_COMPRESSED_SIZE);
-		printf("compressed size:         %i\n", csize);
-		fsize = libmpq_archive_info(mpq_a, LIBMPQ_MPQ_UNCOMPRESSED_SIZE);
-		printf("uncompressed size:       %i\n", fsize);
-		ratio = 100 - ((float)csize / (float)fsize * 100);
-		printf("compression ratio:       %.2f%\n", ratio);
+
+		/* open archive was successful, show information. */
+		NOTICE("archive number:			%i/%i\n", mpq_info__options.count, mpq_info__options.file);
+		NOTICE("archive name:			%s\n", mpq_filename);
+		NOTICE("archive type:			%s\n", mpq_a->flags ? "protected" : "unprotected");
+		NOTICE("archive size:			%i\n", libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_SIZE));
+		NOTICE("archive hashtable size:		%i\n", libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_HASHTABLE_SIZE));
+		NOTICE("archive blocktable size:	%i\n", libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_BLOCKTABLE_SIZE));
+		NOTICE("archive blocksize:		%i\n", libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_BLOCKSIZE));
+		NOTICE("archive files:			%i\n", libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_NUMFILES));
+		NOTICE("archive compressed size:	%i\n", libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_COMPRESSED_SIZE));
+		NOTICE("archive uncompressed size:	%i\n", libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_UNCOMPRESSED_SIZE));
+		NOTICE("archive compression ratio:	%.2f%\n", (100 - ((float)libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_COMPRESSED_SIZE) / (float)libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_UNCOMPRESSED_SIZE) * 100)));
 	} else {
-		printf("archive number:          %i/%i\n", mpq_info_options->last_file, mpq_info_options->filenumber);
-		printf("archive name:            %s\n", filename);
-		printf("archive type:            no mpq archive\n");
+
+		/* open archive failed. */
+		NOTICE("archive number:			%i/%i\n", mpq_info__options.count, mpq_info__options.file);
+		NOTICE("archive name:			%s\n", mpq_filename);
+		NOTICE("archive type:			no mpq archive\n");
 	}
 
 	/* always close file descriptor, file could be opened also if it is no valid mpq archive. */
-	libmpq_archive_close(mpq_a);
+	libmpq__archive_close(mpq_a);
 
-	if (mpq_info_options->last_file < mpq_info_options->filenumber) {
-		printf("\n-- next archive --\n\n");
+	/* free the memory of the mpq-archive. */
+	free(mpq_a);
+
+	/* if multiple archives were given, continue with next one. */
+	if (mpq_info__options.count < mpq_info__options.file) {
+		NOTICE("\n-- next archive --\n\n");
 	}
 
-	free(mpq_a);
+	/* if no error was found, return zero. */
 	return 0;
 }
 
+/* the main function starts here. */
 int main(int argc, char **argv) {
-	char *program_name;
+
+	/* common variables for the command line. */
 	int opt;
 	int option_index = 0;
+	static char const short_options[] = "hv";
+	static struct option const long_options[] = {
+		{"help",	no_argument,	0,	'h'},
+		{"version",	no_argument,	0,	'v'},
+		{0,		0,		0,	0}
+	};
+	optind = 0;
+	opterr = 0;
+
+	/* some common variables. */
+	char *program_name;
 	unsigned char mpq_filename[PATH_MAX];
 
-	mpq_info_options_s *mpq_info_options;
-
-	static char const short_options[] = "vh";
-	static struct option const long_options[] = {
-		{"help", no_argument, 0, 'h'},
-		{"version", no_argument, 0, 'v'},
-		{0, 0, 0, 0}
-	};
-	extern int optind;
-
+	/* get program name. */
 	program_name = argv[0];
 	if (program_name && strrchr(program_name, '/')) {
 		program_name = strrchr(program_name, '/') + 1;
 	}
 
+	/* if no command line option was given, show some info. */
 	if (argc <= 1) {
-		mpq_info_usage(1, program_name);
+
+		/* show some info on how to get help. :) */
+		ERROR("%s: no action was given\n", program_name);
+		ERROR("Try `%s --help' for more information.\n", program_name);
+
+		/* exit with error. */
 		exit(1);
 	}
 
-	/* allocate memory for argument structure */
-	mpq_info_options = malloc(sizeof(mpq_info_options_s));
-	memset(mpq_info_options, 0, sizeof(mpq_info_options_s));
+	/* cleanup. */
+	memset(&mpq_info__options, 0, sizeof(mpq_info__options));
 
-	while (TRUE) {
-		opt = getopt_long(argc, argv, short_options, long_options, &option_index);
+	/* parse command line. */
+	while ((opt = getopt_long(argc, argv, short_options, long_options, &option_index)) != -1) {
+
 		if (opt == -1) {
 			break;
 		}
-		if (opt == 'h') {
-			mpq_info_usage(0, program_name);
-			free(mpq_info_options);
-			exit(0);
-		}
+
+		/* parse option. */
 		switch (opt) {
+			case 'h':
+				mpq_info__usage(program_name);
+				exit(0);
 			case 'v':
-				mpq_info_show_version(program_name);
-				free(mpq_info_options);
+				mpq_info__version(program_name);
 				exit(0);
 			default:
-				mpq_info_usage(1, program_name);
-				free(mpq_info_options);
+
+				/* show some info on how to get help. :) */
+				ERROR("%s: unrecognized option `%s'\n", program_name, argv[optind - 1]);
+				ERROR("Try `%s --help' for more information.\n", program_name);
+
+				/* exit with error. */
 				exit(1);
 		}
 	}
 
 	/* fill option structure with long option arguments */
-	mpq_info_options->filenumber = argc - optind;
-	mpq_info_options->last_file  = 1;
+	mpq_info__options.file = argc - optind;
+	mpq_info__options.count = 1;
 
-	/* done parsing arguments, check for filenames. */
-	if (optind < argc) {
-		do {
-			strncpy(mpq_filename, argv[optind], PATH_MAX);
-			mpq_info_archive_info(mpq_info_options, mpq_filename);
-			mpq_info_options->last_file++;
-		} while (++optind < argc);
-	} else {
-		fprintf(stderr, "No filename given.\n");
-		mpq_info_usage(1, program_name);
-	}
+	/* create the file count from the command line arguments. */
+	do {
+		strncpy(mpq_filename, argv[optind], PATH_MAX);
+		mpq_info__archive_info(mpq_filename);
+		mpq_info__options.count++;
+	} while (++optind < argc);
 
-	/* finaly free argument structure */
-	free(mpq_info_options);
+	/* execution was successful. */
+	exit(0);
 }
