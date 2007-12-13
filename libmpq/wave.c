@@ -1,8 +1,8 @@
 /*
- *  wave.c -- this file contains decompression methods used by Storm.dll
+ *  wave.c -- this file contains decompression methods used by mpq-tools
  *            to decompress wave files.
  *
- *  Copyright (C) 2003 Maik Broemme <mbroemme@plusserver.de>
+ *  Copyright (c) 2003-2007 Maik Broemme <mbroemme@plusserver.de>
  *
  *  This source was adepted from the C++ version of wave.cpp included
  *  in stormlib. The C++ version belongs to the following authors,
@@ -25,17 +25,22 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/* generic includes. */
+#include <stdint.h>
+
+/* libmpq includes. */
 #include "wave.h"
 
-/* Tables necessary dor decompression */
-static unsigned long wave_table_1503f120[] = {
+/* table necessary dor decompression. */
+static uint32_t wave_table_1503f120[] = {
 	0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000004, 0xFFFFFFFF, 0x00000002, 0xFFFFFFFF, 0x00000006,
 	0xFFFFFFFF, 0x00000001, 0xFFFFFFFF, 0x00000005, 0xFFFFFFFF, 0x00000003, 0xFFFFFFFF, 0x00000007,
 	0xFFFFFFFF, 0x00000001, 0xFFFFFFFF, 0x00000005, 0xFFFFFFFF, 0x00000003, 0xFFFFFFFF, 0x00000007,  
 	0xFFFFFFFF, 0x00000002, 0xFFFFFFFF, 0x00000004, 0xFFFFFFFF, 0x00000006, 0xFFFFFFFF, 0x00000008  
 };
 
-static unsigned long wave_table_1503f1a0[] = {
+/* table necessary dor decompression. */
+static uint32_t wave_table_1503f1a0[] = {
 	0x00000007, 0x00000008, 0x00000009, 0x0000000A, 0x0000000B, 0x0000000C, 0x0000000D, 0x0000000E,
 	0x00000010, 0x00000011, 0x00000013, 0x00000015, 0x00000017, 0x00000019, 0x0000001C, 0x0000001F,
 	0x00000022, 0x00000025, 0x00000029, 0x0000002D, 0x00000032, 0x00000037, 0x0000003C, 0x00000042,
@@ -50,88 +55,138 @@ static unsigned long wave_table_1503f1a0[] = {
 	0x00007FFF
 };
 
-/*
- *  Decompress a wave file, mono or stereo
- *
- *  Offset: 1500F230
- */
-int libmpq_wave_decompress(unsigned char *out_buf, int out_length, unsigned char *in_buf, int in_length, int channels) {
+/* decompress a wave file, mono or stereo, 1500F230 offset. */
+int32_t libmpq_wave_decompress(uint8_t *out_buf, int32_t out_length, uint8_t *in_buf, int32_t in_length, int32_t channels) {
+
+	/* some common variables. */
 	byte_and_short out;
 	byte_and_short in;
-	unsigned char *in_end = in_buf + in_length;	/* End on input buffer */
-	unsigned long index;
-	long nr_array1[2];
-	long nr_array2[2];
-	int count = 0;
+	uint32_t index;
+	int32_t nr_array1[2];
+	int32_t nr_array2[2];
+	uint32_t count = 0;
 
-	out.pb     = out_buf;
-	in.pb      = in_buf;
+	/* end on input buffer. */
+	uint8_t *in_end = in_buf + in_length;
+
+	/* assign default values. */
+	out.pb       = out_buf;
+	in.pb        = in_buf;
 	nr_array1[0] = 0x2C;
 	nr_array1[1] = 0x2C;
+
+	/* increase. */
 	in.pw++;
 
 	/* 15007AD7 */
 	for (count = 0; count < channels; count++) {
-		long temp;
-		temp = *(short *)in.pw++;
+
+		/* some common variables. */
+		int32_t temp;
+
+		/* save pointer. */
+		temp = *(int16_t *)in.pw++;
 		nr_array2[count] = temp;
+
+		/* check if should break. */
 		if (out_length < 2) {
 			return out.pb - out_buf;
 		}
-		*out.pw++   = (unsigned short)temp;
+
+		/* return values. */
+		*out.pw++   = (uint16_t)temp;
 		out_length -= 2;
 	}
+
+	/* decrease channels. */
 	index = channels - 1;
+
+	/* loop through input buffer until end reached. */
 	while (in.pb < in_end) {
-		unsigned char one_byte = *in.pb++;
+
+		/* save the byte. */
+		uint8_t one_byte = *in.pb++;
+
+		/* check how many channels and set index. */
 		if (channels == 2) {
 			index = (index == 0) ? 1 : 0;
 		}
 
-		/*
-		 * Get one byte from input buffer
-		 * 15007B25
-		 */
+		/* 15007B25 - get one byte from input buffer. */
 		if (one_byte & 0x80) {
+
 			/* 15007B32 */
-			switch(one_byte & 0x7F) {
-				case 0:					/* 15007B8E */
+			switch (one_byte & 0x7F) {
+				case 0:
+
+					/* 15007B8E */
 					if (nr_array1[index] != 0) {
 						nr_array1[index]--;
 					}
+
+					/* check if should break. */
 					if (out_length < 2) {
 						break;
 					}
-					*out.pw++ = (unsigned short)nr_array2[index];
+
+					/* return values. */
+					*out.pw++ = (uint16_t)nr_array2[index];
 					out_length -= 2;
+
+					/* continue loop. */
 					continue;
-				case 1:					/* 15007B72 */
-					nr_array1[index] += 8;		/* EBX also */
+				case 1:
+					/* 15007B72 and EBX. */
+					nr_array1[index] += 8;
+
+					/* check index. */
 					if (nr_array1[index] > 0x58) {
 						nr_array1[index] = 0x58;
 					}
+
+					/* check how many channels and set index. */
 					if (channels == 2) {
 						index = (index == 0) ? 1 : 0;
 					}
+
+					/* continue loop. */
 					continue;
 				case 2:
+
+					/* nothing todo, so continue. */
 					continue;
 				default:
+
+					/* decrease index. */
 					nr_array1[index] -= 8;
+
+					/* check index. */
 					if (nr_array1[index] < 0) {
 						nr_array1[index] = 0;
 					}
+
+					/* check if two channels left. */
 					if (channels != 2) {
 						continue;
 					}
 					index = (index == 0) ? 1 : 0;
+
+					/* continue loop. */
 					continue;
 			}
 		} else {
-			unsigned long temp1 = wave_table_1503f1a0[nr_array1[index]];	/* EDI */
-			unsigned long temp2 = temp1 >> in_buf[1];	/* ESI */
-			long temp3 = nr_array2[index];			/* ECX */
-			if (one_byte & 0x01) {				/* EBX = one_byte */
+
+			/* EDI */
+			uint32_t temp1 = wave_table_1503f1a0[nr_array1[index]];
+
+			/* ESI */
+			uint32_t temp2 = temp1 >> in_buf[1];
+
+			/* ECX */
+			int32_t temp3 = nr_array2[index];
+
+			/* EBX = one byte. */
+			if (one_byte & 0x01) {
 				temp2 += (temp1 >> 0);
 			}
 			if (one_byte & 0x02) {
@@ -149,10 +204,10 @@ int libmpq_wave_decompress(unsigned char *out_buf, int out_length, unsigned char
 			if (one_byte & 0x20) {
 				temp2 += (temp1 >> 5);
 			}
-			if(one_byte & 0x40) {
+			if (one_byte & 0x40) {
 				temp3 -= temp2;
-				if (temp3 <= (long)0xFFFF8000) {
-					temp3 = (long)0xFFFF8000;
+				if (temp3 <= (int32_t)0xFFFF8000) {
+					temp3 = (int32_t)0xFFFF8000;
 				}
 			} else {
 				temp3 += temp2;
@@ -160,26 +215,36 @@ int libmpq_wave_decompress(unsigned char *out_buf, int out_length, unsigned char
 					temp3 = 0x7FFF;
 				}
 			}
+
+			/* restore index. */
 			nr_array2[index] = temp3;
+
+			/* check if should break. */
 			if (out_length < 2) {
 				break;
 			}
 
-			temp2 = nr_array1[index];
-			one_byte &= 0x1F;
-			*out.pw++ = (unsigned short)temp3;
-			out_length -= 2;
-			temp2 += wave_table_1503f120[one_byte];
-			nr_array1[index] = temp2;
+			/* assign values. */
+			temp2             = nr_array1[index];
+			one_byte         &= 0x1F;
+			*out.pw++         = (uint16_t)temp3;
+			out_length       -= 2;
+			temp2            += wave_table_1503f120[one_byte];
+			nr_array1[index]  = temp2;
 
+			/* check index. */
 			if (nr_array1[index] < 0) {
 				nr_array1[index] = 0;
 			} else {
+
+				/* check index. */
 				if (nr_array1[index] > 0x58) {
 					nr_array1[index] = 0x58;
 				}
 			}
 		}
 	}
+
+	/* return copied bytes. */
 	return (out.pb - out_buf);
 }
