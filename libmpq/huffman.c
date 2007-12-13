@@ -10,9 +10,9 @@
  *    - Replaced the goto things with some better C code.
  *
  *  This source was adepted from the C++ version of huffman.cpp included
- *  in stormlib. The C++ version belongs to the following authors,
+ *  in stormlib. The C++ version belongs to the following authors:
  *
- *  Ladislav Zezula <ladik.zezula.net>
+ *  Ladislav Zezula <ladik@zezula.net>
  *  ShadowFlare <BlakFlare@hotmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -36,10 +36,12 @@
 
 /* libmpq includes. */
 #include "mpq.h"
+
+/* huffman includes. */
 #include "huffman.h"
 
 /* tables for huffman tree. */
-unsigned char table1502A630[] = {
+static uint8_t table1502A630[] = {
 
 	/* data for compression type 0x00. */
 	0x0A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -657,7 +659,7 @@ uint32_t libmpq_huff_get_8bits(struct huffman_input_stream *is) {
 	/* check if we should extract bits. */
 	if (is->bits <= 8) {
 		is->bit_buf |= *(uint16_t *)is->in_buf << is->bits;
-		is->in_buf  += sizeof(uint16_t);
+		is->in_buf  += sizeof(int16_t);
 		is->bits    += 16;
 	}
 
@@ -676,7 +678,7 @@ uint32_t libmpq_huff_get_7bits(struct huffman_input_stream *is) {
 	/* check if we should extract bits. */
 	if (is->bits <= 7) {
 		is->bit_buf |= *(uint16_t *)is->in_buf << is->bits;
-		is->in_buf  += sizeof(uint16_t);
+		is->in_buf  += sizeof(int16_t);
 		is->bits    += 16;
 	}
 
@@ -696,7 +698,7 @@ uint32_t libmpq_huff_get_bit(struct huffman_input_stream *is) {
 	/* check if we should extract bits. */
 	if (--is->bits == 0) {
 		is->bit_buf  = *(uint32_t *)is->in_buf;
-		is->in_buf  += sizeof(uint32_t);
+		is->in_buf  += sizeof(int32_t);
 		is->bits     = 32;
 	}
 
@@ -1068,7 +1070,7 @@ int libmpq_huff_do_decompress(struct huffman_tree *ht, struct huffman_input_stre
 }
 
 /* this function initialize a huffman tree. */
-int libmpq_huff_init_tree(struct huffman_tree *ht, struct huffman_tree_item *hi, unsigned int cmp) {
+void libmpq_huff_init_tree(struct huffman_tree *ht, struct huffman_tree_item *hi, unsigned int cmp) {
 
 	/* some common variables. */
 	int count;
