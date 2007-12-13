@@ -84,7 +84,7 @@ static void libmpq_pkzip_write_output_data(char *buf, unsigned int *size, void *
 	info->out_pos += to_write;
 }
 
-int libmpq_pkzip_decompress(char *out_buf, int *out_length, char *in_buf, int in_length) {
+int32_t libmpq_pkzip_decompress(int8_t *out_buf, int32_t *out_length, int8_t *in_buf, int32_t in_length) {
 	pkzip_data info;					/* Data information */
 	char *work_buf = malloc(LIBMPQ_PKZIP_EXP_BUFFER_SIZE);	/* mpq_pkzip work buffer */
 
@@ -103,17 +103,17 @@ int libmpq_pkzip_decompress(char *out_buf, int *out_length, char *in_buf, int in
 	return 0;
 }
 
-int libmpq_wave_decompress_mono(char *out_buf, int *out_length, char *in_buf, int in_length) {
+int32_t libmpq_wave_decompress_mono(int8_t *out_buf, int32_t *out_length, int8_t *in_buf, int32_t in_length) {
 	*out_length = libmpq_wave_decompress((unsigned char *)out_buf, *out_length, (unsigned char *)in_buf, in_length, 1);
 	return 1;
 }
 
-int libmpq_wave_decompress_stereo(char *out_buf, int *out_length, char *in_buf, int in_length) {
+int32_t libmpq_wave_decompress_stereo(int8_t *out_buf, int32_t *out_length, int8_t *in_buf, int32_t in_length) {
 	*out_length = libmpq_wave_decompress((unsigned char *)out_buf, *out_length, (unsigned char *)in_buf, in_length, 2);
 	return 1;
 }
 
-int libmpq_zlib_decompress(char *out_buf, int *out_length, char *in_buf, int in_length) {
+int32_t libmpq_zlib_decompress(int8_t *out_buf, int32_t *out_length, int8_t *in_buf, int32_t in_length) {
 	z_stream z;					/* Stream information for zlib */
 	int result;
 
@@ -144,7 +144,7 @@ int libmpq_zlib_decompress(char *out_buf, int *out_length, char *in_buf, int in_
  *
  *  1500F5F0
  */
-int libmpq_huff_decompress(char *out_buf, int *out_length, char *in_buf, int in_length) {
+int32_t libmpq_huff_decompress(int8_t *out_buf, int32_t *out_length, int8_t *in_buf, int32_t in_length) {
 	struct huffman_tree		*ht = malloc(sizeof(struct huffman_tree));
 	struct huffman_input_stream	*is = malloc(sizeof(struct huffman_input_stream));
 	struct huffman_tree_item	*hi = malloc(sizeof(struct huffman_tree_item));
@@ -153,8 +153,8 @@ int libmpq_huff_decompress(char *out_buf, int *out_length, char *in_buf, int in_
 	memset(hi, 0, sizeof(struct huffman_tree_item));
 
 	/* Initialize input stream */
-	is->bit_buf  = *(unsigned long *)in_buf;
-	in_buf      += sizeof(unsigned long);
+	is->bit_buf  = *(uint32_t *)in_buf;
+	in_buf      += sizeof(uint32_t);
 	is->in_buf   = (unsigned char *)in_buf;
 	is->bits     = 32;
 
@@ -162,6 +162,7 @@ int libmpq_huff_decompress(char *out_buf, int *out_length, char *in_buf, int in_
 	libmpq_huff_init_tree(ht, hi, LIBMPQ_HUFF_DECOMPRESS);
 
 	*out_length = libmpq_huff_do_decompress(ht, is, (unsigned char *)out_buf, *out_length);
+	printf("BAR: %i SIZE: %i\n", *out_length, sizeof(struct huffman_tree));
 
 	free(hi);
 	free(is);
@@ -169,7 +170,7 @@ int libmpq_huff_decompress(char *out_buf, int *out_length, char *in_buf, int in_
 	return 0;
 }
 
-int libmpq_multi_decompress(char *out_buf, int *pout_length, char *in_buf, int in_length) {
+int32_t libmpq_multi_decompress(int8_t *out_buf, int32_t *pout_length, int8_t *in_buf, int32_t in_length) {
 	char		*temp_buf = NULL;		/* Temporary storage for decompressed data */
 	char		*work_buf = NULL;		/* Where to store decompressed data */
 	int		out_length = *pout_length;	/* For storage number of output bytes */
