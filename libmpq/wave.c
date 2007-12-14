@@ -5,9 +5,9 @@
  *  Copyright (c) 2003-2007 Maik Broemme <mbroemme@plusserver.de>
  *
  *  This source was adepted from the C++ version of wave.cpp included
- *  in stormlib. The C++ version belongs to the following authors,
+ *  in stormlib. The C++ version belongs to the following authors:
  *
- *  Ladislav Zezula <ladik.zezula.net>
+ *  Ladislav Zezula <ladik@zezula.net>
  *  Tom Amigo <tomamigo@apexmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,11 +28,11 @@
 /* generic includes. */
 #include <stdint.h>
 
-/* libmpq includes. */
+/* libmpq generic includes. */
 #include "wave.h"
 
 /* table necessary dor decompression. */
-static uint32_t wave_table_1503f120[] = {
+static unsigned int wave_table_1503f120[] = {
 	0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000004, 0xFFFFFFFF, 0x00000002, 0xFFFFFFFF, 0x00000006,
 	0xFFFFFFFF, 0x00000001, 0xFFFFFFFF, 0x00000005, 0xFFFFFFFF, 0x00000003, 0xFFFFFFFF, 0x00000007,
 	0xFFFFFFFF, 0x00000001, 0xFFFFFFFF, 0x00000005, 0xFFFFFFFF, 0x00000003, 0xFFFFFFFF, 0x00000007,  
@@ -40,7 +40,7 @@ static uint32_t wave_table_1503f120[] = {
 };
 
 /* table necessary dor decompression. */
-static uint32_t wave_table_1503f1a0[] = {
+static unsigned int wave_table_1503f1a0[] = {
 	0x00000007, 0x00000008, 0x00000009, 0x0000000A, 0x0000000B, 0x0000000C, 0x0000000D, 0x0000000E,
 	0x00000010, 0x00000011, 0x00000013, 0x00000015, 0x00000017, 0x00000019, 0x0000001C, 0x0000001F,
 	0x00000022, 0x00000025, 0x00000029, 0x0000002D, 0x00000032, 0x00000037, 0x0000003C, 0x00000042,
@@ -55,19 +55,19 @@ static uint32_t wave_table_1503f1a0[] = {
 	0x00007FFF
 };
 
-/* decompress a wave file, mono or stereo, 1500F230 offset. */
-int32_t libmpq_wave_decompress(uint8_t *out_buf, int32_t out_length, uint8_t *in_buf, int32_t in_length, int32_t channels) {
+/* this function decompress a wave file, mono or stereo, 1500F230 offset. */
+int libmpq__do_decompress_wave(unsigned char *out_buf, int out_length, unsigned char *in_buf, int in_length, int channels) {
 
 	/* some common variables. */
 	byte_and_short out;
 	byte_and_short in;
-	uint32_t index;
-	int32_t nr_array1[2];
-	int32_t nr_array2[2];
-	uint32_t count = 0;
+	unsigned int index;
+	int nr_array1[2];
+	int nr_array2[2];
+	unsigned int count = 0;
 
 	/* end on input buffer. */
-	uint8_t *in_end = in_buf + in_length;
+	unsigned char *in_end = in_buf + in_length;
 
 	/* assign default values. */
 	out.pb       = out_buf;
@@ -82,10 +82,10 @@ int32_t libmpq_wave_decompress(uint8_t *out_buf, int32_t out_length, uint8_t *in
 	for (count = 0; count < channels; count++) {
 
 		/* some common variables. */
-		int32_t temp;
+		int temp;
 
 		/* save pointer. */
-		temp = *(int16_t *)in.pw++;
+		temp = *(short *)in.pw++;
 		nr_array2[count] = temp;
 
 		/* check if should break. */
@@ -94,7 +94,7 @@ int32_t libmpq_wave_decompress(uint8_t *out_buf, int32_t out_length, uint8_t *in
 		}
 
 		/* return values. */
-		*out.pw++   = (uint16_t)temp;
+		*out.pw++   = (unsigned short)temp;
 		out_length -= 2;
 	}
 
@@ -105,7 +105,7 @@ int32_t libmpq_wave_decompress(uint8_t *out_buf, int32_t out_length, uint8_t *in
 	while (in.pb < in_end) {
 
 		/* save the byte. */
-		uint8_t one_byte = *in.pb++;
+		unsigned char one_byte = *in.pb++;
 
 		/* check how many channels and set index. */
 		if (channels == 2) {
@@ -130,7 +130,7 @@ int32_t libmpq_wave_decompress(uint8_t *out_buf, int32_t out_length, uint8_t *in
 					}
 
 					/* return values. */
-					*out.pw++ = (uint16_t)nr_array2[index];
+					*out.pw++ = (unsigned short)nr_array2[index];
 					out_length -= 2;
 
 					/* continue loop. */
@@ -177,13 +177,13 @@ int32_t libmpq_wave_decompress(uint8_t *out_buf, int32_t out_length, uint8_t *in
 		} else {
 
 			/* EDI */
-			uint32_t temp1 = wave_table_1503f1a0[nr_array1[index]];
+			unsigned int temp1 = wave_table_1503f1a0[nr_array1[index]];
 
 			/* ESI */
-			uint32_t temp2 = temp1 >> in_buf[1];
+			unsigned int temp2 = temp1 >> in_buf[1];
 
 			/* ECX */
-			int32_t temp3 = nr_array2[index];
+			int temp3 = nr_array2[index];
 
 			/* EBX = one byte. */
 			if (one_byte & 0x01) {
@@ -206,8 +206,8 @@ int32_t libmpq_wave_decompress(uint8_t *out_buf, int32_t out_length, uint8_t *in
 			}
 			if (one_byte & 0x40) {
 				temp3 -= temp2;
-				if (temp3 <= (int32_t)0xFFFF8000) {
-					temp3 = (int32_t)0xFFFF8000;
+				if (temp3 <= (int)0xFFFF8000) {
+					temp3 = (int)0xFFFF8000;
 				}
 			} else {
 				temp3 += temp2;
@@ -227,7 +227,7 @@ int32_t libmpq_wave_decompress(uint8_t *out_buf, int32_t out_length, uint8_t *in
 			/* assign values. */
 			temp2             = nr_array1[index];
 			one_byte         &= 0x1F;
-			*out.pw++         = (uint16_t)temp3;
+			*out.pw++         = (unsigned short)temp3;
 			out_length       -= 2;
 			temp2            += wave_table_1503f120[one_byte];
 			nr_array1[index]  = temp2;

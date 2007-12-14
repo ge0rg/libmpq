@@ -22,63 +22,63 @@
 #define _COMMON_H
 
 /* function to decrypt a mpq block.. */
-int32_t libmpq__decrypt_mpq_block(
+int libmpq__decrypt_mpq_block(
 	mpq_archive	*mpq_a,
-	uint32_t	*block,
-	uint32_t	length,
-	uint32_t	seed1
+	unsigned int	*block,
+	unsigned int	length,
+	unsigned int	seed1
 );
 
 /* function to decrypt hash table of mpq archive. */
-int32_t libmpq__decrypt_table_hash(
+int libmpq__decrypt_table_hash(
 	mpq_archive	*mpq_a,
-	uint8_t		*pbKey
+	unsigned char	*pbKey
 );
 
 /* function to decrypt hash table of mpq archive. */
-int32_t libmpq__decrypt_table_block(
+int libmpq__decrypt_table_block(
 	mpq_archive	*mpq_a,
-	uint8_t		*pbKey
+	unsigned char	*pbKey
 );
 
 /* function to detect decryption key. */
-int32_t libmpq__decrypt_key(
+int libmpq__decrypt_key(
 	mpq_archive	*mpq_a,
-	uint32_t	*block,
-	uint32_t	decrypted
+	unsigned int	*block,
+	unsigned int	decrypted
 );
 
 /* function to initialize decryption buffer. */
-int32_t libmpq__decrypt_init_buffer(
+int libmpq__decrypt_buffer_init(
 	mpq_archive	*mpq_a
 );
 
 /* function to read decrypted hash table. */
-int32_t libmpq__read_table_hash(
+int libmpq__read_table_hash(
 	mpq_archive	*mpq_a
 );
 
 /* function to read decrypted hash table. */
-int32_t libmpq__read_table_block(
+int libmpq__read_table_block(
 	mpq_archive	*mpq_a
 );
 
 /* function to read decrypted block. */
-int32_t libmpq__read_file_block(
+int libmpq__read_file_block(
 	mpq_archive	*mpq_a,
 	mpq_file	*mpq_f,
-	uint32_t	blockpos,
-	uint8_t		*buffer,
-	uint32_t	blockbytes
+	unsigned int	blockpos,
+	unsigned char	*buffer,
+	unsigned int	blockbytes
 );
 
 /* function to read file from mpq archive. */
-int32_t libmpq__read_file_mpq(
+int libmpq__read_file_mpq(
 	mpq_archive	*mpq_a,
 	mpq_file	*mpq_f,
-	uint32_t	filepos,
-	uint8_t		*buffer,
-	uint32_t	toread
+	unsigned int	filepos,
+	unsigned char	*buffer,
+	unsigned int	toread
 );
 
 #endif						/* _COMMON_H */

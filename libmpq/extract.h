@@ -22,26 +22,26 @@
 #define _EXTRACT_H
 
 /* table for decompression functions. */
-typedef int32_t		(*DECOMPRESS)(uint8_t *, int32_t *, uint8_t *, int32_t);
+typedef int		(*DECOMPRESS)(unsigned char *, int *, unsigned char *, int);
 typedef struct {
-	uint32_t	mask;			/* decompression bit. */
+	unsigned int	mask;			/* decompression bit. */
 	DECOMPRESS	decompress;		/* decompression function. */
 } decompress_table;
 
 /* decompression using pkzip. */
-extern int32_t libmpq__decompress_pkzip(
-	uint8_t		*out_buf,
-	int32_t		*out_length,
-	uint8_t		*in_buf,
-	int32_t		in_length
+extern int libmpq__decompress_pkzip(
+	unsigned char	*out_buf,
+	int		*out_length,
+	unsigned char	*in_buf,
+	int		in_length
 );
 
 /* decompression using zlib. */
-extern int32_t libmpq__decompress_zlib(
-	uint8_t		*out_buf,
-	int32_t		*out_length,
-	uint8_t		*in_buf,
-	int32_t		in_length
+extern int libmpq__decompress_zlib(
+	unsigned char	*out_buf,
+	int		*out_length,
+	unsigned char	*in_buf,
+	int		in_length
 );
 
 /*
@@ -50,35 +50,35 @@ extern int32_t libmpq__decompress_zlib(
  *
  *  1500F5F0
  */
-extern int32_t libmpq__decompress_huffman(
-	uint8_t		*out_buf,
-	int32_t		*out_length,
-	uint8_t		*in_buf,
-	int32_t		in_length
+extern int libmpq__decompress_huffman(
+	unsigned char	*out_buf,
+	int		*out_length,
+	unsigned char	*in_buf,
+	int		in_length
 );
 
 /* decompression using wave. (2 channels) */
-extern int32_t libmpq__decompress_wave_stereo(
-	uint8_t		*out_buf,
-	int32_t		*out_length,
-	uint8_t		*in_buf,
-	int32_t		in_length
+extern int libmpq__decompress_wave_stereo(
+	unsigned char	*out_buf,
+	int		*out_length,
+	unsigned char	*in_buf,
+	int		in_length
 );
 
 /* decompression using wave. (1 channel) */
-extern int32_t libmpq__decompress_wave_mono(
-	uint8_t		*out_buf,
-	int32_t		*out_length,
-	uint8_t		*in_buf,
-	int32_t		in_length
+extern int libmpq__decompress_wave_mono(
+	unsigned char	*out_buf,
+	int		*out_length,
+	unsigned char	*in_buf,
+	int		in_length
 );
 
 /* decompression using multiple of the above algorithm. */
-extern int32_t libmpq__decompress_multi(
-	uint8_t		*out_buf,
-	int32_t		*pout_length,
-	uint8_t		*in_buf,
-	int32_t		in_length
+extern int libmpq__decompress_multi(
+	unsigned char	*out_buf,
+	int		*pout_length,
+	unsigned char	*in_buf,
+	int		in_length
 );
 
 /* table with decompression bits and functions. */

@@ -4,9 +4,9 @@
  *  Copyright (c) 2003-2007 Maik Broemme <mbroemme@plusserver.de>
  *
  *  This source was adepted from the C++ version of huffman.h included
- *  in stormlib. The C++ version belongs to the following authors,
+ *  in stormlib. The C++ version belongs to the following authors:
  *
- *  Ladislav Zezula <ladik.zezula.net>
+ *  Ladislav Zezula <ladik@zezula.net>
  *  ShadowFlare <BlakFlare@hotmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,9 +28,9 @@
 #define _HUFFMAN_H
 
 /* define pointer conversions. */
-#define PTR_NOT(ptr)				(struct huffman_tree_item *)(~(uintptr_t)(ptr))
+#define PTR_NOT(ptr)				(struct huffman_tree_item *)(~(unsigned long)(ptr))
 #define PTR_PTR(ptr)				((struct huffman_tree_item *)(ptr))
-#define PTR_INT(ptr)				(intptr_t)(ptr)
+#define PTR_INT(ptr)				(long)(ptr)
 
 /* define item handling. */
 #define INSERT_ITEM				1		/* insert item into huffman tree. */
@@ -38,35 +38,35 @@
 
 /* input stream for huffmann decompression. */
 struct huffman_input_stream {
-	uint8_t		*in_buf;				/* 00 - input data. */
-	uint32_t	bit_buf;				/* 04 - input bit buffer. */
-	uint32_t	bits;					/* 08 - number of bits remaining in byte. */
+	unsigned char		*in_buf;				/* 00 - input data. */
+	unsigned int	bit_buf;				/* 04 - input bit buffer. */
+	unsigned int	bits;					/* 08 - number of bits remaining in byte. */
 };
 
 /* huffman tree item. */
 struct huffman_tree_item {
-	struct		huffman_tree_item *next;		/* 00 - Pointer to next huffman tree item. */
-	struct		huffman_tree_item *prev;		/* 04 - Pointer to prev huffman tree item (< 0 if none). */
-	uint32_t	dcmp_byte;				/* 08 - index of this item in item pointer array, decompressed byte value. */
-	uint32_t	byte_value;				/* 0C - some byte value. */
+	struct		huffman_tree_item *next;		/* 00 - pointer to next huffman tree item. */
+	struct		huffman_tree_item *prev;		/* 04 - pointer to prev huffman tree item (< 0 if none). */
+	unsigned int	dcmp_byte;				/* 08 - index of this item in item pointer array, decompressed byte value. */
+	unsigned int	byte_value;				/* 0C - some byte value. */
 	struct		huffman_tree_item *parent;		/* 10 - pointer to parent huffman tree item (NULL if none). */
 	struct		huffman_tree_item *child;		/* 14 - pointer to child huffman tree item. */
 };
 
 /* structure used for quick decompression. */
 struct huffman_decompress {
-	uint32_t	offs00;					/* 00 - 1 if resolved. */
-	uint32_t	bits;					/* 04 - bit count. */
+	unsigned int	offs00;					/* 00 - 1 if resolved. */
+	unsigned int	bits;					/* 04 - bit count. */
 	union {
-		uint32_t	dcmp_byte;			/* 08 - byte value for decompress (if bitCount <= 7). */
+		unsigned int	dcmp_byte;			/* 08 - byte value for decompress (if bitCount <= 7). */
 		struct		huffman_tree_item *p_item;	/* 08 - huffman tree item (if number of bits is greater than 7). */
 	};
 };
 
 /* structure for huffman tree. */
 struct huffman_tree {
-	uint32_t	cmp0;					/* 0000 - 1 if compression type 0. */
-	uint32_t	offs0004;				/* 0004 - some flag. */
+	unsigned int	cmp0;					/* 0000 - 1 if compression type 0. */
+	unsigned int	offs0004;				/* 0004 - some flag. */
 	struct		huffman_tree_item items0008[0x203];	/* 0008 - huffman tree items. */
 	struct		huffman_tree_item *item3050;		/* 3050 - always NULL? */
 	struct		huffman_tree_item *item3054;		/* 3054 - pointer to huffman tree item. */
@@ -74,10 +74,76 @@ struct huffman_tree {
 	struct		huffman_tree_item *item305C;		/* 305C - usually NULL. */
 	struct		huffman_tree_item *first;		/* 3060 - pointer to top (first) huffman tree item. */
 	struct		huffman_tree_item *last;		/* 3064 - pointer to bottom (last) huffman tree item (< 0 if invalid). */
-	uint32_t	items;					/* 3068 - number of used huffman tree items. */
+	unsigned int	items;					/* 3068 - number of used huffman tree items. */
 	struct		huffman_tree_item *items306C[0x102];	/* 306C - huffman tree item pointer array. */
 	struct		huffman_decompress qd3474[0x80];	/* 3474 - array for quick decompression. */
-	uint8_t		table1502A630[];			/* some table to make struct size flexible. */
+	unsigned char	table_1502A630[];			/* some table to make struct size flexible. */
 };
+
+/* insert a new item into huffman tree. */
+void libmpq__huffman_insert_item(
+	struct		huffman_tree_item **p_item,
+	struct		huffman_tree_item *item,
+	unsigned int	where,
+	struct		huffman_tree_item *item2
+);
+
+/* remove item from huffman tree. */
+void libmpq__huffman_remove_item(
+	struct		huffman_tree_item *hi
+);
+
+/* get previous item from huffman tree. */
+struct huffman_tree_item *libmpq__huffman_previous_item(
+	struct		huffman_tree_item *hi,
+	long		value
+);
+
+/* get one bit from stream. */
+unsigned int libmpq__huffman_get_1bit(
+	struct		huffman_input_stream *is
+);
+
+/* get seven bit from stream. */
+unsigned int libmpq__huffman_get_7bit(
+	struct		huffman_input_stream *is
+);
+
+/* get eight bit from stream. */
+unsigned int libmpq__huffman_get_8bit(
+	struct		huffman_input_stream *is
+);
+
+/* call 1500E740. */
+struct huffman_tree_item *libmpq__huffman_call_1500E740(
+	struct		huffman_tree *ht
+);
+
+/* call 1500E820- */
+void libmpq__huffman_call_1500E820(
+	struct		huffman_tree *ht,
+	struct		huffman_tree_item *p_item
+);
+
+/* initialize the huffman tree. */
+void libmpq__huffman_tree_init(
+	struct		huffman_tree *ht,
+	struct		huffman_tree_item *hi,
+	unsigned int	cmp
+);
+
+/* build the huffman tree. */
+void libmpq__huffman_tree_build(
+	struct		huffman_tree *ht,
+	unsigned int	cmp_type
+);
+
+/* decompress the stream using huffman compression. */
+int libmpq__do_decompress_huffman(
+	struct		huffman_tree *ht,
+	struct		huffman_input_stream *is,
+	unsigned char	*out_buf,
+	unsigned int	out_length
+);
 
 #endif						/* _HUFFMAN_H */
