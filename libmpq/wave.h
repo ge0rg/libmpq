@@ -4,7 +4,7 @@
  *  Copyright (c) 2003-2007 Maik Broemme <mbroemme@plusserver.de>
  *
  *  This source was adepted from the C++ version of wave.h included
- *  in stormlib. The C++ version belongs to the following authors,
+ *  in stormlib. The C++ version belongs to the following authors:
  *
  *  Ladislav Zezula <ladik.zezula.net>
  *  Tom Amigo <tomamigo@apexmail.com>
@@ -29,8 +29,17 @@
 
 /* buffer. */
 typedef union {
-	uint16_t	*pw;
-	uint8_t		*pb;
+	unsigned short	*pw;
+	unsigned char	*pb;
 } byte_and_short;
+
+/* decompress a wave file, mono or stereo, 1500F230 offset. */
+int libmpq__do_decompress_wave(
+	unsigned char	*out_buf,
+	int		out_length,
+	unsigned char	*in_buf,
+	int		in_length,
+	int		channels
+);
 
 #endif						/* _WAVE_H */

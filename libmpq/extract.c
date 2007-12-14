@@ -1,6 +1,6 @@
 /*
  *  extract.c -- global extracting function for all known file compressions
- *               in a MPQ archive.
+ *               in a mpq archive.
  *
  *  Copyright (c) 2003-2007 Maik Broemme <mbroemme@plusserver.de>
  *
@@ -26,69 +26,25 @@
 /* zlib includes. */
 #include <zlib.h>
 
-/* libmpq includes. */
+/* libmpq main includes. */
 #include "mpq.h"
+
+/* libmpq generic includes. */
 #include "explode.h"
+#include "extract.h"
 #include "huffman.h"
+#include "wave.h"
 
-/*
- *  Support functions for PKWARE data compression library.
- *
- *  Function loads data from the input buffer. Used by mpq_pkzip
- *  "implode" and "explode" function as user-defined callback.
- *  Returns number of bytes loaded.
- *
- *  char * buf          - Pointer to a buffer where to store loaded data
- *  unsigned int * size - Max. number of bytes to read
- *  void * param        - Custom pointer, parameter of implode/explode
- */
-static unsigned int libmpq_pkzip_read_input_data(char *buf, unsigned int *size, void *param) {
-	pkzip_data *info = (pkzip_data *)param;
-	unsigned int max_avail = (info->in_bytes - info->in_pos);
-	unsigned int to_read = *size;
+/* this function decompress a stream using pkzip algorithm. */
+int libmpq__decompress_pkzip(unsigned char *out_buf, int *out_length, unsigned char *in_buf, int in_length) {
 
-	/* Check the case when not enough data available */
-	if (to_read > max_avail) {
-		to_read = max_avail;
-	}
+	/* data information. */
+	pkzip_data info;
 
-	/* Load data and increment offsets */
-	memcpy(buf, info->in_buf + info->in_pos, to_read);
-	info->in_pos += to_read;
+	/* work buffer. */
+	unsigned char *work_buf = malloc(sizeof(pkzip_data_cmp));
 
-	return to_read;
-}
-
-/*
- *  Support functions for PKWARE data compression library.
- *
- *  Function for store output data. Used by mpq_pkzip "implode" and
- *  "explode" as user-defined callback.
- *
- *  char * buf          - Pointer to data to be written
- *  unsigned int * size - Number of bytes to write
- *  void * param        - Custom pointer, parameter of implode/explode
- */
-static void libmpq_pkzip_write_output_data(char *buf, unsigned int *size, void *param) {
-	pkzip_data *info = (pkzip_data *)param;
-	unsigned int max_write = (info->max_out - info->out_pos);
-	unsigned int to_write = *size;
-
-	/* Check the case when not enough space in the output buffer */
-	if (to_write > max_write) {
-		to_write = max_write;
-	}
-
-	/* Write output data and increments offsets */
-	memcpy(info->out_buf + info->out_pos, buf, to_write);
-	info->out_pos += to_write;
-}
-
-int32_t libmpq_pkzip_decompress(int8_t *out_buf, int32_t *out_length, int8_t *in_buf, int32_t in_length) {
-	pkzip_data info;					/* Data information */
-	char *work_buf = malloc(LIBMPQ_PKZIP_EXP_BUFFER_SIZE);	/* mpq_pkzip work buffer */
-
-	/* Fill data information structure */
+	/* fill data information structure. */
 	info.in_buf   = in_buf;
 	info.in_pos   = 0;
 	info.in_bytes = in_length;
@@ -96,28 +52,25 @@ int32_t libmpq_pkzip_decompress(int8_t *out_buf, int32_t *out_length, int8_t *in
 	info.out_pos  = 0;
 	info.max_out  = *out_length;
 
-	/* Do the decompression */
-	libmpq_pkzip_explode(libmpq_pkzip_read_input_data, libmpq_pkzip_write_output_data, work_buf, &info);
+	/* do the decompression. */
+	libmpq__do_decompress_pkzip(work_buf, &info);
 	*out_length = info.out_pos;
+
+	/* free allocated memory. */
 	free(work_buf);
+
+	/* if no error was found, return zero. */
 	return 0;
 }
 
-int32_t libmpq_wave_decompress_mono(int8_t *out_buf, int32_t *out_length, int8_t *in_buf, int32_t in_length) {
-	*out_length = libmpq_wave_decompress((unsigned char *)out_buf, *out_length, (unsigned char *)in_buf, in_length, 1);
-	return 1;
-}
+/* this function decompress a stream using zlib algorithm. */
+int libmpq__decompress_zlib(unsigned char *out_buf, int *out_length, unsigned char *in_buf, int in_length) {
 
-int32_t libmpq_wave_decompress_stereo(int8_t *out_buf, int32_t *out_length, int8_t *in_buf, int32_t in_length) {
-	*out_length = libmpq_wave_decompress((unsigned char *)out_buf, *out_length, (unsigned char *)in_buf, in_length, 2);
-	return 1;
-}
-
-int32_t libmpq_zlib_decompress(int8_t *out_buf, int32_t *out_length, int8_t *in_buf, int32_t in_length) {
-	z_stream z;					/* Stream information for zlib */
+	/* stream information for zlib. */
+	z_stream z;
 	int result;
 
-	/* Fill the stream structure for zlib */
+	/* fill the stream structure for zlib. */
 	z.next_in   = (Bytef *)in_buf;
 	z.avail_in  = (uInt)in_length;
 	z.total_in  = in_length;
@@ -127,125 +80,171 @@ int32_t libmpq_zlib_decompress(int8_t *out_buf, int32_t *out_length, int8_t *in_
 	z.zalloc    = NULL;
 	z.zfree     = NULL;
 
-	/* Initialize the decompression structure. Storm.dll uses zlib version 1.1.3 */
+	/* initialize the decompression structure, storm.dll uses zlib version 1.1.3. */
 	if ((result = inflateInit(&z)) == 0) {
 
-		/* Call zlib to decompress the data */
+		/* call zlib to decompress the data. */
 		result = inflate(&z, Z_FINISH);
 		*out_length = z.total_out;
 		inflateEnd(&z);
 	}
+
+	/* return zlib status. */
 	return result;
 }
 
-/*
- *  Huffmann decompression routine. The in_length parameter is not used, but needs
- *  to be specified due to compatibility reasons.
- *
- *  1500F5F0
- */
-int32_t libmpq_huff_decompress(int8_t *out_buf, int32_t *out_length, int8_t *in_buf, int32_t in_length) {
-	struct huffman_tree		*ht = malloc(sizeof(struct huffman_tree));
-	struct huffman_input_stream	*is = malloc(sizeof(struct huffman_input_stream));
-	struct huffman_tree_item	*hi = malloc(sizeof(struct huffman_tree_item));
+/* this function decompress a stream using huffman algorithm. */
+int libmpq__decompress_huffman(unsigned char *out_buf, int *out_length, unsigned char *in_buf, int in_length) {
+
+	/* huffman tree information. */
+	struct huffman_tree *ht         = malloc(sizeof(struct huffman_tree));
+	struct huffman_input_stream *is = malloc(sizeof(struct huffman_input_stream));
+	struct huffman_tree_item *hi    = malloc(sizeof(struct huffman_tree_item));
+
+	/* cleanup structures. */
 	memset(ht, 0, sizeof(struct huffman_tree));
 	memset(is, 0, sizeof(struct huffman_input_stream));
 	memset(hi, 0, sizeof(struct huffman_tree_item));
 
-	/* Initialize input stream */
-	is->bit_buf  = *(uint32_t *)in_buf;
-	in_buf      += sizeof(uint32_t);
+	/* initialize input stream. */
+	is->bit_buf  = *(unsigned int *)in_buf;
+	in_buf      += sizeof(int);
 	is->in_buf   = (unsigned char *)in_buf;
 	is->bits     = 32;
 
-	/* Initialize the Huffmann tree for decompression */
-	libmpq_huff_init_tree(ht, hi, LIBMPQ_HUFF_DECOMPRESS);
+	/* initialize the huffman tree for decompression. */
+	libmpq__huffman_tree_init(ht, hi, LIBMPQ_HUFF_DECOMPRESS);
 
-	*out_length = libmpq_huff_do_decompress(ht, is, (unsigned char *)out_buf, *out_length);
-	printf("BAR: %i SIZE: %i\n", *out_length, sizeof(struct huffman_tree));
+	/* save the number of copied bytes. */
+	*out_length = libmpq__do_decompress_huffman(ht, is, out_buf, *out_length);
 
+	/* free allocated memory. */
 	free(hi);
 	free(is);
 	free(ht);
+
+	/* if no error was found, return zero. */
 	return 0;
 }
 
-int32_t libmpq_multi_decompress(int8_t *out_buf, int32_t *pout_length, int8_t *in_buf, int32_t in_length) {
-	char		*temp_buf = NULL;		/* Temporary storage for decompressed data */
-	char		*work_buf = NULL;		/* Where to store decompressed data */
-	int		out_length = *pout_length;	/* For storage number of output bytes */
-	unsigned	fDecompressions1;		/* Decompressions applied to the block */
-	unsigned	fDecompressions2;		/* Just another copy of decompressions applied to the block */
-	int		count = 0;			/* Counter for every use */
-	int		entries = (sizeof(dcmp_table) / sizeof(decompress_table));
-	int		i;
+/* this function decompress a stream using wave algorithm. (2 channels) */
+int libmpq__decompress_wave_stereo(unsigned char *out_buf, int *out_length, unsigned char *in_buf, int in_length) {
 
-	/* If the input length is the same as output, do nothing. */
+	/* save the number of copied bytes. */
+	*out_length = libmpq__do_decompress_wave(out_buf, *out_length, in_buf, in_length, 2);
+
+	/* if no error was found, return zero. */
+	return 0;
+}
+
+/* this function decompress a stream using wave algorithm. (1 channel) */
+int libmpq__decompress_wave_mono(unsigned char *out_buf, int *out_length, unsigned char *in_buf, int in_length) {
+
+	/* save the number of copied bytes. */
+	*out_length = libmpq__do_decompress_wave(out_buf, *out_length, in_buf, in_length, 1);
+
+	/* if no error was found, return zero. */
+	return 0;
+}
+
+/* this function decompress a stream using a combination of the other compression algorithm. */
+int libmpq__decompress_multi(unsigned char *out_buf, int *pout_length, unsigned char *in_buf, int in_length) {
+
+	/* temporary storage for decompressed data. */
+	unsigned char *temp_buf  = NULL;
+
+	/* where to store decompressed data. */
+	unsigned char *work_buf  = NULL;
+
+	/* for storage number of output bytes. */
+	int out_length = *pout_length;
+
+	/* counter for every use. */
+	unsigned int count     = 0;
+	unsigned int entries   = (sizeof(dcmp_table) / sizeof(decompress_table));
+
+	/* decompressions applied to the block. */
+	unsigned char fDecompressions1;
+
+	/* another copy of decompressions applied to the block. */
+	unsigned char fDecompressions2;
+
+	/* counter for the loops. */
+	unsigned int i;
+
+	/* check if the input length is the same as output, so do nothing. */
 	if (in_length == out_length) {
+
+		/* check if buffer have same data. */
 		if (in_buf == out_buf) {
-			return 1;
+			return 0;
 		}
+
+		/* copy buffer to target. */
 		memcpy(out_buf, in_buf, in_length);
-		return 1;
+		return 0;
 	}
 
-	/* Get applied compression types and decrement data length */
-	fDecompressions1 = fDecompressions2 = (unsigned char)*in_buf++;
+	/* get applied compression types and decrement data length. */
+	fDecompressions1 = fDecompressions2 = *in_buf++;
 	in_length--;
 
-	/* Search decompression table type and get all types of compression */
+	/* search decompression table type and get all types of compression. */
 	for (i = 0; i < entries; i++) {
-		/* We have to apply this decompression? */
+
+		/* check if have to apply this decompression. */
 		if (fDecompressions1 & dcmp_table[i].mask) {
 			count++;
 		}
 
-		/* Clear this flag from temporary variable. */
+		/* clear this flag from temporary variable. */
 		fDecompressions2 &= ~dcmp_table[i].mask;
 	}
 
-	/*
-	 *  Check if there is some method unhandled
-	 *  (E.g. compressed by future versions)
-	 */
+	/* check if there is some method unhandled. (e.g. compressed by future versions) */
 	if (fDecompressions2 != 0) {
-		printf("Unknown Compression\n");
-		return 0;
+		/* TODO: Add an error handler here. */
+//		printf("Unknown Compression\n");
+		return 1;
 	}
 
-	/* If there is more than only one compression, we have to allocate extra buffer */
+	/* check if there is more than only one compression, we have to allocate extra buffer. */
 	if (count >= 2) {
 		temp_buf = malloc(out_length);
 	}
 
-	/* Apply all decompressions */
+	/* apply all decompressions. */
 	for (i = 0, count = 0; i < entries; i++) {
 
-		/* If not used this kind of compression, skip the loop */
+		/* check if not used this kind of compression. */
 		if (fDecompressions1 & dcmp_table[i].mask) {
 
-			/* If odd case, use target buffer for output, otherwise use allocated tempbuf */
-			work_buf = (count++ & 1) ? temp_buf : out_buf;
+			/* if odd case, use target buffer for output, otherwise use allocated tempbuf. */
+			work_buf   = (count++ & 1) ? temp_buf : out_buf;
 			out_length = *pout_length;
 
-			/* Decompress buffer using corresponding function */
+			/* decompress buffer using corresponding function. */
 			dcmp_table[i].decompress(work_buf, &out_length, in_buf, in_length);
 
-			/* Move output length to src length for next compression */
+			/* ,ove output length to source length for next compression. */
 			in_length = out_length;
-			in_buf = work_buf;
+			in_buf    = work_buf;
 		}
 	}
 
-	/* If output buffer is not the same like target buffer, we have to copy data */
+	/* check if output buffer is not the same like target buffer, so we have to copy data. */
 	if (work_buf != out_buf) {
 		memcpy(out_buf, in_buf, out_length);
 	}
+
+	/* save copied bytes. */
 	*pout_length = out_length;
 
-	/* Delete temporary buffer, if necessary */
+	/* delete temporary buffer, if necessary. */
 	if (temp_buf != NULL) {
 		free(temp_buf);
 	}
-	return 1;
+
+	/* if no error was found, return zero. */
+	return 0;
 }
