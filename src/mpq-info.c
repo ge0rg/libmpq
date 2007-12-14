@@ -34,7 +34,7 @@
 #include "config.h"
 
 /* the command line option struct. */
-static struct {
+struct {
 	unsigned int	file;		/* number of archives to check. */
 	unsigned int	count;		/* number of last archive. */
 } mpq_info__options;
@@ -46,7 +46,7 @@ static struct {
 #define NOTICE(...) printf(__VA_ARGS__);
 
 /* this function show the usage. */
-static int mpq_info__usage(char *program_name) {
+int mpq_info__usage(char *program_name) {
 
 	/* show the help. */
 	NOTICE("Usage: %s [OPTION] [ARCHIVE]...\n", program_name);
@@ -63,7 +63,7 @@ static int mpq_info__usage(char *program_name) {
 }
 
 /* this function shows the version information. */
-static int mpq_info__version(char *program_name) {
+int mpq_info__version(char *program_name) {
 
 	/* show the version. */
 	NOTICE("%s (mopaq) %s (zlib %s)\n", program_name, libmpq__version(), zlibVersion());
@@ -77,7 +77,7 @@ static int mpq_info__version(char *program_name) {
 }
 
 /* this function shows some archive information. */
-static int mpq_info__archive_info(unsigned char *mpq_filename) {
+int mpq_info__archive_info(char *mpq_filename) {
 
 	/* some common variables. */
 	unsigned int result = 0;
@@ -104,7 +104,7 @@ static int mpq_info__archive_info(unsigned char *mpq_filename) {
 		NOTICE("archive files:			%i\n", libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_NUMFILES));
 		NOTICE("archive compressed size:	%i\n", libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_COMPRESSED_SIZE));
 		NOTICE("archive uncompressed size:	%i\n", libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_UNCOMPRESSED_SIZE));
-		NOTICE("archive compression ratio:	%.2f%\n", (100 - ((float)libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_COMPRESSED_SIZE) / (float)libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_UNCOMPRESSED_SIZE) * 100)));
+		NOTICE("archive compression ratio:	%.2f\n", (100 - ((float)libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_COMPRESSED_SIZE) / (float)libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_UNCOMPRESSED_SIZE) * 100)));
 	} else {
 
 		/* open archive failed. */
@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
 
 	/* some common variables. */
 	char *program_name;
-	unsigned char mpq_filename[PATH_MAX];
+	char mpq_filename[PATH_MAX];
 
 	/* get program name. */
 	program_name = argv[0];
