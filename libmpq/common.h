@@ -21,7 +21,7 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
-/* function to decrypt a mpq block.. */
+/* function to decrypt a mpq block. */
 int libmpq__decrypt_mpq_block(
 	mpq_archive	*mpq_a,
 	unsigned int	*block,
