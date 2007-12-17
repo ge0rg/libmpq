@@ -51,6 +51,8 @@ int libmpq__archive_open(mpq_archive *mpq_a, const char *mpq_filename) {
 	unsigned int ncnt = FALSE;
 	unsigned int i;
 	struct stat fileinfo;
+	char tempfile[PATH_MAX];
+	int tempsize;
 
 	/* allocate memory for the mpq archive. */
 	mpq_a->mpq_l = malloc(sizeof(mpq_list));
@@ -182,11 +184,17 @@ int libmpq__archive_open(mpq_archive *mpq_a, const char *mpq_filename) {
 		return LIBMPQ_ARCHIVE_ERROR_MALLOC;
 	}
 
+	/* cleanup. */
+	memset(mpq_a->mpq_l->mpq_files, 0, mpq_a->header->blocktablesize * sizeof(char *));
+
 	/* loop through all files in mpq archive. */
 	for (i = 0; i < mpq_a->header->blocktablesize; i++) {
 
+		/* create proper formatted filename. */
+		tempsize = snprintf(tempfile, PATH_MAX, "file%06i.xxx", i + 1);
+
 		/* allocate memory for the filelist element. */
-		mpq_a->mpq_l->mpq_files[i] = malloc(sizeof(char *));
+		mpq_a->mpq_l->mpq_files[i] = malloc(tempsize);
 
 		/* check if memory allocation was successful. */
 		if (!mpq_a->mpq_l->mpq_files[i]) {
@@ -195,8 +203,11 @@ int libmpq__archive_open(mpq_archive *mpq_a, const char *mpq_filename) {
 			return LIBMPQ_ARCHIVE_ERROR_MALLOC;
 		}
 
+		/* cleanup. */
+		memset(mpq_a->mpq_l->mpq_files[i], 0, tempsize);
+
 		/* create the filename. */
-		snprintf((char *)mpq_a->mpq_l->mpq_files[i], PATH_MAX, "file%06i.xxx", i + 1);
+		mpq_a->mpq_l->mpq_files[i] = memcpy(mpq_a->mpq_l->mpq_files[i], tempfile, tempsize);
 	}
 
 	/* if no error was found, return zero. */
