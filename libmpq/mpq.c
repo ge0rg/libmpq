@@ -93,8 +93,8 @@ int libmpq__archive_open(mpq_archive *mpq_a, const char *mpq_filename) {
 	/* fill the structures with informations */
 	strncpy((char *)mpq_a->filename, mpq_filename, strlen(mpq_filename));
 	libmpq__decrypt_buffer_init(mpq_a);
-	mpq_a->fd = fd;
-	mpq_a->header->id = 0;
+	mpq_a->fd            = fd;
+	mpq_a->header->id    = 0;
 	mpq_a->maxblockindex = 0;
 
 	/* loop through file and search for mpq signature. */
@@ -111,6 +111,9 @@ int libmpq__archive_open(mpq_archive *mpq_a, const char *mpq_filename) {
 
 		/* if different number of bytes read, break the loop. */
 		if (rb != sizeof(mpq_header)) {
+
+			/* reset values, to make close archive function happy. */
+			mpq_a->header->blocktablesize = 0;
 
 			/* no valid mpq archive. */
 			return LIBMPQ_ARCHIVE_ERROR_FORMAT;
