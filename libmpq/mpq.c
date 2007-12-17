@@ -400,7 +400,7 @@ int libmpq__file_info(mpq_archive *mpq_a, unsigned int infotype, const unsigned 
 }
 
 /* this function returns filename by the given number. */
-unsigned char *libmpq__file_name(mpq_archive *mpq_a, const unsigned int number) {
+char *libmpq__file_name(mpq_archive *mpq_a, const unsigned int number) {
 
 	/* check if we are in the range of available files. */
 	if (number < 1 || number > mpq_a->header->blocktablesize) {
@@ -414,7 +414,7 @@ unsigned char *libmpq__file_name(mpq_archive *mpq_a, const unsigned int number) 
 }
 
 /* this function returns filenumber by the given name. */
-int libmpq__file_number(mpq_archive *mpq_a, const unsigned char *name) {
+int libmpq__file_number(mpq_archive *mpq_a, const char *name) {
 
 	/* some common variables. */
 	unsigned int i;
@@ -423,7 +423,7 @@ int libmpq__file_number(mpq_archive *mpq_a, const unsigned char *name) {
 	for (i = 0; mpq_a->mpq_l->mpq_files[i]; i++) {
 
 		/* check if given filename was found in list. */
-		if (strncmp((const char *)mpq_a->mpq_l->mpq_files[i], (const char *)name, strlen((const char *)name)) == 0) {
+		if (strncmp(mpq_a->mpq_l->mpq_files[i], name, strlen(name)) == 0) {
 
 			/* if file found return the number */
 			return i + 1;

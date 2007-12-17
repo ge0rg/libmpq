@@ -126,7 +126,7 @@ typedef struct {
 
 /* file structure used since diablo 1.00 (0x38 bytes). */
 typedef struct {
-	unsigned char	filename[PATH_MAX];	/* filename of the actual file in the archive. */
+	char		filename[PATH_MAX];	/* filename of the actual file in the archive. */
 	int		fd;			/* file handle. */
 	unsigned int	seed;			/* seed used for file decrypt. */
 	unsigned int	filepos;		/* current file position. */
@@ -144,7 +144,7 @@ typedef struct {
 
 /* filelist structure. */
 typedef struct {
-	unsigned char	**mpq_files;		/* filelist. */
+	char		**mpq_files;		/* filelist. */
 } mpq_list;
 
 /* archive structure used since diablo 1.00 by blizzard. */
@@ -179,8 +179,8 @@ extern int libmpq__archive_info(mpq_archive *mpq_a, unsigned int infotype);
 
 /* generic file information. */
 extern int libmpq__file_info(mpq_archive *mpq_a, unsigned int infotype, const unsigned int number);
-extern unsigned char *libmpq__file_name(mpq_archive *mpq_a, const unsigned int number);
-extern int libmpq__file_number(mpq_archive *mpq_a, const unsigned char *name);
+extern char *libmpq__file_name(mpq_archive *mpq_a, const unsigned int number);
+extern int libmpq__file_number(mpq_archive *mpq_a, const char *name);
 extern int libmpq__file_extract(mpq_archive *mpq_a, const unsigned int number);
 
 #endif						/* _MPQ_H */
