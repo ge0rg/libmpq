@@ -2,7 +2,7 @@
  *  explode.h -- header file for pkware data decompression library
  *               used by mpq-tools.
  *
- *  Copyright (c) 2003-2007 Maik Broemme <mbroemme@plusserver.de>
+ *  Copyright (c) 2003-2008 Maik Broemme <mbroemme@plusserver.de>
  *
  *  This source was adepted from the C++ version of pklib.h included
  *  in stormlib. The C++ version belongs to the following authors:
@@ -64,7 +64,7 @@ typedef struct {
 	unsigned char	slen_bits[0x10];	/* 30F4 - numbers of bits for skip copied block length. */
 	unsigned char	clen_bits[0x10];	/* 3104 - number of valid bits for copied block. */
 	unsigned short	len_base[0x10];		/* 3114 - buffer. */
-} __attribute__ ((packed)) pkzip_data_cmp;
+} __attribute__ ((packed)) pkzip_cmp_s;
 
 /* data structure. */
 typedef struct {
@@ -74,14 +74,14 @@ typedef struct {
 	unsigned char	*out_buf;		/* pointer to output data buffer. */
 	unsigned int	out_pos;		/* position in the output buffer. */
 	int		max_out;		/* maximum number of bytes in the output buffer. */
-} pkzip_data;
+} pkzip_data_s;
 
 /*
  *  skips given number of bits in bit buffer, result is stored in mpq_pkzip->bit_buf
  *  and if no data in input buffer, returns zero.
  */
 int libmpq__pkzip_skip_bit(
-	pkzip_data_cmp	*mpq_pkzip,
+	pkzip_cmp_s	*mpq_pkzip,
 	unsigned int	bits
 );
 
@@ -95,7 +95,7 @@ void libmpq__pkzip_generate_tables_decode(
 
 /* generate tables for ascii decompression. */
 void libmpq__pkzip_generate_tables_ascii(
-	pkzip_data_cmp	*mpq_pkzip
+	pkzip_cmp_s	*mpq_pkzip
 );
 
 /*                      
@@ -106,12 +106,12 @@ void libmpq__pkzip_generate_tables_ascii(
  *           0x306         : out of buffer?
  */
 unsigned int libmpq__pkzip_decode_literal(
-	pkzip_data_cmp	*mpq_pkzip
+	pkzip_cmp_s	*mpq_pkzip
 );
 
 /* retrieves the number of bytes to move back. */
 unsigned int libmpq__pkzip_decode_distance(
-	pkzip_data_cmp	*mpq_pkzip,
+	pkzip_cmp_s	*mpq_pkzip,
 	unsigned int	length
 );
 
@@ -146,7 +146,7 @@ void libmpq__pkzip_data_write_output(
 
 /* extract data from input stream. */
 unsigned int libmpq__pkzip_expand(
-	pkzip_data_cmp	*mpq_pkzip
+	pkzip_cmp_s	*mpq_pkzip
 );
 
 /* decompress the stream using pkzip compression. */

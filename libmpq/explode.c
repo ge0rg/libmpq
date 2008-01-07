@@ -1,7 +1,7 @@
 /*
  *  explode.c -- explode function of pkware data compression library.
  *
- *  Copyright (c) 2003-2007 Maik Broemme <mbroemme@plusserver.de>
+ *  Copyright (c) 2003-2008 Maik Broemme <mbroemme@plusserver.de>
  *
  *  This source was adepted from the C++ version of pkware.cpp included
  *  in stormlib. The C++ version belongs to the following authors:
@@ -133,7 +133,7 @@ static char copyright[] = "PKWARE Data Compression Library for Win32\r\n"
 			    "Version 1.11\r\n";
 
 /* skips given number of bits. */
-int libmpq__pkzip_skip_bit(pkzip_data_cmp *mpq_pkzip, unsigned int bits) {
+int libmpq__pkzip_skip_bit(pkzip_cmp_s *mpq_pkzip, unsigned int bits) {
 
 	/* check if number of bits required is less than number of bits in the buffer. */
 	if (bits <= mpq_pkzip->extra_bits) {
@@ -183,7 +183,7 @@ void libmpq__pkzip_generate_tables_decode(int count, unsigned char *bits, unsign
 }
 
 /* this function generate the tables for ascii decompression. */
-void libmpq__pkzip_generate_tables_ascii(pkzip_data_cmp *mpq_pkzip) {
+void libmpq__pkzip_generate_tables_ascii(pkzip_cmp_s *mpq_pkzip) {
 
 	/* some common variables. */
 	unsigned short *code_asc = &pkzip_code_asc[0xFF];
@@ -247,7 +247,7 @@ void libmpq__pkzip_generate_tables_ascii(pkzip_data_cmp *mpq_pkzip) {
 }
 
 /* this function decompress the imploded data using coded literals. */
-unsigned int libmpq__pkzip_decode_literal(pkzip_data_cmp *mpq_pkzip) {
+unsigned int libmpq__pkzip_decode_literal(pkzip_cmp_s *mpq_pkzip) {
 
 	/* number of bits to skip. */
 	unsigned int bits;
@@ -358,7 +358,7 @@ unsigned int libmpq__pkzip_decode_literal(pkzip_data_cmp *mpq_pkzip) {
 }
 
 /* this function retrieves the number of bytes to move back. */
-unsigned int libmpq__pkzip_decode_distance(pkzip_data_cmp *mpq_pkzip, unsigned int length) {
+unsigned int libmpq__pkzip_decode_distance(pkzip_cmp_s *mpq_pkzip, unsigned int length) {
 
 	/* some common variables. */
 	unsigned int pos  = mpq_pkzip->pos1[(mpq_pkzip->bit_buf & 0xFF)];
@@ -396,7 +396,7 @@ unsigned int libmpq__pkzip_decode_distance(pkzip_data_cmp *mpq_pkzip, unsigned i
 unsigned int libmpq__pkzip_data_read_input(char *buf, unsigned int *size, void *param) {
 
 	/* some common variables. */
-	pkzip_data *info   = (pkzip_data *)param;
+	pkzip_data_s *info   = (pkzip_data_s *)param;
 	unsigned int max_avail = (info->in_bytes - info->in_pos);
 	unsigned int to_read   = *size;
 
@@ -417,7 +417,7 @@ unsigned int libmpq__pkzip_data_read_input(char *buf, unsigned int *size, void *
 void libmpq__pkzip_data_write_output(char *buf, unsigned int *size, void *param) {
 
 	/* some common variables. */
-	pkzip_data *info   = (pkzip_data *)param;
+	pkzip_data_s *info   = (pkzip_data_s *)param;
 	unsigned int max_write = (info->max_out - info->out_pos);
 	unsigned int to_write  = *size;
 
@@ -432,7 +432,7 @@ void libmpq__pkzip_data_write_output(char *buf, unsigned int *size, void *param)
 }
 
 /* this function extract the data from input stream. */
-unsigned int libmpq__pkzip_expand(pkzip_data_cmp *mpq_pkzip) {
+unsigned int libmpq__pkzip_expand(pkzip_cmp_s *mpq_pkzip) {
 
 	/* number of bytes to copy. */
 	unsigned int copy_bytes;
@@ -508,10 +508,10 @@ unsigned int libmpq__pkzip_expand(pkzip_data_cmp *mpq_pkzip) {
 unsigned int libmpq__do_decompress_pkzip(unsigned char *work_buf, void *param) {
 
 	/* some common variables. */
-	pkzip_data_cmp *mpq_pkzip = (pkzip_data_cmp *)work_buf;
+	pkzip_cmp_s *mpq_pkzip = (pkzip_cmp_s *)work_buf;
 
 	/* set the whole work buffer to zeros. */
-	memset(mpq_pkzip, 0, sizeof(pkzip_data_cmp));
+	memset(mpq_pkzip, 0, sizeof(pkzip_cmp_s));
 
 	/* initialize work struct and load compressed data. */
 	mpq_pkzip->read_buf   = libmpq__pkzip_data_read_input;

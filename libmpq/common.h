@@ -1,7 +1,7 @@
 /*
  *  common.h -- header functions used by mpq-tools.
  *
- *  Copyright (c) 2003-2007 Maik Broemme <mbroemme@plusserver.de>
+ *  Copyright (c) 2003-2008 Maik Broemme <mbroemme@plusserver.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 
 /* function to decrypt a mpq block. */
 int libmpq__decrypt_mpq_block(
-	mpq_archive	*mpq_a,
+	mpq_archive_s	*mpq_archive,
 	unsigned int	*block,
 	unsigned int	length,
 	unsigned int	seed1
@@ -31,42 +31,42 @@ int libmpq__decrypt_mpq_block(
 
 /* function to decrypt hash table of mpq archive. */
 int libmpq__decrypt_table_hash(
-	mpq_archive	*mpq_a,
+	mpq_archive_s	*mpq_archive,
 	unsigned char	*pbKey
 );
 
 /* function to decrypt hash table of mpq archive. */
 int libmpq__decrypt_table_block(
-	mpq_archive	*mpq_a,
+	mpq_archive_s	*mpq_archive,
 	unsigned char	*pbKey
 );
 
 /* function to detect decryption key. */
 int libmpq__decrypt_key(
-	mpq_archive	*mpq_a,
+	mpq_archive_s	*mpq_archive,
 	unsigned int	*block,
 	unsigned int	decrypted
 );
 
 /* function to initialize decryption buffer. */
 int libmpq__decrypt_buffer_init(
-	mpq_archive	*mpq_a
+	mpq_archive_s	*mpq_archive
 );
 
 /* function to read decrypted hash table. */
 int libmpq__read_table_hash(
-	mpq_archive	*mpq_a
+	mpq_archive_s	*mpq_archive
 );
 
 /* function to read decrypted hash table. */
 int libmpq__read_table_block(
-	mpq_archive	*mpq_a
+	mpq_archive_s	*mpq_archive
 );
 
 /* function to read decrypted block. */
 int libmpq__read_file_block(
-	mpq_archive	*mpq_a,
-	mpq_file	*mpq_f,
+	mpq_archive_s	*mpq_archive,
+	mpq_file_s	*mpq_file,
 	unsigned int	blockpos,
 	unsigned char	*buffer,
 	unsigned int	blockbytes
@@ -74,8 +74,8 @@ int libmpq__read_file_block(
 
 /* function to read file from mpq archive. */
 int libmpq__read_file_mpq(
-	mpq_archive	*mpq_a,
-	mpq_file	*mpq_f,
+	mpq_archive_s	*mpq_archive,
+	mpq_file_s	*mpq_file,
 	unsigned int	filepos,
 	unsigned char	*buffer,
 	unsigned int	toread

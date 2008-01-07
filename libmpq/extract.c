@@ -2,7 +2,7 @@
  *  extract.c -- global extracting function for all known file compressions
  *               in a mpq archive.
  *
- *  Copyright (c) 2003-2007 Maik Broemme <mbroemme@plusserver.de>
+ *  Copyright (c) 2003-2008 Maik Broemme <mbroemme@plusserver.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,29 +35,35 @@
 #include "huffman.h"
 #include "wave.h"
 
-/* this function decompress a stream using pkzip algorithm. */
-int libmpq__decompress_pkzip(unsigned char *out_buf, int *out_length, unsigned char *in_buf, int in_length) {
+/* this function decompress a stream using huffman algorithm. */
+int libmpq__decompress_huffman(unsigned char *out_buf, int *out_length, unsigned char *in_buf, int in_length) {
 
-	/* data information. */
-	pkzip_data info;
+	/* huffman tree information. */
+	struct huffman_tree_s *ht         = malloc(sizeof(struct huffman_tree_s));
+	struct huffman_input_stream_s *is = malloc(sizeof(struct huffman_input_stream_s));
+	struct huffman_tree_item_s *hi    = malloc(sizeof(struct huffman_tree_item_s));
 
-	/* work buffer. */
-	unsigned char *work_buf = malloc(sizeof(pkzip_data_cmp));
+	/* cleanup structures. */
+	memset(ht, 0, sizeof(struct huffman_tree_s));
+	memset(is, 0, sizeof(struct huffman_input_stream_s));
+	memset(hi, 0, sizeof(struct huffman_tree_item_s));
 
-	/* fill data information structure. */
-	info.in_buf   = in_buf;
-	info.in_pos   = 0;
-	info.in_bytes = in_length;
-	info.out_buf  = out_buf;
-	info.out_pos  = 0;
-	info.max_out  = *out_length;
+	/* initialize input stream. */
+	is->bit_buf  = *(unsigned int *)in_buf;
+	in_buf      += sizeof(int);
+	is->in_buf   = (unsigned char *)in_buf;
+	is->bits     = 32;
 
-	/* do the decompression. */
-	libmpq__do_decompress_pkzip(work_buf, &info);
-	*out_length = info.out_pos;
+	/* initialize the huffman tree for decompression. */
+	libmpq__huffman_tree_init(ht, hi, LIBMPQ_HUFF_DECOMPRESS);
+
+	/* save the number of copied bytes. */
+	*out_length = libmpq__do_decompress_huffman(ht, is, out_buf, *out_length);
 
 	/* free allocated memory. */
-	free(work_buf);
+	free(hi);
+	free(is);
+	free(ht);
 
 	/* if no error was found, return zero. */
 	return 0;
@@ -93,45 +99,39 @@ int libmpq__decompress_zlib(unsigned char *out_buf, int *out_length, unsigned ch
 	return result;
 }
 
-/* this function decompress a stream using huffman algorithm. */
-int libmpq__decompress_huffman(unsigned char *out_buf, int *out_length, unsigned char *in_buf, int in_length) {
+/* this function decompress a stream using pkzip algorithm. */
+int libmpq__decompress_pkzip(unsigned char *out_buf, int *out_length, unsigned char *in_buf, int in_length) {
 
-	/* huffman tree information. */
-	struct huffman_tree *ht         = malloc(sizeof(struct huffman_tree));
-	struct huffman_input_stream *is = malloc(sizeof(struct huffman_input_stream));
-	struct huffman_tree_item *hi    = malloc(sizeof(struct huffman_tree_item));
+	/* data information. */
+	pkzip_data_s info;
 
-	/* cleanup structures. */
-	memset(ht, 0, sizeof(struct huffman_tree));
-	memset(is, 0, sizeof(struct huffman_input_stream));
-	memset(hi, 0, sizeof(struct huffman_tree_item));
+	/* work buffer. */
+	unsigned char *work_buf = malloc(sizeof(pkzip_cmp_s));
 
-	/* initialize input stream. */
-	is->bit_buf  = *(unsigned int *)in_buf;
-	in_buf      += sizeof(int);
-	is->in_buf   = (unsigned char *)in_buf;
-	is->bits     = 32;
+	/* fill data information structure. */
+	info.in_buf   = in_buf;
+	info.in_pos   = 0;
+	info.in_bytes = in_length;
+	info.out_buf  = out_buf;
+	info.out_pos  = 0;
+	info.max_out  = *out_length;
 
-	/* initialize the huffman tree for decompression. */
-	libmpq__huffman_tree_init(ht, hi, LIBMPQ_HUFF_DECOMPRESS);
-
-	/* save the number of copied bytes. */
-	*out_length = libmpq__do_decompress_huffman(ht, is, out_buf, *out_length);
+	/* do the decompression. */
+	libmpq__do_decompress_pkzip(work_buf, &info);
+	*out_length = info.out_pos;
 
 	/* free allocated memory. */
-	free(hi);
-	free(is);
-	free(ht);
+	free(work_buf);
 
 	/* if no error was found, return zero. */
 	return 0;
 }
 
-/* this function decompress a stream using wave algorithm. (2 channels) */
-int libmpq__decompress_wave_stereo(unsigned char *out_buf, int *out_length, unsigned char *in_buf, int in_length) {
+/* this function decompress a stream using bzip2 library. */
+int libmpq__decompress_bzip2(unsigned char *out_buf, int *out_length, unsigned char *in_buf, int in_length) {
 
-	/* save the number of copied bytes. */
-	*out_length = libmpq__do_decompress_wave(out_buf, *out_length, in_buf, in_length, 2);
+	/* TODO: add bzip2 decompression here. */
+	printf("TODO: bzip2 library.\n");
 
 	/* if no error was found, return zero. */
 	return 0;
@@ -142,6 +142,16 @@ int libmpq__decompress_wave_mono(unsigned char *out_buf, int *out_length, unsign
 
 	/* save the number of copied bytes. */
 	*out_length = libmpq__do_decompress_wave(out_buf, *out_length, in_buf, in_length, 1);
+
+	/* if no error was found, return zero. */
+	return 0;
+}
+
+/* this function decompress a stream using wave algorithm. (2 channels) */
+int libmpq__decompress_wave_stereo(unsigned char *out_buf, int *out_length, unsigned char *in_buf, int in_length) {
+
+	/* save the number of copied bytes. */
+	*out_length = libmpq__do_decompress_wave(out_buf, *out_length, in_buf, in_length, 2);
 
 	/* if no error was found, return zero. */
 	return 0;
@@ -160,8 +170,8 @@ int libmpq__decompress_multi(unsigned char *out_buf, int *pout_length, unsigned 
 	int out_length = *pout_length;
 
 	/* counter for every use. */
-	unsigned int count     = 0;
-	unsigned int entries   = (sizeof(dcmp_table) / sizeof(decompress_table));
+	unsigned int count   = 0;
+	unsigned int entries = (sizeof(dcmp_table) / sizeof(decompress_table_s));
 
 	/* decompressions applied to the block. */
 	unsigned char fDecompressions1;
@@ -204,7 +214,7 @@ int libmpq__decompress_multi(unsigned char *out_buf, int *pout_length, unsigned 
 	/* check if there is some method unhandled. (e.g. compressed by future versions) */
 	if (fDecompressions2 != 0) {
 		/* TODO: Add an error handler here. */
-//		printf("Unknown Compression\n");
+		/* printf("Unknown Compression\n"); */
 		return 1;
 	}
 

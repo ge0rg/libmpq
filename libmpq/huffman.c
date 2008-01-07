@@ -2,7 +2,7 @@
  *  huffman.c -- functions do decompress files in mpq files which
  *               uses a modified huffman version.
  *
- *  Copyright (c) 2003-2007 Maik Broemme <mbroemme@plusserver.de>
+ *  Copyright (c) 2003-2008 Maik Broemme <mbroemme@plusserver.de>
  *
  *  Differences between C++ and C version:
  *
@@ -216,16 +216,16 @@ static unsigned char table_1502A630[] = {
 };
 
 /* this function insert an item to a huffman tree. */
-void libmpq__huffman_insert_item(struct huffman_tree_item **p_item, struct huffman_tree_item *item, unsigned int where, struct huffman_tree_item *item2) {
+void libmpq__huffman_insert_item(struct huffman_tree_item_s **p_item, struct huffman_tree_item_s *item, unsigned int where, struct huffman_tree_item_s *item2) {
 
 	/* EDI - next to the first item. */
-	struct huffman_tree_item *next = item->next;
+	struct huffman_tree_item_s *next = item->next;
 
 	/* ESI - prev to the first item. */
-	struct huffman_tree_item *prev = item->prev;
+	struct huffman_tree_item_s *prev = item->prev;
 
 	/* pointer to previous item. */
-	struct huffman_tree_item *prev2;
+	struct huffman_tree_item_s *prev2;
 
 	/* pointer to next item. */
 	long next2;
@@ -326,10 +326,10 @@ void libmpq__huffman_insert_item(struct huffman_tree_item **p_item, struct huffm
 }
 
 /* 1500BC90 - remove item from huffman tree.*/
-void libmpq__huffman_remove_item(struct huffman_tree_item *hi) {
+void libmpq__huffman_remove_item(struct huffman_tree_item_s *hi) {
 
 	/* EDX - some common variables. */
-	struct huffman_tree_item *temp;
+	struct huffman_tree_item_s *temp;
 
 	/* check if next item is not empty. */
 	if (hi->next != NULL) {
@@ -352,7 +352,7 @@ void libmpq__huffman_remove_item(struct huffman_tree_item *hi) {
 }
 
 /* get previous huffman tree item. */
-struct huffman_tree_item *libmpq__huffman_previous_item(struct huffman_tree_item *hi, long value) {
+struct huffman_tree_item_s *libmpq__huffman_previous_item(struct huffman_tree_item_s *hi, long value) {
 
 	/* check if previous item exist. */
 	if (PTR_INT(hi->prev) < 0) {
@@ -373,7 +373,7 @@ struct huffman_tree_item *libmpq__huffman_previous_item(struct huffman_tree_item
 }
 
 /* get one bit from input stream. */
-unsigned int libmpq__huffman_get_1bit(struct huffman_input_stream *is) {
+unsigned int libmpq__huffman_get_1bit(struct huffman_input_stream_s *is) {
 
 	/* some common variables. */
 	unsigned int bit = (is->bit_buf & 1);
@@ -393,7 +393,7 @@ unsigned int libmpq__huffman_get_1bit(struct huffman_input_stream *is) {
 }
 
 /* get 7 bits from the input stream. */
-unsigned int libmpq__huffman_get_7bit(struct huffman_input_stream *is) {
+unsigned int libmpq__huffman_get_7bit(struct huffman_input_stream_s *is) {
 
 	/* check if we should extract bits. */
 	if (is->bits <= 7) {
@@ -407,7 +407,7 @@ unsigned int libmpq__huffman_get_7bit(struct huffman_input_stream *is) {
 }
 
 /* get the whole byte from the input stream. */
-unsigned int libmpq__huffman_get_8bit(struct huffman_input_stream *is) {
+unsigned int libmpq__huffman_get_8bit(struct huffman_input_stream_s *is) {
 
 	/* some common variables. */
 	unsigned int one_byte;
@@ -429,18 +429,18 @@ unsigned int libmpq__huffman_get_8bit(struct huffman_input_stream *is) {
 }
 
 /* return struct for 1500E740. */
-struct huffman_tree_item *libmpq__huffman_call_1500E740(struct huffman_tree *ht) {
+struct huffman_tree_item_s *libmpq__huffman_call_1500E740(struct huffman_tree_s *ht) {
 
 	/* EDX */
-	struct huffman_tree_item *p_item1 = ht->item3058;
+	struct huffman_tree_item_s *p_item1 = ht->item3058;
 
 	/* EAX */
-	struct huffman_tree_item *p_item2;
+	struct huffman_tree_item_s *p_item2;
 
 	/* some common variables. */
-	struct huffman_tree_item *p_next;
-	struct huffman_tree_item *p_prev;
-	struct huffman_tree_item **pp_item;
+	struct huffman_tree_item_s *p_next;
+	struct huffman_tree_item_s *p_prev;
+	struct huffman_tree_item_s **pp_item;
 
 	/* check if item is empty. */
 	if (PTR_INT(p_item1) <= 0 || (p_item2 = p_item1) == NULL) {
@@ -480,7 +480,7 @@ struct huffman_tree_item *libmpq__huffman_call_1500E740(struct huffman_tree *ht)
 
 	/* ESI */
 	pp_item       = &ht->first;
-	p_item1->next = (struct huffman_tree_item *)pp_item;
+	p_item1->next = (struct huffman_tree_item_s *)pp_item;
 	p_item1->prev = pp_item[1];
 
 	/* EDI = ht->item305C - ECX */
@@ -499,7 +499,7 @@ struct huffman_tree_item *libmpq__huffman_call_1500E740(struct huffman_tree *ht)
 
 		/* check if pointer is valid. */
 		if (PTR_INT(ht->item305C) < 0) {
-			p_prev += (struct huffman_tree_item *)pp_item - (*pp_item)->prev;
+			p_prev += (struct huffman_tree_item_s *)pp_item - (*pp_item)->prev;
 		} else {
 			p_prev += PTR_INT(ht->item305C);
 		}
@@ -516,19 +516,19 @@ struct huffman_tree_item *libmpq__huffman_call_1500E740(struct huffman_tree *ht)
 }
 
 /* return struct for 1500E820. */
-void libmpq__huffman_call_1500E820(struct huffman_tree *ht, struct huffman_tree_item *p_item) {
+void libmpq__huffman_call_1500E820(struct huffman_tree_s *ht, struct huffman_tree_item_s *p_item) {
 
 	/* EDI */
-	struct huffman_tree_item *p_item1;
+	struct huffman_tree_item_s *p_item1;
 
 	/* EAX */
-	struct huffman_tree_item *p_item2 = NULL;
+	struct huffman_tree_item_s *p_item2 = NULL;
 
 	/* EDX */
-	struct huffman_tree_item *p_item3;
+	struct huffman_tree_item_s *p_item3;
 
 	/* EBX */
-	struct huffman_tree_item *p_prev;
+	struct huffman_tree_item_s *p_prev;
 
 	/* loop through parent items. */
 	for (; p_item != NULL; p_item = p_item->parent) {
@@ -623,7 +623,7 @@ void libmpq__huffman_call_1500E820(struct huffman_tree *ht, struct huffman_tree_
 }
 
 /* this function initialize a huffman tree. */
-void libmpq__huffman_tree_init(struct huffman_tree *ht, struct huffman_tree_item *hi, unsigned int cmp) {
+void libmpq__huffman_tree_init(struct huffman_tree_s *ht, struct huffman_tree_item_s *hi, unsigned int cmp) {
 
 	/* some common variables. */
 	unsigned int count;
@@ -645,14 +645,14 @@ void libmpq__huffman_tree_init(struct huffman_tree *ht, struct huffman_tree_item
 
 	/* clear all huffman decompress items, do this only if preparing for decompression. */
 	if (cmp == LIBMPQ_HUFF_DECOMPRESS) {
-		for (count = 0; count < sizeof(ht->qd3474) / sizeof(struct huffman_decompress); count++) {
+		for (count = 0; count < sizeof(ht->qd3474) / sizeof(struct huffman_decompress_s); count++) {
 			ht->qd3474[count].offs00 = 0;
 		}
 	}
 }
 
 /* this function build a huffman tree, called with the first 8 bits loaded from input stream. */
-void libmpq__huffman_tree_build(struct huffman_tree *ht, unsigned int cmp_type) {
+void libmpq__huffman_tree_build(struct huffman_tree_s *ht, unsigned int cmp_type) {
 
 	/* [ESP+10] - the greatest character found in table. */
 	unsigned int max_byte;
@@ -664,8 +664,8 @@ void libmpq__huffman_tree_build(struct huffman_tree *ht, unsigned int cmp_type) 
 	unsigned int found;
 
 	/* [ESP+14] - Pointer to Huffman tree item pointer array. */
-	struct huffman_tree_item **p_item;
-	struct huffman_tree_item *child1;
+	struct huffman_tree_item_s **p_item;
+	struct huffman_tree_item_s *child1;
 
 	/* some common variables. */
 	unsigned int i;
@@ -674,7 +674,7 @@ void libmpq__huffman_tree_build(struct huffman_tree *ht, unsigned int cmp_type) 
 	while (PTR_INT(ht->last) > 0) {
 
 		/* EAX */
-		struct huffman_tree_item *temp;
+		struct huffman_tree_item_s *temp;
 
 		/* ESI->next */
 		if (ht->last->next != NULL) {
@@ -698,7 +698,7 @@ void libmpq__huffman_tree_build(struct huffman_tree *ht, unsigned int cmp_type) 
 	max_byte    = 0;
 
 	/* pointer to current entry in huffman tree item pointer array. */
-	p_item      = (struct huffman_tree_item **)&ht->items306C;
+	p_item      = (struct huffman_tree_item_s **)&ht->items306C;
 
 	/* ensure we have low 8 bits only. */
 	cmp_type   &= 0xFF;
@@ -710,8 +710,8 @@ void libmpq__huffman_tree_build(struct huffman_tree *ht, unsigned int cmp_type) 
 	for (i = 0; i < 0x100; i++, p_item++) {
 
 		/* item to be created. */
-		struct huffman_tree_item *item    = ht->item3058;
-		struct huffman_tree_item *p_item3 = ht->item3058;
+		struct huffman_tree_item_s *item    = ht->item3058;
+		struct huffman_tree_item_s *p_item3 = ht->item3058;
 		unsigned char one_byte                  = byte_array[i];
 
 		/* skip all the bytes which are zero. */
@@ -800,10 +800,10 @@ void libmpq__huffman_tree_build(struct huffman_tree *ht, unsigned int cmp_type) 
 	for (; i < 0x102; i++) {
 
 		/* EDI */
-		struct huffman_tree_item **p_item2 = &ht->items306C[i];
+		struct huffman_tree_item_s **p_item2 = &ht->items306C[i];
 
 		/* 15006B59 - ESI */
-		struct huffman_tree_item *item2 = ht->item3058;
+		struct huffman_tree_item_s *item2 = ht->item3058;
 
 		/* check if item is a valid pointer. */
 		if (PTR_INT(item2) <= 0) {
@@ -825,10 +825,10 @@ void libmpq__huffman_tree_build(struct huffman_tree *ht, unsigned int cmp_type) 
 	if (PTR_INT((child1 = ht->last)) > 0) {
 
 		/* EBP */
-		struct huffman_tree_item *child2;
+		struct huffman_tree_item_s *child2;
 
 		/* ESI */
-		struct huffman_tree_item *item;
+		struct huffman_tree_item_s *item;
 
 		/* 15006BB8 */
 		while (PTR_INT((child2 = child1->prev)) > 0) {
@@ -862,7 +862,7 @@ void libmpq__huffman_tree_build(struct huffman_tree *ht, unsigned int cmp_type) 
 			} else {
 
 				/* EDI */
-				struct huffman_tree_item *p_item2 = child2->prev;
+				struct huffman_tree_item_s *p_item2 = child2->prev;
 				found = 0;
 
 				/* check if item is a valid pointer. */
@@ -891,7 +891,7 @@ void libmpq__huffman_tree_build(struct huffman_tree *ht, unsigned int cmp_type) 
 				if (item->next != 0) {
 
 					/* some common variables. */
-					struct huffman_tree_item *temp4 = libmpq__huffman_previous_item(item, -1);
+					struct huffman_tree_item_s *temp4 = libmpq__huffman_previous_item(item, -1);
 
 					/* zhe first item changed. */
 					temp4->next                     = item->next;
@@ -930,15 +930,15 @@ void libmpq__huffman_tree_build(struct huffman_tree *ht, unsigned int cmp_type) 
 }
 
 /* this function did the real decompression. */
-int libmpq__do_decompress_huffman(struct huffman_tree *ht, struct huffman_input_stream *is, unsigned char *out_buf, unsigned int out_length) {
+int libmpq__do_decompress_huffman(struct huffman_tree_s *ht, struct huffman_input_stream_s *is, unsigned char *out_buf, unsigned int out_length) {
 
 	/* some common variables. */
 	unsigned int dcmp_byte = 0;
-	unsigned int bit_count;
-	struct huffman_decompress *qd;
-	struct huffman_tree_item *p_item1;
-	struct huffman_tree_item *p_item2;
 	unsigned char *out_pos = out_buf;
+	unsigned int bit_count;
+	struct huffman_decompress_s *qd;
+	struct huffman_tree_item_s *p_item1;
+	struct huffman_tree_item_s *p_item2;
 
 	/* 8 bits loaded from input stream. */
 	unsigned int n8bits;
