@@ -1,7 +1,7 @@
 /*
  *  extract.h -- header for the extraction functions used by mpq-tools.
  *
- *  Copyright (c) 2003-2007 Maik Broemme <mbroemme@plusserver.de>
+ *  Copyright (c) 2003-2008 Maik Broemme <mbroemme@plusserver.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,28 +21,20 @@
 #ifndef _EXTRACT_H
 #define _EXTRACT_H
 
+/* define compression types for multilpe compressions. */
+#define LIBMPQ_COMPRESSION_HUFFMANN		0x01		/* huffmann compression. (used on wave files only and introduced in starcraft) */
+#define LIBMPQ_COMPRESSION_ZLIB			0x02		/* zlib compression. (introduced in warcraft 3)*/
+#define LIBMPQ_COMPRESSION_PKWARE		0x08		/* pkware dcl compression. (first used compression algorithm) */
+#define LIBMPQ_COMPRESSION_BZIP2		0x10		/* bzip compression. (introduced in warcraft 3 - the frozen throne) */
+#define LIBMPQ_COMPRESSION_WAVE_MONO		0x40		/* adpcm 4:1 compression. (introduced in starcraft) */
+#define LIBMPQ_COMPRESSION_WAVE_STEREO		0x80		/* adpcm 4:1 compression. (introduced in starcraft) */
+
 /* table for decompression functions. */
 typedef int		(*DECOMPRESS)(unsigned char *, int *, unsigned char *, int);
 typedef struct {
 	unsigned int	mask;			/* decompression bit. */
 	DECOMPRESS	decompress;		/* decompression function. */
-} decompress_table;
-
-/* decompression using pkzip. */
-extern int libmpq__decompress_pkzip(
-	unsigned char	*out_buf,
-	int		*out_length,
-	unsigned char	*in_buf,
-	int		in_length
-);
-
-/* decompression using zlib. */
-extern int libmpq__decompress_zlib(
-	unsigned char	*out_buf,
-	int		*out_length,
-	unsigned char	*in_buf,
-	int		in_length
-);
+} decompress_table_s;
 
 /*
  *  huffmann decompression routine, the in_length parameter is not used,
@@ -57,8 +49,24 @@ extern int libmpq__decompress_huffman(
 	int		in_length
 );
 
-/* decompression using wave. (2 channels) */
-extern int libmpq__decompress_wave_stereo(
+/* decompression using zlib. */
+extern int libmpq__decompress_zlib(
+	unsigned char	*out_buf,
+	int		*out_length,
+	unsigned char	*in_buf,
+	int		in_length
+);
+
+/* decompression using pkzip. */
+extern int libmpq__decompress_pkzip(
+	unsigned char	*out_buf,
+	int		*out_length,
+	unsigned char	*in_buf,
+	int		in_length
+);
+
+/* decompression using bzip2. */
+extern int libmpq__decompress_bzip2(
 	unsigned char	*out_buf,
 	int		*out_length,
 	unsigned char	*in_buf,
@@ -67,6 +75,14 @@ extern int libmpq__decompress_wave_stereo(
 
 /* decompression using wave. (1 channel) */
 extern int libmpq__decompress_wave_mono(
+	unsigned char	*out_buf,
+	int		*out_length,
+	unsigned char	*in_buf,
+	int		in_length
+);
+
+/* decompression using wave. (2 channels) */
+extern int libmpq__decompress_wave_stereo(
 	unsigned char	*out_buf,
 	int		*out_length,
 	unsigned char	*in_buf,
@@ -82,12 +98,13 @@ extern int libmpq__decompress_multi(
 );
 
 /* table with decompression bits and functions. */
-static decompress_table dcmp_table[] = {
-	{0x08, libmpq__decompress_pkzip},	/* decompression with pkware data compression library. */
+static decompress_table_s dcmp_table[] = {
+	{0x01, libmpq__decompress_huffman},	/* decompression using huffman trees. */
 	{0x02, libmpq__decompress_zlib},	/* decompression with the zlib library. */
-	{0x01, libmpq__decompress_huffman},	/* huffmann decompression. */
-	{0x80, libmpq__decompress_wave_stereo},	/* wave decompression for stereo waves. */
-	{0x40, libmpq__decompress_wave_mono}	/* wave decompression for mono waves. */
+	{0x08, libmpq__decompress_pkzip},	/* decompression with pkware data compression library. */
+	{0x10, libmpq__decompress_bzip2},	/* decompression with bzip2 library. */
+	{0x40, libmpq__decompress_wave_mono},	/* decompression for mono waves. */
+	{0x80, libmpq__decompress_wave_stereo}	/* decompression for stereo waves. */
 };
 
 #endif						/* _EXTRACT_H */

@@ -1,7 +1,7 @@
 /*
  *  mpq.h -- some default types and defines.
  *
- *  Copyright (c) 2003-2007 Maik Broemme <mbroemme@plusserver.de>
+ *  Copyright (c) 2003-2008 Maik Broemme <mbroemme@plusserver.de>
  *
  *  This source was adepted from the C++ version of StormLib.h and
  *  StormPort.h included in stormlib. The C++ version belongs to
@@ -30,6 +30,7 @@
 
 /* generic includes. */
 #include <limits.h>
+#include <sys/types.h>
 
 /* define return value if nothing failed. */
 #define LIBMPQ_SUCCESS				0		/* return value for all functions which success. */
@@ -52,9 +53,12 @@
 
 /* define generic mpq archive information. */
 #define LIBMPQ_MPQ_HEADER_ID			0x1A51504D	/* mpq archive header ('MPQ\x1A') */
-#define LIBMPQ_MPQ_HEADER_W3M			0x6D9E4B86	/* special value used by w3m map protector. */
-#define LIBMPQ_MPQ_FLAG_PROTECTED		0x00000002	/* required for protected mpq archives, like w3m maps. */
+//#define LIBMPQ_MPQ_HEADER_W3M			0x6D9E4B86	/* special value used by w3m map protector. */
+//#define LIBMPQ_MPQ_FLAG_PROTECTED		0x00000002	/* required for protected mpq archives, like w3m maps. */
 #define LIBMPQ_MPQ_HASH_DELETED			0xFFFFFFFE	/* block index for deleted hash entry. */
+
+#define LIBMPQ_ARCHIVE_VERSION_ONE		0
+#define LIBMPQ_ARCHIVE_VERSION_TWO		1
 
 /* define generic values for returning archive information. */
 #define LIBMPQ_ARCHIVE_SIZE			1		/* mpq archive size. */
@@ -96,33 +100,33 @@ typedef unsigned int	mpq_buffer[0x500];
 
 /* mpq archive header. */
 typedef struct {
-	unsigned int	id;			/* the 0x1A51504D ('MPQ\x1A') signature. */
-	unsigned int	offset;			/* offset of the first file (relative to mpq start). */
-	unsigned int	archivesize;		/* size of mpq archive. */
-	unsigned short	offsetsc;		/* 0000 for starcraft and broodwar. */
-	unsigned short	blocksize;		/* size of file block is (0x200 << blocksize). */
-	unsigned int	hashtablepos;		/* file position of mpq_hash. */
-	unsigned int	blocktablepos;		/* file position of mpq_block, each entry has 16 bytes. */
-	unsigned int	hashtablesize;		/* number of entries in hash table. */
-	unsigned int	blocktablesize;		/* number of entries in the block table. */
-} __attribute__ ((packed)) mpq_header;
-
+	unsigned int	mpq_magic;		/* the 0x1A51504D ('MPQ\x1A') signature. */
+	unsigned int	header_size;		/* mpq archive header size. */
+	unsigned int	archive_size;		/* size of mpq archive. */
+	unsigned short	version;		/* 0000 for starcraft and broodwar. */
+	unsigned short	sector_size_shift;	/* size of file block is (0x200 << blocksize). */
+	unsigned int	hash_table_offset;	/* file position of mpq_hash. */
+	unsigned int	block_table_offset;	/* file position of mpq_block, each entry has 16 bytes. */
+	unsigned int	hash_table_length;	/* number of entries in hash table. */
+	unsigned int	block_table_length;	/* number of entries in the block table. */
+} __attribute__ ((packed)) mpq_header_s;
 
 /* hash entry, all files in the archive are searched by their hashes. */
 typedef struct {
-	unsigned int	name1;			/* the first two unsigned ints are the encrypted file. */
-	unsigned int	name2;			/* the first two unsigned ints are the encrypted file. */
-	unsigned int	locale;			/* locale information. */
-	unsigned int	blockindex;		/* index to file description block. */
-} mpq_hash;
+	unsigned int	hash_a;			/* the first two unsigned ints are the encrypted file. */
+	unsigned int	hash_b;			/* the first two unsigned ints are the encrypted file. */
+	unsigned short	locale;			/* locale information. */
+	unsigned short	platform;		/* platform information and zero is default. */
+	unsigned int	block_table_index;	/* index to file description block. */
+} __attribute__ ((packed)) mpq_hash_s;
 
 /* file description block contains informations about the file. */
 typedef struct {
-	unsigned int	filepos;		/* block file starting position in the archive. */
-	unsigned int	csize;			/* compressed file size. */
-	unsigned int	fsize;			/* uncompressed file size. */
+	unsigned int	offset;			/* block file starting position in the archive. */
+	unsigned int	archived_size;		/* compressed file size. */
+	unsigned int	size;			/* uncompressed file size. */
 	unsigned int	flags;			/* flags. */
-} mpq_block;
+} __attribute__ ((packed)) mpq_block_s;
 
 /* file structure used since diablo 1.00 (0x38 bytes). */
 typedef struct {
@@ -135,17 +139,17 @@ typedef struct {
 	unsigned int	*blockpos;		/* position of each file block (only for compressed files). */
 	int		blockposloaded;		/* true if block positions loaded. */
 	unsigned int	offset2;		/* number of bytes somewhere? */
-	mpq_hash	*mpq_h;			/* hash table entry. */
-	mpq_block	*mpq_b;			/* file block pointer. */
+	mpq_hash_s	*mpq_hash;		/* hash table entry. */
+	mpq_block_s	*mpq_block;		/* file block pointer. */
 
 	/* non file structure related members. */
 	unsigned int	accessed;		/* was something from the file already read? */
-} mpq_file;
+} mpq_file_s;
 
 /* filelist structure. */
 typedef struct {
 	char		**mpq_files;		/* filelist. */
-} mpq_list;
+} mpq_list_s;
 
 /* archive structure used since diablo 1.00 by blizzard. */
 typedef struct {
@@ -159,28 +163,28 @@ typedef struct {
 	unsigned int	filepos;		/* current file pointer. */
 	unsigned int	openfiles;		/* number of open files + 1. */
 	mpq_buffer	buf;			/* mpq buffer. */
-	mpq_header	*header;		/* mpq file header. */
-	mpq_hash	*hashtable;		/* hash table. */
-	mpq_block	*blocktable;		/* block table. */
+	mpq_header_s	*mpq_header;		/* mpq file header. */
+	mpq_hash_s	*mpq_hash;		/* hash table. */
+	mpq_block_s	*mpq_block;		/* block table. */
 
 	/* non archive structure related members. */
-	mpq_list	*mpq_l;			/* handle to filelist (in most cases this is the last file in the archive). */
+	mpq_list_s	*mpq_list;		/* handle to filelist (in most cases this is the last file in the archive). */
 	unsigned int	flags;			/* see LIBMPQ_MPQ_FLAG_XXX for more details. */
 	unsigned int	maxblockindex;		/* the highest block table entry. */
-} mpq_archive;
+} mpq_archive_s;
 
 /* generic information about library. */
 extern unsigned char *libmpq__version();
 
 /* generic mpq archive information. */
-extern int libmpq__archive_open(mpq_archive *mpq_a, const char *mpq_filename);
-extern int libmpq__archive_close(mpq_archive *mpq_a);
-extern int libmpq__archive_info(mpq_archive *mpq_a, unsigned int infotype);
+extern int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename);
+extern int libmpq__archive_close(mpq_archive_s *mpq_archive);
+extern int libmpq__archive_info(mpq_archive_s *mpq_archive, unsigned int infotype);
 
 /* generic file information. */
-extern int libmpq__file_info(mpq_archive *mpq_a, unsigned int infotype, const unsigned int number);
-extern char *libmpq__file_name(mpq_archive *mpq_a, const unsigned int number);
-extern int libmpq__file_number(mpq_archive *mpq_a, const char *name);
-extern int libmpq__file_extract(mpq_archive *mpq_a, const unsigned int number);
+extern int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int infotype, const unsigned int number);
+extern char *libmpq__file_name(mpq_archive_s *mpq_archive, const unsigned int number);
+extern int libmpq__file_number(mpq_archive_s *mpq_archive, const char *name);
+extern int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number);
 
 #endif						/* _MPQ_H */
