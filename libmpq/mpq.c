@@ -204,15 +204,19 @@ int libmpq__archive_close(mpq_archive_s *mpq_archive) {
 	/* some common variables. */
 	unsigned int i;
 
-	/* free the filelist. */
-	for (i = 0; i < mpq_archive->mpq_header->block_table_length; i++) {
+	/* check if filelist was created. */
+	if (mpq_archive->mpq_list->mpq_files != NULL) {
 
-		/* free the filelist element. */
-		free(mpq_archive->mpq_list->mpq_files[i]);
+		/* free the filelist. */
+		for (i = 0; i < mpq_archive->mpq_header->block_table_length; i++) {
+
+			/* free the filelist element. */
+			free(mpq_archive->mpq_list->mpq_files[i]);
+		}
+
+		/* free the filelist pointer. */
+		free(mpq_archive->mpq_list->mpq_files);
 	}
-
-	/* free the filelist pointer. */
-	free(mpq_archive->mpq_list->mpq_files);
 
 	/* cleanup. */
 	memset(mpq_archive->buf, 0, sizeof(mpq_archive->buf));
