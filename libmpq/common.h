@@ -81,4 +81,9 @@ int libmpq__read_file_mpq(
 	unsigned int	toread
 );
 
+/* function to read listfile from mpq archive. */
+int libmpq__read_file_list(
+	mpq_archive_s	*mpq_archive
+);
+
 #endif						/* _COMMON_H */

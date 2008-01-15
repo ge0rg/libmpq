@@ -633,3 +633,144 @@ int libmpq__read_file_mpq(mpq_archive_s *mpq_archive, mpq_file_s *mpq_file, unsi
 	/* return the copied bytes. */
 	return bytesread;
 }
+
+/* function to read listfile from mpq archive. */
+int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
+
+	/* TODO: include the cool filelist from last file in mpq archive here. */
+	/* some common variables. */
+	unsigned int count = 0;
+	unsigned int i;
+	int tempsize;
+	char tempfile[PATH_MAX];
+	char **file_names;
+	unsigned int *block_table_index;
+
+	/* allocate memory for the mpq file list. */
+	if ((mpq_archive->mpq_list = malloc(sizeof(mpq_list_s))) == NULL) {
+
+		/* memory allocation problem. */
+		return LIBMPQ_ARCHIVE_ERROR_MALLOC;
+	}
+
+	/* cleanup. */
+	memset(mpq_archive->mpq_list, 0, sizeof(mpq_list_s));
+
+	/* allocate memory for the file names. */
+	file_names = malloc(mpq_archive->mpq_header->block_table_length * sizeof(char *));
+	block_table_index = malloc(mpq_archive->mpq_header->block_table_length * sizeof(unsigned int));
+
+	/* check if memory allocation was successful. */
+	if (!file_names || !block_table_index) {
+
+		/* memory allocation problem. */
+		return LIBMPQ_ARCHIVE_ERROR_MALLOC;
+	}
+
+	/* cleanup. */
+	memset(file_names, 0, mpq_archive->mpq_header->block_table_length * sizeof(char *));
+	memset(block_table_index, 0, mpq_archive->mpq_header->block_table_length * sizeof(unsigned int));
+
+	/* loop through all files in mpq archive. */
+	for (i = 0; i < mpq_archive->mpq_header->hash_table_length; i++) {
+
+		/* check if hashtable is valid for this file. */
+		if (mpq_archive->mpq_hash[i].block_table_index == LIBMPQ_MPQ_HASH_FREE) {
+
+			/* continue because this is an empty hash entry. */
+			continue;
+		}
+
+		/* check if blocksize is zero. */
+		if (mpq_archive->mpq_block[mpq_archive->mpq_hash[i].block_table_index].size == 0) {
+
+			/* nothing to do with that block. */
+			continue;
+		}
+
+		/* create proper formatted filename. */
+		tempsize = snprintf(tempfile, PATH_MAX, "file%06i.xxx", mpq_archive->mpq_hash[i].block_table_index + 1);
+
+		/* allocate memory for the filelist element. */
+		file_names[mpq_archive->mpq_hash[i].block_table_index] = malloc(tempsize);
+
+		/* check if memory allocation was successful. */
+		if (!file_names[mpq_archive->mpq_hash[i].block_table_index]) {
+
+			/* memory allocation problem. */
+			return LIBMPQ_ARCHIVE_ERROR_MALLOC;
+		}
+
+		/* cleanup. */
+		memset(file_names[mpq_archive->mpq_hash[i].block_table_index], 0, tempsize);
+
+		/* create the filename. */
+		file_names[mpq_archive->mpq_hash[i].block_table_index] = memcpy(file_names[mpq_archive->mpq_hash[i].block_table_index], tempfile, tempsize);
+		block_table_index[mpq_archive->mpq_hash[i].block_table_index] = mpq_archive->mpq_hash[i].block_table_index;
+
+		/* increase file counter. */
+		count++;
+	}
+
+	/* save the number of files. */
+	mpq_archive->num_files = count;
+
+	/* allocate memory for the file names. */
+	mpq_archive->mpq_list->file_names = malloc(count * sizeof(char *));
+	mpq_archive->mpq_list->block_table_index = malloc(count * sizeof(unsigned int));
+
+	/* check if memory allocation was successful. */
+	if (!mpq_archive->mpq_list->file_names || !mpq_archive->mpq_list->block_table_index) {
+
+		/* memory allocation problem. */
+		return LIBMPQ_ARCHIVE_ERROR_MALLOC;
+	}
+
+	/* cleanup. */
+	memset(mpq_archive->mpq_list->file_names, 0, count * sizeof(char *));
+	memset(mpq_archive->mpq_list->block_table_index, 0, count * sizeof(unsigned int));
+
+	/* reset the counter and use it again. */
+	count = 0;
+
+	/* loop through all files a second time and rebuild indexes for unused blocks (first seen in warcraft 3 - the frozen throne). */
+	for (i = 0; i < mpq_archive->mpq_header->block_table_length; i++) {
+
+		if (file_names[i] != NULL) {
+
+			/* allocate memory for the filelist element. */
+			mpq_archive->mpq_list->file_names[count] = malloc(strlen(file_names[i]));
+
+			/* check if memory allocation was successful. */
+			if (!mpq_archive->mpq_list->file_names[count]) {
+
+				/* memory allocation problem. */
+				return LIBMPQ_ARCHIVE_ERROR_MALLOC;
+			}
+
+			/* cleanup. */
+			memset(mpq_archive->mpq_list->file_names[count], 0, strlen(file_names[i]));
+
+			/* create the filename. */
+			mpq_archive->mpq_list->file_names[count] = memcpy(mpq_archive->mpq_list->file_names[count], file_names[i], strlen(file_names[i]));
+			mpq_archive->mpq_list->block_table_index[count] = block_table_index[i];
+
+			/* increase file counter. */
+			count++;
+		}
+	}
+
+	/* free the filelist. */
+	for (i = 0; i < mpq_archive->mpq_header->block_table_length; i++) {
+
+		/* free the filelist element. */
+		free(file_names[i]);
+	}
+
+	/* free the filelist pointer. */
+	free(file_names);
+	free(block_table_index);
+
+	/* if no error was found, return zero. */
+	return 0;
+}
