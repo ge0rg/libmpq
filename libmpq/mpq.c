@@ -175,7 +175,7 @@ int libmpq__archive_close(mpq_archive_s *mpq_archive) {
 	memset(mpq_archive->buf, 0, sizeof(mpq_archive->buf));
 
 	/* check if filelist was created. */
-	if (mpq_archive->mpq_list->file_names != NULL) {
+	if (mpq_archive->mpq_list != NULL && mpq_archive->mpq_list->file_names != NULL) {
 
 		/* free the filelist. */
 		for (i = 0; i < mpq_archive->num_files; i++) {
