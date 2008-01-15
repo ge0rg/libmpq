@@ -64,7 +64,7 @@ int libmpq__decrypt_table_hash(mpq_archive_s *mpq_archive, unsigned char *pbKey)
 	/* one key character. */
 	unsigned int ch;
 	unsigned int *pdwTable = (unsigned int *)(mpq_archive->mpq_hash);
-	unsigned int length    = mpq_archive->mpq_header->hash_table_size * 4;
+	unsigned int length    = mpq_archive->mpq_header->hash_table_count * 4;
 
 	/* prepare seeds. */
 	while (*pbKey != 0) {
@@ -97,7 +97,7 @@ int libmpq__decrypt_table_block(mpq_archive_s *mpq_archive, unsigned char *pbKey
 	/* one key character. */
 	unsigned int ch;
 	unsigned int *pdwTable = (unsigned int *)(mpq_archive->mpq_block);
-	unsigned int length    = mpq_archive->mpq_header->block_table_size * 4;
+	unsigned int length    = mpq_archive->mpq_header->block_table_count * 4;
 
 	/* prepare seeds. */
 	while(*pbKey != 0) {
@@ -216,7 +216,7 @@ int libmpq__read_table_hash(mpq_archive_s *mpq_archive) {
 	int rb = 0;
 
 	/* allocate memory, note that the blocktable should be as large as the hashtable. (for later file additions) */
-	mpq_archive->mpq_hash = malloc(sizeof(mpq_hash_s) * mpq_archive->mpq_header->hash_table_size);
+	mpq_archive->mpq_hash = malloc(sizeof(mpq_hash_s) * mpq_archive->mpq_header->hash_table_count);
 
 	/* check if memory allocation was successful. */
 	if (!mpq_archive->mpq_hash) {
@@ -224,16 +224,16 @@ int libmpq__read_table_hash(mpq_archive_s *mpq_archive) {
 	}
 
 	/* cleanup. */
-	memset(mpq_archive->mpq_hash, 0, sizeof(mpq_hash_s) * mpq_archive->mpq_header->hash_table_size);
+	memset(mpq_archive->mpq_hash, 0, sizeof(mpq_hash_s) * mpq_archive->mpq_header->hash_table_count);
 
 	/* seek in the file. */
 	lseek(mpq_archive->fd, mpq_archive->mpq_header->hash_table_offset + mpq_archive->archive_offset, SEEK_SET);
 
 	/* read the hash table into the buffer. */
-	rb = read(mpq_archive->fd, mpq_archive->mpq_hash, mpq_archive->mpq_header->hash_table_size * sizeof(mpq_hash_s));
+	rb = read(mpq_archive->fd, mpq_archive->mpq_hash, mpq_archive->mpq_header->hash_table_count * sizeof(mpq_hash_s));
 
 	/* if different number of bytes read, break the loop. */
-	if (rb != (mpq_archive->mpq_header->hash_table_size * sizeof(mpq_hash_s))) {
+	if (rb != (mpq_archive->mpq_header->hash_table_count * sizeof(mpq_hash_s))) {
 		return -1;
 	}
 
@@ -251,7 +251,7 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 	int rb = 0;
 
 	/* allocate memory, note that the blocktable should be as large as the hashtable. (for later file additions) */
-	mpq_archive->mpq_block = malloc(sizeof(mpq_block_s) * mpq_archive->mpq_header->block_table_size);
+	mpq_archive->mpq_block = malloc(sizeof(mpq_block_s) * mpq_archive->mpq_header->block_table_count);
 	mpq_archive->block_buffer = malloc(mpq_archive->block_size);
 
 	/* check if memory allocation was successful. */
@@ -260,17 +260,17 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 	}
 
 	/* cleanup. */
-	memset(mpq_archive->mpq_block, 0, sizeof(mpq_block_s) * mpq_archive->mpq_header->block_table_size);
+	memset(mpq_archive->mpq_block, 0, sizeof(mpq_block_s) * mpq_archive->mpq_header->block_table_count);
 	memset(mpq_archive->block_buffer, 0, mpq_archive->block_size);
 
 	/* seek in file. */
 	lseek(mpq_archive->fd, mpq_archive->mpq_header->block_table_offset + mpq_archive->archive_offset, SEEK_SET);
 
 	/* read the block table into the buffer. */
-	rb = read(mpq_archive->fd, mpq_archive->mpq_block, mpq_archive->mpq_header->block_table_size * sizeof(mpq_block_s));
+	rb = read(mpq_archive->fd, mpq_archive->mpq_block, mpq_archive->mpq_header->block_table_count * sizeof(mpq_block_s));
 
 	/* if different number of bytes read, break the loop. */
-	if (rb != (mpq_archive->mpq_header->block_table_size * sizeof(mpq_block_s))) {
+	if (rb != (mpq_archive->mpq_header->block_table_count * sizeof(mpq_block_s))) {
 		return -1;
 	}
 
@@ -338,8 +338,8 @@ int libmpq__read_file_block(mpq_archive_s *mpq_archive, mpq_file_s *mpq_file, un
 
 	/* check if file is compressed. */
 	if (mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) {
-		readpos = mpq_file->file_block_offset[blocknum];
-		toread  = mpq_file->file_block_offset[blocknum + nblocks] - readpos;
+		readpos = mpq_file->compressed_offset[blocknum];
+		toread  = mpq_file->compressed_offset[blocknum + nblocks] - readpos;
 	}
 
 	/* set new read position. */
@@ -383,7 +383,7 @@ int libmpq__read_file_block(mpq_archive_s *mpq_archive, mpq_file_s *mpq_file, un
 
 		/* get current block length. */
 		if (mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) {
-			blocksize = mpq_file->file_block_offset[index + 1] - mpq_file->file_block_offset[index];
+			blocksize = mpq_file->compressed_offset[index + 1] - mpq_file->compressed_offset[index];
 		}
 
 		/* check if block is encrypted, we have to decrypt it. */
@@ -457,20 +457,20 @@ int libmpq__read_file_mpq(mpq_archive_s *mpq_archive, mpq_file_s *mpq_file, unsi
 	unsigned int loaded    = 0;
 
 	/* check if file position is greater or equal to file size. */
-	if (mpq_file->offset >= mpq_file->mpq_block->uncompressed_size) {
+	if (mpq_file->uncompressed_offset >= mpq_file->mpq_block->uncompressed_size) {
 		return 0;
 	}
 
 	/* check if to few bytes in the file remaining, cut them. */
-	if ((mpq_file->mpq_block->uncompressed_size - mpq_file->offset) < toread) {
-		toread = (mpq_file->mpq_block->uncompressed_size - mpq_file->offset);
+	if ((mpq_file->mpq_block->uncompressed_size - mpq_file->uncompressed_offset) < toread) {
+		toread = (mpq_file->mpq_block->uncompressed_size - mpq_file->uncompressed_offset);
 	}
 
 	/* block position in the file. */
-	block_offset = mpq_file->offset & ~(mpq_archive->block_size - 1);
+	block_offset = mpq_file->uncompressed_offset & ~(mpq_archive->block_size - 1);
 
 	/* load the first block, if incomplete, it may be loaded in the cache buffer and we have to check if this block is loaded, if not, load it. */
-	if ((mpq_file->offset % mpq_archive->block_size) != 0) {
+	if ((mpq_file->uncompressed_offset % mpq_archive->block_size) != 0) {
 
 		/* number of bytes remaining in the buffer. */
 		unsigned int tocopy;
@@ -487,7 +487,7 @@ int libmpq__read_file_mpq(mpq_archive_s *mpq_archive, mpq_file_s *mpq_file, unsi
 
 			/* save lastly accessed file and block position for later use. */
 			mpq_archive->block_offset = block_offset;
-			buffer_offset   = mpq_file->offset % mpq_archive->block_size;
+			buffer_offset   = mpq_file->uncompressed_offset % mpq_archive->block_size;
 		}
 
 		/* check remaining bytes for copying. */
@@ -596,9 +596,9 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 	memset(mpq_archive->mpq_list, 0, sizeof(mpq_list_s));
 
 	/* allocate memory for the file names. */
-	file_names = malloc(mpq_archive->mpq_header->block_table_size * sizeof(char *));
-	block_table_indices = malloc(mpq_archive->mpq_header->block_table_size * sizeof(unsigned int));
-	hash_table_indices = malloc(mpq_archive->mpq_header->block_table_size * sizeof(unsigned int));
+	file_names = malloc(mpq_archive->mpq_header->block_table_count * sizeof(char *));
+	block_table_indices = malloc(mpq_archive->mpq_header->block_table_count * sizeof(unsigned int));
+	hash_table_indices = malloc(mpq_archive->mpq_header->block_table_count * sizeof(unsigned int));
 
 	/* check if memory allocation was successful. */
 	if (!file_names || !block_table_indices || !hash_table_indices) {
@@ -608,12 +608,12 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 	}
 
 	/* cleanup. */
-	memset(file_names, 0, mpq_archive->mpq_header->block_table_size * sizeof(char *));
-	memset(block_table_indices, 0, mpq_archive->mpq_header->block_table_size * sizeof(unsigned int));
-	memset(hash_table_indices, 0, mpq_archive->mpq_header->block_table_size * sizeof(unsigned int));
+	memset(file_names, 0, mpq_archive->mpq_header->block_table_count * sizeof(char *));
+	memset(block_table_indices, 0, mpq_archive->mpq_header->block_table_count * sizeof(unsigned int));
+	memset(hash_table_indices, 0, mpq_archive->mpq_header->block_table_count * sizeof(unsigned int));
 
 	/* loop through all files in mpq archive. */
-	for (i = 0; i < mpq_archive->mpq_header->hash_table_size; i++) {
+	for (i = 0; i < mpq_archive->mpq_header->hash_table_count; i++) {
 
 		/* check if hashtable is valid for this file. */
 		if (mpq_archive->mpq_hash[i].block_table_index == LIBMPQ_MPQ_HASH_FREE) {
@@ -655,7 +655,7 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 	}
 
 	/* save the number of files. */
-	mpq_archive->num_files = count;
+	mpq_archive->file_count = count;
 
 	/* allocate memory for the file names. */
 	mpq_archive->mpq_list->file_names = malloc(count * sizeof(char *));
@@ -678,7 +678,7 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 	count = 0;
 
 	/* loop through all files a second time and rebuild indexes for unused blocks (first seen in warcraft 3 - the frozen throne). */
-	for (i = 0; i < mpq_archive->mpq_header->block_table_size; i++) {
+	for (i = 0; i < mpq_archive->mpq_header->block_table_count; i++) {
 
 		if (file_names[i] != NULL) {
 
@@ -706,7 +706,7 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 	}
 
 	/* free the filelist. */
-	for (i = 0; i < mpq_archive->mpq_header->block_table_size; i++) {
+	for (i = 0; i < mpq_archive->mpq_header->block_table_count; i++) {
 
 		/* free the filelist element. */
 		free(file_names[i]);
