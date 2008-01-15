@@ -46,7 +46,6 @@ unsigned char *libmpq__version() {
 int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename) {
 
 	/* some common variables. */
-	int fd          = 0;
 	unsigned int rb = 0;
 
 	/* allocate memory for the mpq header. */
@@ -60,10 +59,10 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename) {
 	memset(mpq_archive->mpq_header, 0, sizeof(mpq_header_s));
 
 	/* try to open the file. */
-	fd = open(mpq_filename, O_RDONLY);
+	mpq_archive->fd = open(mpq_filename, O_RDONLY);
 
 	/* check if file exists and is readable */
-	if (fd == -1) {
+	if (mpq_archive->fd == -1) {
 
 		/* file could not be opened. */
 		return LIBMPQ_ARCHIVE_ERROR_OPEN;
@@ -76,7 +75,6 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename) {
 	libmpq__decrypt_buffer_init(mpq_archive);
 
 	/* assign some default values. */
-	mpq_archive->fd                    = fd;
 	mpq_archive->mpq_header->mpq_magic = 0;
 	mpq_archive->num_files             = 0;
 	mpq_archive->archive_offset        = 0;
@@ -377,7 +375,6 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number) 
 	/* some common variables. */
 	mpq_file_s *mpq_file   = NULL;
 	mpq_hash_s *mpq_hash   = NULL;
-	int fd                 = 0;
 	int transferred        = 1;
 	int i;
 	unsigned char buffer[0x1000];
@@ -390,10 +387,10 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number) 
 	}
 
 	/* open file in write mode. */
-	fd = open(mpq_archive->mpq_list->file_names[number - 1], O_RDWR|O_CREAT|O_TRUNC, 0644);
+	mpq_file->fd = open(mpq_archive->mpq_list->file_names[number - 1], O_RDWR|O_CREAT|O_TRUNC, 0644);
 
 	/* check if file could be written. */
-	if (fd == -1) {
+	if (mpq_file->fd == -1) {
 
 		/* file could not be created, so return with error. */
 		return LIBMPQ_FILE_ERROR_OPEN;
@@ -436,11 +433,10 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number) 
 	memset(mpq_file, 0, sizeof(mpq_file_s));
 
 	/* initialize file structure. */
-	mpq_file->fd             = fd;
-	mpq_file->mpq_block      = &mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[number - 1]];
-	mpq_file->num_blocks     = (mpq_file->mpq_block->uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size;
-	mpq_file->mpq_hash       = mpq_hash;
-	mpq_file->accessed       = FALSE;
+	mpq_file->mpq_block  = &mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[number - 1]];
+	mpq_file->mpq_hash   = mpq_hash;
+	mpq_file->num_blocks = (mpq_file->mpq_block->uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size;
+	mpq_file->accessed   = FALSE;
 	snprintf(mpq_file->filename, PATH_MAX, (const char *)mpq_archive->mpq_list->file_names[number - 1]);
 
 	/* allocate buffers for decompression. */
@@ -471,12 +467,7 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number) 
 		if (mpq_file->mpq_block->flags & LIBMPQ_FILE_ENCRYPTED) {
 
 			/* check if we don't know the file seed, try to find it. */
-			if (mpq_file->seed == 0) {
-				mpq_file->seed = libmpq__decrypt_key(mpq_archive, mpq_file->file_block_offset, rb);
-			}
-
-			/* check if we don't know the file seed, sorry but we cannot extract the file. */
-			if (mpq_file->seed == 0) {
+			if (!(mpq_file->seed = libmpq__decrypt_key(mpq_archive, mpq_file->file_block_offset, rb))) {
 
 				/* sorry without seed, we cannot extract file. */
 				return LIBMPQ_FILE_ERROR_DECRYPT;
@@ -538,7 +529,7 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number) 
 	}
 
 	/* check if file descriptor is valid. */
-	if ((close(fd)) == -1) {
+	if ((close(mpq_file->fd)) == -1) {
 
 		/* file was not opened. */
 		return LIBMPQ_FILE_ERROR_CLOSE;

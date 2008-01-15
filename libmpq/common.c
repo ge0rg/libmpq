@@ -163,14 +163,14 @@ int libmpq__decrypt_key(mpq_archive_s *mpq_archive, unsigned int *block, unsigne
 		seed2 += mpq_archive->mpq_buffer[0x400 + (seed1 & 0xFF)];
 		ch     = block[1] ^ (seed1 + seed2);
 
-		/* check if we found the fileseed. */
+		/* check if we found the file seed. */
 		if ((ch & 0xFFFF0000) == 0) {
 			return saveseed1;
 		}
 	}
 
-	/* if no error was found, return zero. */
-	return 0;
+	/* if no file seed was found return with error. */
+	return LIBMPQ_FILE_ERROR_DECRYPT;
 }
 
 /* function to initialize decryption buffer. */
