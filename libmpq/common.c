@@ -224,7 +224,7 @@ int libmpq__read_table_hash(mpq_archive_s *mpq_archive) {
 	}
 
 	/* seek in the file. */
-	lseek(mpq_archive->fd, mpq_archive->mpqpos + mpq_archive->mpq_header->hash_table_offset, SEEK_SET);
+	lseek(mpq_archive->fd, mpq_archive->mpq_header->hash_table_offset, SEEK_SET);
 
 	/* read the hash table into the buffer. */
 	rb = read(mpq_archive->fd, mpq_archive->mpq_hash, mpq_archive->mpq_header->hash_table_length * sizeof(mpq_hash_s));
@@ -257,7 +257,7 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 	}
 
 	/* seek in file. */
-	lseek(mpq_archive->fd, mpq_archive->mpqpos + mpq_archive->mpq_header->block_table_offset, SEEK_SET);
+	lseek(mpq_archive->fd, mpq_archive->mpq_header->block_table_offset, SEEK_SET);
 
 	/* read the block table into the buffer. */
 	rb = read(mpq_archive->fd, mpq_archive->mpq_block, mpq_archive->mpq_header->block_table_length * sizeof(mpq_block_s));
@@ -267,8 +267,12 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 		return -1;
 	}
 
-	/* decrypt block table. */
-	libmpq__decrypt_table_block(mpq_archive, (unsigned char *)"(block table)");
+	/* decrypt block table only if it is encrypted. */
+	if (mpq_archive->mpq_header->header_size != mpq_archive->mpq_block->offset) {
+
+		/* decrypt block table. */
+		libmpq__decrypt_table_block(mpq_archive, (unsigned char *)"(block table)");
+	}
 
 	/* if no error was found, return zero. */
 	return 0;
@@ -312,8 +316,8 @@ int libmpq__read_file_block(mpq_archive_s *mpq_archive, mpq_file_s *mpq_file, un
 	}
 
 	/* set blocknumber and number of blocks. */
-	bytesremain = mpq_archive->mpq_block->size - blockpos;
-	blocknum    = blockpos   / mpq_archive->blocksize;
+	bytesremain = mpq_file->mpq_block->size - blockpos;
+	blocknum    = blockpos / mpq_archive->blocksize;
 	nblocks     = blockbytes / mpq_archive->blocksize;
 
 	/* check if some bytes are still open and add a block. */
@@ -351,7 +355,6 @@ int libmpq__read_file_block(mpq_archive_s *mpq_archive, mpq_file_s *mpq_file, un
 
 			/* check if we don't know the file seed, sorry but we cannot extract the file. */
 			if (mpq_file->seed == 0) {
-
 				return 0;
 			}
 
