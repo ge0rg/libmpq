@@ -585,6 +585,7 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 	char tempfile[PATH_MAX];
 	char **file_names;
 	unsigned int *block_table_indices;
+	unsigned int *hash_table_indices;
 
 	/* allocate memory for the mpq file list. */
 	if ((mpq_archive->mpq_list = malloc(sizeof(mpq_list_s))) == NULL) {
@@ -599,9 +600,10 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 	/* allocate memory for the file names. */
 	file_names = malloc(mpq_archive->mpq_header->block_table_size * sizeof(char *));
 	block_table_indices = malloc(mpq_archive->mpq_header->block_table_size * sizeof(unsigned int));
+	hash_table_indices = malloc(mpq_archive->mpq_header->block_table_size * sizeof(unsigned int));
 
 	/* check if memory allocation was successful. */
-	if (!file_names || !block_table_indices) {
+	if (!file_names || !block_table_indices || !hash_table_indices) {
 
 		/* memory allocation problem. */
 		return LIBMPQ_ARCHIVE_ERROR_MALLOC;
@@ -610,6 +612,7 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 	/* cleanup. */
 	memset(file_names, 0, mpq_archive->mpq_header->block_table_size * sizeof(char *));
 	memset(block_table_indices, 0, mpq_archive->mpq_header->block_table_size * sizeof(unsigned int));
+	memset(hash_table_indices, 0, mpq_archive->mpq_header->block_table_size * sizeof(unsigned int));
 
 	/* loop through all files in mpq archive. */
 	for (i = 0; i < mpq_archive->mpq_header->hash_table_size; i++) {
@@ -647,6 +650,7 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 		/* create the filename. */
 		file_names[mpq_archive->mpq_hash[i].block_table_index] = memcpy(file_names[mpq_archive->mpq_hash[i].block_table_index], tempfile, tempsize);
 		block_table_indices[mpq_archive->mpq_hash[i].block_table_index] = mpq_archive->mpq_hash[i].block_table_index;
+		hash_table_indices[mpq_archive->mpq_hash[i].block_table_index] = i;
 
 		/* increase file counter. */
 		count++;
@@ -658,9 +662,10 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 	/* allocate memory for the file names. */
 	mpq_archive->mpq_list->file_names = malloc(count * sizeof(char *));
 	mpq_archive->mpq_list->block_table_indices = malloc(count * sizeof(unsigned int));
+	mpq_archive->mpq_list->hash_table_indices = malloc(count * sizeof(unsigned int));
 
 	/* check if memory allocation was successful. */
-	if (!mpq_archive->mpq_list->file_names || !mpq_archive->mpq_list->block_table_indices) {
+	if (!mpq_archive->mpq_list->file_names || !mpq_archive->mpq_list->block_table_indices || !mpq_archive->mpq_list->hash_table_indices) {
 
 		/* memory allocation problem. */
 		return LIBMPQ_ARCHIVE_ERROR_MALLOC;
@@ -669,6 +674,7 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 	/* cleanup. */
 	memset(mpq_archive->mpq_list->file_names, 0, count * sizeof(char *));
 	memset(mpq_archive->mpq_list->block_table_indices, 0, count * sizeof(unsigned int));
+	memset(mpq_archive->mpq_list->hash_table_indices, 0, count * sizeof(unsigned int));
 
 	/* reset the counter and use it again. */
 	count = 0;
@@ -694,6 +700,7 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 			/* create the filename. */
 			mpq_archive->mpq_list->file_names[count] = memcpy(mpq_archive->mpq_list->file_names[count], file_names[i], strlen(file_names[i]));
 			mpq_archive->mpq_list->block_table_indices[count] = block_table_indices[i];
+			mpq_archive->mpq_list->hash_table_indices[count] = hash_table_indices[i];
 
 			/* increase file counter. */
 			count++;
@@ -710,6 +717,7 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 	/* free the filelist pointer. */
 	free(file_names);
 	free(block_table_indices);
+	free(hash_table_indices);
 
 	/* if no error was found, return zero. */
 	return 0;
