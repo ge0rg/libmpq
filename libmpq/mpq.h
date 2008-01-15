@@ -107,8 +107,8 @@ typedef struct {
 	unsigned short	block_size;		/* size of file block is (512 * 2 ^ block size). */
 	unsigned int	hash_table_offset;	/* file position of mpq_hash. */
 	unsigned int	block_table_offset;	/* file position of mpq_block, each entry has 16 bytes. */
-	unsigned int	hash_table_size;	/* number of entries in hash table. */
-	unsigned int	block_table_size;	/* number of entries in the block table. */
+	unsigned int	hash_table_count;	/* number of entries in hash table. */
+	unsigned int	block_table_count;	/* number of entries in the block table. */
 } __attribute__ ((packed)) mpq_header_s;
 
 /* hash entry, all files in the archive are searched by their hashes. */
@@ -133,9 +133,9 @@ typedef struct {
 	char		filename[PATH_MAX];	/* filename of the actual file in the archive. */
 	int		fd;			/* file handle. */
 	unsigned int	seed;			/* seed used for file decrypt. */
-	unsigned int	offset;			/* position in file. */
-	unsigned int	num_blocks;		/* number of blocks in the file (incl. the last noncomplete one). */
-	unsigned int	*file_block_offset;	/* position of each file block (only for compressed files). */
+	unsigned int	block_count;		/* number of blocks in the file (inclusive the last noncomplete one). */
+	unsigned int	uncompressed_offset;	/* position in file after extraction (bytes copied). */
+	unsigned int	*compressed_offset;	/* position of each file block (only for compressed files). */
 	mpq_hash_s	*mpq_hash;		/* hash table entry. */
 	mpq_block_s	*mpq_block;		/* file block pointer. */
 } mpq_file_s;
@@ -168,7 +168,7 @@ typedef struct {
 
 	/* non archive structure related members. */
 	mpq_list_s	*mpq_list;		/* handle to filelist (in most cases this is the last file in the archive). */
-	unsigned int	num_files;		/* number of files in archive, which could be extracted */
+	unsigned int	file_count;		/* number of files in archive, which could be extracted */
 	unsigned int	flags;			/* see LIBMPQ_MPQ_FLAG_XXX for more details. */
 } mpq_archive_s;
 
