@@ -67,7 +67,7 @@ int libmpq__read_table_block(
 int libmpq__read_file_block(
 	mpq_archive_s	*mpq_archive,
 	mpq_file_s	*mpq_file,
-	unsigned int	blockpos,
+	unsigned int	block_offset,
 	unsigned char	*buffer,
 	unsigned int	blockbytes
 );
@@ -76,7 +76,6 @@ int libmpq__read_file_block(
 int libmpq__read_file_mpq(
 	mpq_archive_s	*mpq_archive,
 	mpq_file_s	*mpq_file,
-	unsigned int	filepos,
 	unsigned char	*buffer,
 	unsigned int	toread
 );

@@ -51,6 +51,7 @@
 #define LIBMPQ_FILE_ERROR_EXIST			-4		/* file does not exist in archive. */
 #define LIBMPQ_FILE_ERROR_RANGE			-5		/* filenumber is out of range. */
 #define LIBMPQ_FILE_ERROR_MALLOC		-6		/* memory allocation error for file. */
+#define LIBMPQ_FILE_ERROR_DECRYPT		-7		/* we don't know the decryption seed. */
 
 /* define generic mpq archive information. */
 #define LIBMPQ_MPQ_HEADER_ID			0x1A51504D	/* mpq archive header ('MPQ\x1A') */
@@ -97,20 +98,17 @@
 #define min(a, b) ((a < b) ? a : b)
 #endif
 
-/* the decryption buffer. */
-typedef unsigned int	mpq_buffer[0x500];
-
 /* mpq archive header. */
 typedef struct {
 	unsigned int	mpq_magic;		/* the 0x1A51504D ('MPQ\x1A') signature. */
 	unsigned int	header_size;		/* mpq archive header size. */
 	unsigned int	archive_size;		/* size of mpq archive. */
 	unsigned short	version;		/* 0000 for starcraft and broodwar. */
-	unsigned short	sector_size_shift;	/* size of file block is (0x200 << blocksize). */
+	unsigned short	block_size;		/* size of file block is (512 * 2 ^ block size). */
 	unsigned int	hash_table_offset;	/* file position of mpq_hash. */
 	unsigned int	block_table_offset;	/* file position of mpq_block, each entry has 16 bytes. */
-	unsigned int	hash_table_length;	/* number of entries in hash table. */
-	unsigned int	block_table_length;	/* number of entries in the block table. */
+	unsigned int	hash_table_size;	/* number of entries in hash table. */
+	unsigned int	block_table_size;	/* number of entries in the block table. */
 } __attribute__ ((packed)) mpq_header_s;
 
 /* hash entry, all files in the archive are searched by their hashes. */
@@ -125,8 +123,8 @@ typedef struct {
 /* file description block contains informations about the file. */
 typedef struct {
 	unsigned int	offset;			/* block file starting position in the archive. */
-	unsigned int	archived_size;		/* compressed file size. */
-	unsigned int	size;			/* uncompressed file size. */
+	unsigned int	compressed_size;	/* compressed file size. */
+	unsigned int	uncompressed_size;	/* uncompressed file size. */
 	unsigned int	flags;			/* flags. */
 } __attribute__ ((packed)) mpq_block_s;
 
@@ -135,12 +133,9 @@ typedef struct {
 	char		filename[PATH_MAX];	/* filename of the actual file in the archive. */
 	int		fd;			/* file handle. */
 	unsigned int	seed;			/* seed used for file decrypt. */
-	unsigned int	filepos;		/* current file position. */
-	unsigned int	offset;
-	unsigned int	nblocks;		/* number of blocks in the file (incl. the last noncomplete one). */
-	unsigned int	*blockpos;		/* position of each file block (only for compressed files). */
-	int		blockposloaded;		/* true if block positions loaded. */
-	unsigned int	offset2;		/* number of bytes somewhere? */
+	unsigned int	offset;			/* position in file. */
+	unsigned int	num_blocks;		/* number of blocks in the file (incl. the last noncomplete one). */
+	unsigned int	*file_block_offset;	/* position of each file block (only for compressed files). */
 	mpq_hash_s	*mpq_hash;		/* hash table entry. */
 	mpq_block_s	*mpq_block;		/* file block pointer. */
 
@@ -151,21 +146,24 @@ typedef struct {
 /* filelist structure. */
 typedef struct {
 	char		**file_names;		/* file name for archive members. */
-	unsigned int	*block_table_index;	/* pointer which stores the mapping for filenumber to hash entry. */
+	unsigned int	*block_table_indices;	/* pointer which stores the mapping for filenumber to hash entry. */
 } mpq_list_s;
 
 /* archive structure used since diablo 1.00 by blizzard. */
 typedef struct {
-	unsigned char	filename[PATH_MAX];	/* archive file name. */
+
+	/* generic file information. */
+	char		filename[PATH_MAX];	/* archive file name. */
 	int		fd;			/* file handle. */
-	unsigned int	blockpos;		/* position of loaded block in the file. */
-	unsigned int	blocksize;		/* size of file block. */
-	unsigned char	*blockbuf;		/* buffer (cache) for file block. */
-	unsigned int	bufpos;			/* position in block buffer. */
-	unsigned int	mpqpos;			/* archive position in the file. */
-	unsigned int	filepos;		/* current file pointer. */
-	unsigned int	openfiles;		/* number of open files + 1. */
-	mpq_buffer	buf;			/* mpq buffer. */
+
+	/* generic position information. */
+	unsigned int	block_size;		/* size of the mpq block. */
+	unsigned int	block_offset;		/* position of loaded block in the file. */
+	unsigned int	archive_offset;		/* archive position in the file. */
+
+	/* archive related buffers and tables. */
+	unsigned int	mpq_buffer[0x500];	/* mpq encryption and decryption buffer. */
+	unsigned char	*block_buffer;		/* buffer (cache) for file block. */
 	mpq_header_s	*mpq_header;		/* mpq file header. */
 	mpq_hash_s	*mpq_hash;		/* hash table. */
 	mpq_block_s	*mpq_block;		/* block table. */
@@ -174,9 +172,6 @@ typedef struct {
 	mpq_list_s	*mpq_list;		/* handle to filelist (in most cases this is the last file in the archive). */
 	unsigned int	num_files;		/* number of files in archive, which could be extracted */
 	unsigned int	flags;			/* see LIBMPQ_MPQ_FLAG_XXX for more details. */
-
-	/* TODO: maybe obsolet. */
-	unsigned int	maxblockindex;		/* the highest block table entry. */
 } mpq_archive_s;
 
 /* generic information about library. */
