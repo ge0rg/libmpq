@@ -373,10 +373,8 @@ int libmpq__file_number(mpq_archive_s *mpq_archive, const char *name) {
 int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number) {
 
 	/* some common variables. */
-	mpq_file_s *mpq_file   = NULL;
-	mpq_hash_s *mpq_hash   = NULL;
-	int transferred        = 1;
-	int i;
+	mpq_file_s *mpq_file = NULL;
+	int transferred      = 1;
 	unsigned char buffer[0x1000];
 
 	/* check if we are in the range of available files. */
@@ -384,28 +382,6 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number) 
 
 		/* file not found by number, so return with error. */
 		return LIBMPQ_FILE_ERROR_RANGE;
-	}
-
-	/* open file in write mode. */
-	mpq_file->fd = open(mpq_archive->mpq_list->file_names[number - 1], O_RDWR|O_CREAT|O_TRUNC, 0644);
-
-	/* check if file could be written. */
-	if (mpq_file->fd == -1) {
-
-		/* file could not be created, so return with error. */
-		return LIBMPQ_FILE_ERROR_OPEN;
-	}
-
-	/* search for correct hashtable. */
-	for (i = 0; i < mpq_archive->mpq_header->hash_table_size; i++) {
-		if ((mpq_archive->mpq_list->block_table_indices[number - 1]) == (mpq_archive->mpq_hash[i]).block_table_index) {
-
-			/* correct hashtable found. */
-			mpq_hash = &(mpq_archive->mpq_hash[i]);
-
-			/* break execution. */
-			break;
-		}
 	}
 
 	/* check if sizes are correct. */
@@ -432,9 +408,19 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number) 
 	/* cleanup. */
 	memset(mpq_file, 0, sizeof(mpq_file_s));
 
+	/* open file in write mode. */
+	mpq_file->fd = open(mpq_archive->mpq_list->file_names[number - 1], O_RDWR|O_CREAT|O_TRUNC, 0644);
+
+	/* check if file could be written. */
+	if (mpq_file->fd == -1) {
+
+		/* file could not be created, so return with error. */
+		return LIBMPQ_FILE_ERROR_OPEN;
+	}
+
 	/* initialize file structure. */
 	mpq_file->mpq_block  = &mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[number - 1]];
-	mpq_file->mpq_hash   = mpq_hash;
+	mpq_file->mpq_hash   = &mpq_archive->mpq_hash[mpq_archive->mpq_list->hash_table_indices[number - 1]];
 	mpq_file->num_blocks = (mpq_file->mpq_block->uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size;
 	mpq_file->accessed   = FALSE;
 	snprintf(mpq_file->filename, PATH_MAX, (const char *)mpq_archive->mpq_list->file_names[number - 1]);

@@ -146,7 +146,8 @@ typedef struct {
 /* filelist structure. */
 typedef struct {
 	char		**file_names;		/* file name for archive members. */
-	unsigned int	*block_table_indices;	/* pointer which stores the mapping for filenumber to hash entry. */
+	unsigned int	*block_table_indices;	/* pointer which stores the mapping for file number to block entry. */
+	unsigned int	*hash_table_indices;	/* pointer which stores the mapping for file number to hash entry. */
 } mpq_list_s;
 
 /* archive structure used since diablo 1.00 by blizzard. */
