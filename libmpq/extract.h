@@ -97,14 +97,4 @@ extern int libmpq__decompress_multi(
 	int		in_length
 );
 
-/* table with decompression bits and functions. */
-static decompress_table_s dcmp_table[] = {
-	{0x01, libmpq__decompress_huffman},	/* decompression using huffman trees. */
-	{0x02, libmpq__decompress_zlib},	/* decompression with the zlib library. */
-	{0x08, libmpq__decompress_pkzip},	/* decompression with pkware data compression library. */
-	{0x10, libmpq__decompress_bzip2},	/* decompression with bzip2 library. */
-	{0x40, libmpq__decompress_wave_mono},	/* decompression for mono waves. */
-	{0x80, libmpq__decompress_wave_stereo}	/* decompression for stereo waves. */
-};
-
 #endif						/* _EXTRACT_H */
