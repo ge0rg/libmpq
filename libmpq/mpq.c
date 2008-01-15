@@ -422,7 +422,6 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number) 
 	mpq_file->mpq_block  = &mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[number - 1]];
 	mpq_file->mpq_hash   = &mpq_archive->mpq_hash[mpq_archive->mpq_list->hash_table_indices[number - 1]];
 	mpq_file->num_blocks = (mpq_file->mpq_block->uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size;
-	mpq_file->accessed   = FALSE;
 	snprintf(mpq_file->filename, PATH_MAX, (const char *)mpq_archive->mpq_list->file_names[number - 1]);
 
 	/* allocate buffers for decompression. */
@@ -498,9 +497,8 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number) 
 			break;
 		} else {
 
-			/* file was already processed in this loop. */
-			mpq_file->accessed  = TRUE;
-			mpq_file->offset   += transferred;
+			/* update file position. */
+			mpq_file->offset += transferred;
 		}
 
 		/* write file to disk. */

@@ -477,7 +477,7 @@ int libmpq__read_file_mpq(mpq_archive_s *mpq_archive, mpq_file_s *mpq_file, unsi
 		unsigned int loaded = mpq_archive->block_size;
 
 		/* check if data are loaded in the cache. */
-		if (mpq_file->accessed == FALSE || block_offset != mpq_archive->block_offset) {   
+		if (block_offset < mpq_archive->block_size - 1 || block_offset != mpq_archive->block_offset) {   
 
 			/* load one mpq block into archive buffer. */
 			loaded = libmpq__read_file_block(mpq_archive, mpq_file, block_offset, mpq_archive->block_buffer, mpq_archive->block_size);
@@ -486,7 +486,6 @@ int libmpq__read_file_mpq(mpq_archive_s *mpq_archive, mpq_file_s *mpq_file, unsi
 			}
 
 			/* save lastly accessed file and block position for later use. */
-			mpq_file->accessed = TRUE;
 			mpq_archive->block_offset = block_offset;
 			buffer_offset   = mpq_file->offset % mpq_archive->block_size;
 		}
@@ -544,7 +543,7 @@ int libmpq__read_file_mpq(mpq_archive_s *mpq_archive, mpq_file_s *mpq_file, unsi
 		unsigned int tocopy = mpq_archive->block_size;
 
 		/* check if data are loaded in the cache. */
-		if (mpq_file->accessed == FALSE || block_offset != mpq_archive->block_offset) {
+		if (block_offset < mpq_archive->block_size - 1 || block_offset != mpq_archive->block_offset) {
 
 			/* load one mpq block into archive buffer. */
 			tocopy = libmpq__read_file_block(mpq_archive, mpq_file, block_offset, mpq_archive->block_buffer, mpq_archive->block_size);
@@ -553,7 +552,6 @@ int libmpq__read_file_mpq(mpq_archive_s *mpq_archive, mpq_file_s *mpq_file, unsi
 			}
 
 			/* save lastly accessed file and block position for later use. */
-			mpq_file->accessed = TRUE;
 			mpq_archive->block_offset = block_offset;
 		}
 
