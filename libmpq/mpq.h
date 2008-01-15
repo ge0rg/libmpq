@@ -138,9 +138,6 @@ typedef struct {
 	unsigned int	*file_block_offset;	/* position of each file block (only for compressed files). */
 	mpq_hash_s	*mpq_hash;		/* hash table entry. */
 	mpq_block_s	*mpq_block;		/* file block pointer. */
-
-	/* non file structure related members. */
-	unsigned int	accessed;		/* was something from the file already read? */
 } mpq_file_s;
 
 /* filelist structure. */
