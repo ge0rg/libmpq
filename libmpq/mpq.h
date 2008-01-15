@@ -83,8 +83,6 @@
 #define LIBMPQ_FILE_EXISTS		0x80000000	/* Set if file exists, reset when the file was deleted */
 #define LIBMPQ_FILE_ENCRYPTED		0x00010000	/* Indicates whether file is encrypted */
 
-#define LIBMPQ_HUFF_DECOMPRESS		0		/* Defines that we want to decompress using huffman trees. */
-
 /* define true and false, because not all systems have them. */
 #ifndef FALSE
 #define FALSE 0

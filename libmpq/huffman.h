@@ -27,6 +27,9 @@
 #ifndef _HUFFMAN_H
 #define _HUFFMAN_H
 
+/* define huffman compression and decompression values. */
+#define LIBMPQ_HUFF_DECOMPRESS			0		/* we want to decompress using huffman trees. */
+
 /* define pointer conversions. */
 #define PTR_NOT(ptr)				(struct huffman_tree_item_s *)(~(unsigned long)(ptr))
 #define PTR_PTR(ptr)				((struct huffman_tree_item_s *)(ptr))
