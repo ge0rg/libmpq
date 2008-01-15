@@ -290,13 +290,6 @@ int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int infotype, const u
 		return LIBMPQ_FILE_ERROR_CORRUPT;
 	}
 
-	/* check if file exists. */
-	if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[number - 1]].flags & LIBMPQ_FILE_EXISTS) == 0) {
-
-		/* file does not exist in mpq archive. */
-		return LIBMPQ_FILE_ERROR_EXIST;
-	}
-
 	/* check which information type should be returned. */
 	switch (infotype) {
 		case LIBMPQ_FILE_COMPRESSED_SIZE:
@@ -388,13 +381,6 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number) 
 
 		/* file is corrupt in mpq archive. */
 		return LIBMPQ_FILE_ERROR_CORRUPT;
-	}
-
-	/* check if file exists. */
-	if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[number - 1]].flags & LIBMPQ_FILE_EXISTS) == 0) {
-
-		/* file does not exist in mpq archive. */
-		return LIBMPQ_FILE_ERROR_EXIST;
 	}
 
 	/* allocate memory for file structure */

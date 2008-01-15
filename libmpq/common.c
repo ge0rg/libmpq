@@ -629,6 +629,13 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 			continue;
 		}
 
+		/* check if file exists. */
+		if ((mpq_archive->mpq_block[mpq_archive->mpq_hash[i].block_table_index].flags & LIBMPQ_FILE_EXISTS) == 0) {
+
+			/* file does not exist, so nothing to do with that block. */
+			continue;
+		}
+
 		/* create proper formatted filename. */
 		tempsize = snprintf(tempfile, PATH_MAX, "file%06i.xxx", mpq_archive->mpq_hash[i].block_table_index + 1);
 

@@ -77,11 +77,13 @@
 #define LIBMPQ_FILE_UNCOMPRESSED_SIZE		2		/* uncompressed filesize of the given file in archive. */
 #define LIBMPQ_FILE_COMPRESSION_TYPE		3		/* compression type of the given file in archive.*/
 
+/* define values used by blizzard as flags. */
+#define LIBMPQ_FILE_EXISTS			0x80000000	/* set if file exists, reset when the file was deleted. */
+#define LIBMPQ_FILE_ENCRYPTED			0x00010000	/* indicates whether file is encrypted. */
+#define LIBMPQ_FILE_COMPRESSED			0x0000FF00	/* file is compressed. */
+
 #define LIBMPQ_FILE_COMPRESS_PKWARE	0x00000100	/* Compression made by PKWARE Data Compression Library */
 #define LIBMPQ_FILE_COMPRESS_MULTI	0x00000200	/* Multiple compressions */
-#define LIBMPQ_FILE_COMPRESSED		0x0000FF00	/* File is compressed */
-#define LIBMPQ_FILE_EXISTS		0x80000000	/* Set if file exists, reset when the file was deleted */
-#define LIBMPQ_FILE_ENCRYPTED		0x00010000	/* Indicates whether file is encrypted */
 
 /* define true and false, because not all systems have them. */
 #ifndef FALSE
