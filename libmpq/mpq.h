@@ -42,6 +42,7 @@
 #define LIBMPQ_ARCHIVE_ERROR_HASHTABLE		-4		/* hashtable in archive if broken. */
 #define LIBMPQ_ARCHIVE_ERROR_BLOCKTABLE		-5		/* blocktable in archive if broken. */
 #define LIBMPQ_ARCHIVE_ERROR_MALLOC		-6		/* memory allocation error for archive. */
+#define LIBMPQ_ARCHIVE_ERROR_LISTFILE		-7		/* error on loading listfile. */
 
 /* define file errors. */
 #define LIBMPQ_FILE_ERROR_OPEN			-1		/* open error on file. */
@@ -55,7 +56,8 @@
 #define LIBMPQ_MPQ_HEADER_ID			0x1A51504D	/* mpq archive header ('MPQ\x1A') */
 //#define LIBMPQ_MPQ_HEADER_W3M			0x6D9E4B86	/* special value used by w3m map protector. */
 //#define LIBMPQ_MPQ_FLAG_PROTECTED		0x00000002	/* required for protected mpq archives, like w3m maps. */
-#define LIBMPQ_MPQ_HASH_DELETED			0xFFFFFFFE	/* block index for deleted hash entry. */
+//#define LIBMPQ_MPQ_HASH_DELETED			0xFFFFFFFE	/* block index for deleted hash entry. */
+#define LIBMPQ_MPQ_HASH_FREE			0xFFFFFFFF	/* hash table entry is empty and has always been empty. */
 
 #define LIBMPQ_ARCHIVE_VERSION_ONE		0
 #define LIBMPQ_ARCHIVE_VERSION_TWO		1
@@ -148,7 +150,8 @@ typedef struct {
 
 /* filelist structure. */
 typedef struct {
-	char		**mpq_files;		/* filelist. */
+	char		**file_names;		/* file name for archive members. */
+	unsigned int	*block_table_index;	/* pointer which stores the mapping for filenumber to hash entry. */
 } mpq_list_s;
 
 /* archive structure used since diablo 1.00 by blizzard. */
@@ -169,7 +172,10 @@ typedef struct {
 
 	/* non archive structure related members. */
 	mpq_list_s	*mpq_list;		/* handle to filelist (in most cases this is the last file in the archive). */
+	unsigned int	num_files;		/* number of files in archive, which could be extracted */
 	unsigned int	flags;			/* see LIBMPQ_MPQ_FLAG_XXX for more details. */
+
+	/* TODO: maybe obsolet. */
 	unsigned int	maxblockindex;		/* the highest block table entry. */
 } mpq_archive_s;
 
