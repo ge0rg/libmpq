@@ -219,10 +219,9 @@ int libmpq__archive_close(mpq_archive_s *mpq_archive) {
 int libmpq__archive_info(mpq_archive_s *mpq_archive, unsigned int infotype) {
 
 	/* some common variables. */
-	unsigned int fsize     = 0;
-	unsigned int compressed_size     = 0;
-	mpq_block_s *mpq_b_end = mpq_archive->mpq_block + mpq_archive->mpq_header->block_table_count;
-	mpq_block_s *mpq_b     = NULL;
+	unsigned int uncompressed_size = 0;
+	unsigned int compressed_size   = 0;
+	unsigned int i;
 
 	/* check which information type should be returned. */
 	switch (infotype) {
@@ -232,15 +231,15 @@ int libmpq__archive_info(mpq_archive_s *mpq_archive, unsigned int infotype) {
 			return mpq_archive->mpq_header->archive_size;
 		case LIBMPQ_ARCHIVE_HASHTABLE_SIZE:
 
-			/* return the hashtable size. */
+			/* return the number of hash table entries. */
 			return mpq_archive->mpq_header->hash_table_count;
 		case LIBMPQ_ARCHIVE_BLOCKTABLE_SIZE:
 
-			/* return the blocktable size. */
+			/* return the number of block table entries. */
 			return mpq_archive->mpq_header->block_table_count;
 		case LIBMPQ_ARCHIVE_BLOCKSIZE:
 
-			/* return the blocksize. */
+			/* return the block size. */
 			return mpq_archive->block_size;
 		case LIBMPQ_ARCHIVE_NUMFILES:
 
@@ -249,21 +248,21 @@ int libmpq__archive_info(mpq_archive_s *mpq_archive, unsigned int infotype) {
 		case LIBMPQ_ARCHIVE_COMPRESSED_SIZE:
 
 			/* loop through all files in archive and count compressed size. */
-			for (mpq_b = mpq_archive->mpq_block; mpq_b < mpq_b_end; mpq_b++) {
-				compressed_size += mpq_b->compressed_size;
+			for (i = 0; i < mpq_archive->file_count; i++) {
+				compressed_size += mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[i]].compressed_size;
 			}
 
 			/* return the compressed size of all files in the mpq archive. */
 			return compressed_size;
 		case LIBMPQ_ARCHIVE_UNCOMPRESSED_SIZE:
 
-			/* loop through all files in archive and count uncompressed size. */
-			for (mpq_b = mpq_archive->mpq_block; mpq_b < mpq_b_end; mpq_b++) {
-				fsize += mpq_b->uncompressed_size;
+			/* loop through all files in archive and count compressed size. */
+			for (i = 0; i < mpq_archive->file_count; i++) {
+				uncompressed_size += mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[i]].uncompressed_size;
 			}
 
 			/* return the uncompressed size of all files in the mpq archive. */
-			return fsize;
+			return uncompressed_size;
 		default:
 
 			/* if no error was found, return zero. */
