@@ -44,7 +44,6 @@ int libmpq__decrypt_table_block(
 /* function to detect decryption key. */
 int libmpq__decrypt_key(
 	mpq_archive_s	*mpq_archive,
-	unsigned int	*block,
 	unsigned int	decrypted
 );
 
@@ -66,7 +65,6 @@ int libmpq__read_table_block(
 /* function to read decrypted block. */
 int libmpq__read_file_block(
 	mpq_archive_s	*mpq_archive,
-	mpq_file_s	*mpq_file,
 	unsigned int	block_offset,
 	unsigned char	*buffer,
 	unsigned int	blockbytes
@@ -75,15 +73,13 @@ int libmpq__read_file_block(
 /* function to read file from mpq archive. */
 int libmpq__read_file_mpq(
 	mpq_archive_s	*mpq_archive,
-	mpq_file_s	*mpq_file,
 	unsigned char	*buffer,
 	unsigned int	toread
 );
 
 /* function to read variable block positions used in compressed files. */
 int libmpq__read_file_offset(
-	mpq_archive_s	*mpq_archive,
-	mpq_file_s	*mpq_file
+	mpq_archive_s	*mpq_archive
 );
 
 /* function to read listfile from mpq archive. */
