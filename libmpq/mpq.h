@@ -39,10 +39,9 @@
 #define LIBMPQ_ARCHIVE_ERROR_OPEN		-1		/* open error on archive file. */
 #define LIBMPQ_ARCHIVE_ERROR_CLOSE		-2		/* close error on archive file. */
 #define LIBMPQ_ARCHIVE_ERROR_FORMAT		-3		/* archive format errror. */
-#define LIBMPQ_ARCHIVE_ERROR_HASHTABLE		-4		/* hashtable in archive if broken. */
-#define LIBMPQ_ARCHIVE_ERROR_BLOCKTABLE		-5		/* blocktable in archive if broken. */
+#define LIBMPQ_ARCHIVE_ERROR_HASH_TABLE		-4		/* hash table in archive is broken. */
+#define LIBMPQ_ARCHIVE_ERROR_BLOCK_TABLE	-5		/* block table in archive is broken. */
 #define LIBMPQ_ARCHIVE_ERROR_MALLOC		-6		/* memory allocation error for archive. */
-#define LIBMPQ_ARCHIVE_ERROR_LISTFILE		-7		/* error on loading listfile. */
 
 /* define file errors. */
 #define LIBMPQ_FILE_ERROR_OPEN			-1		/* open error on file. */
