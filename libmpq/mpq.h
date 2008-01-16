@@ -43,21 +43,21 @@
 #define LIBMPQ_ARCHIVE_ERROR_BLOCK_TABLE	-5		/* block table in archive is broken. */
 #define LIBMPQ_ARCHIVE_ERROR_MALLOC		-6		/* memory allocation error for archive. */
 
+/* define the known archive versions. */
+#define LIBMPQ_ARCHIVE_VERSION_ONE		0		/* version one used until world of warcraft. */
+#define LIBMPQ_ARCHIVE_VERSION_TWO		1		/* version two used from world of warcraft - the burning crusade. */
+
 /* define file errors. */
 #define LIBMPQ_FILE_ERROR_OPEN			-1		/* open error on file. */
 #define LIBMPQ_FILE_ERROR_CLOSE			-2		/* close error on file. */
-#define LIBMPQ_FILE_ERROR_CORRUPT		-3		/* file is corrupt in archive. */
-#define LIBMPQ_FILE_ERROR_EXIST			-4		/* file does not exist in archive. */
-#define LIBMPQ_FILE_ERROR_RANGE			-5		/* filenumber is out of range. */
-#define LIBMPQ_FILE_ERROR_MALLOC		-6		/* memory allocation error for file. */
-#define LIBMPQ_FILE_ERROR_DECRYPT		-7		/* we don't know the decryption seed. */
+#define LIBMPQ_FILE_ERROR_EXIST			-3		/* file does not exist in archive. */
+#define LIBMPQ_FILE_ERROR_RANGE			-4		/* filenumber is out of range. */
+#define LIBMPQ_FILE_ERROR_MALLOC		-5		/* memory allocation error for file. */
+#define LIBMPQ_FILE_ERROR_DECRYPT		-6		/* we don't know the decryption seed. */
 
 /* define generic mpq archive information. */
 #define LIBMPQ_MPQ_HEADER_ID			0x1A51504D	/* mpq archive header ('MPQ\x1A') */
 #define LIBMPQ_MPQ_HASH_FREE			0xFFFFFFFF	/* hash table entry is empty and has always been empty. */
-
-#define LIBMPQ_ARCHIVE_VERSION_ONE		0
-#define LIBMPQ_ARCHIVE_VERSION_TWO		1
 
 /* define generic values for returning archive information. */
 #define LIBMPQ_ARCHIVE_SIZE			1		/* mpq archive size. */
@@ -164,7 +164,6 @@ typedef struct {
 	/* non archive structure related members. */
 	mpq_list_s	*mpq_list;		/* handle to filelist (in most cases this is the last file in the archive). */
 	unsigned int	files;			/* number of files in archive, which could be extracted */
-	unsigned int	flags;			/* see LIBMPQ_MPQ_FLAG_XXX for more details. */
 } mpq_archive_s;
 
 /* generic information about library. */
