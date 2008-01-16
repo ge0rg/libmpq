@@ -220,7 +220,9 @@ int libmpq__read_table_hash(mpq_archive_s *mpq_archive) {
 
 	/* check if memory allocation was successful. */
 	if (!mpq_archive->mpq_hash) {
-		return -1;
+
+		/* memory allocation error. */
+		return LIBMPQ_ARCHIVE_ERROR_MALLOC;
 	}
 
 	/* cleanup. */
@@ -234,7 +236,9 @@ int libmpq__read_table_hash(mpq_archive_s *mpq_archive) {
 
 	/* if different number of bytes read, break the loop. */
 	if (rb != (mpq_archive->mpq_header->hash_table_count * sizeof(mpq_hash_s))) {
-		return -1;
+
+		/* something on read failed. */
+		return LIBMPQ_ARCHIVE_ERROR_HASH_TABLE;
 	}
 
 	/* decrypt the hashtable. */
@@ -256,7 +260,9 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 
 	/* check if memory allocation was successful. */
 	if (!mpq_archive->mpq_block || !mpq_archive->block_buffer) {
-		return -1;
+
+		/* memory allocation error. */
+		return LIBMPQ_ARCHIVE_ERROR_MALLOC;
 	}
 
 	/* cleanup. */
@@ -271,7 +277,9 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 
 	/* if different number of bytes read, break the loop. */
 	if (rb != (mpq_archive->mpq_header->block_table_count * sizeof(mpq_block_s))) {
-		return -1;
+
+		/* something on read failed. */
+		return LIBMPQ_ARCHIVE_ERROR_BLOCK_TABLE;
 	}
 
 	/* decrypt block table only if it is encrypted. */
@@ -575,8 +583,6 @@ int libmpq__read_file_mpq(mpq_archive_s *mpq_archive, mpq_file_s *mpq_file, unsi
 /* function to read variable block positions used in compressed files. */
 int libmpq__read_file_offset(mpq_archive_s *mpq_archive, mpq_file_s *mpq_file) {
 
-	printf("mpq_file->blocks: %i\n", mpq_file->blocks);
-
 	/* allocate buffers for decompression. */
 	if (mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) {
 
@@ -702,6 +708,14 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 		if ((mpq_archive->mpq_block[mpq_archive->mpq_hash[i].block_table_index].flags & LIBMPQ_FILE_EXISTS) == 0) {
 
 			/* file does not exist, so nothing to do with that block. */
+			continue;
+		}
+
+		/* check if sizes are correct. */
+		if (mpq_archive->mpq_block[mpq_archive->mpq_hash[i].block_table_index].offset > (mpq_archive->mpq_header->archive_size + mpq_archive->archive_offset) ||
+		    mpq_archive->mpq_block[mpq_archive->mpq_hash[i].block_table_index].compressed_size > mpq_archive->mpq_header->archive_size) {
+
+			/* file is corrupt in mpq archive, so skip it. */
 			continue;
 		}
 

@@ -47,6 +47,7 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename) {
 
 	/* some common variables. */
 	unsigned int rb = 0;
+	int result      = 0;
 
 	/* allocate memory for the mpq header. */
 	if ((mpq_archive->mpq_header = malloc(sizeof(mpq_header_s))) == NULL) {
@@ -124,25 +125,25 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename) {
 	/* store block size for later use. */
 	mpq_archive->block_size = 512 << mpq_archive->mpq_header->block_size;
 
-	/* try to read and decrypt the hashtable. */
-	if (libmpq__read_table_hash(mpq_archive) != 0) {
+	/* try to read and decrypt the hash table. */
+	if ((result = libmpq__read_table_hash(mpq_archive)) != 0) {
 
-		/* the hashtable seems corrupt. */
-		return LIBMPQ_ARCHIVE_ERROR_HASHTABLE;
+		/* the hash table seems corrupt. */
+		return result;
 	}
 
-	/* try to read and decrypt the blocktable. */
-	if (libmpq__read_table_block(mpq_archive) != 0) {
+	/* try to read and decrypt the block table. */
+	if ((result = libmpq__read_table_block(mpq_archive)) != 0) {
 
-		/* the blocktable seems corrupt. */
-		return LIBMPQ_ARCHIVE_ERROR_BLOCKTABLE;
+		/* the block table seems corrupt. */
+		return result;
 	}
 
-	/* try to read listfile. */
-	if (libmpq__read_file_list(mpq_archive) != 0) {
+	/* try to read list file. */
+	if ((result = libmpq__read_file_list(mpq_archive)) != 0) {
 
-		/* the blocktable seems corrupt. */
-		return LIBMPQ_ARCHIVE_ERROR_LISTFILE;
+		/* the list file seems corrupt. */
+		return result;
 	}
 
 	/* if no error was found, return zero. */
@@ -283,13 +284,6 @@ int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int infotype, const u
 		return LIBMPQ_FILE_ERROR_RANGE;
 	}
 
-	/* check if sizes are correct. */
-	if (mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[number - 1]].offset > (mpq_archive->mpq_header->archive_size + mpq_archive->archive_offset) || mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[number - 1]].compressed_size > mpq_archive->mpq_header->archive_size) {
-
-		/* file is corrupt in mpq archive. */
-		return LIBMPQ_FILE_ERROR_CORRUPT;
-	}
-
 	/* check which information type should be returned. */
 	switch (infotype) {
 		case LIBMPQ_FILE_SIZE_COMPRESSED:
@@ -375,13 +369,6 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number) 
 
 		/* file not found by number, so return with error. */
 		return LIBMPQ_FILE_ERROR_RANGE;
-	}
-
-	/* check if sizes are correct. */
-	if (mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[number - 1]].offset > (mpq_archive->mpq_header->archive_size + mpq_archive->archive_offset) || mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[number - 1]].compressed_size > mpq_archive->mpq_header->archive_size) {
-
-		/* file is corrupt in mpq archive. */
-		return LIBMPQ_FILE_ERROR_CORRUPT;
 	}
 
 	/* allocate memory for file structure */
