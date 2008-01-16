@@ -30,7 +30,6 @@
 
 /* generic includes. */
 #include <limits.h>
-#include <sys/types.h>
 
 /* define return value if nothing failed. */
 #define LIBMPQ_SUCCESS				0		/* return value for all functions which success. */
@@ -136,6 +135,8 @@ typedef struct {
 	unsigned int	blocks;			/* number of blocks in the file (inclusive the last noncomplete one). */
 	unsigned int	uncompressed_offset;	/* position in file after extraction (bytes copied). */
 	unsigned int	*compressed_offset;	/* position of each file block (only for compressed files). */
+	unsigned int	file;			/* file number which is actually processed. */
+	unsigned char	*block_buffer;		/* buffer (cache) for file block. */
 	mpq_hash_s	*mpq_hash;		/* hash table entry. */
 	mpq_block_s	*mpq_block;		/* file block pointer. */
 } mpq_file_s;
@@ -161,14 +162,14 @@ typedef struct {
 
 	/* archive related buffers and tables. */
 	unsigned int	mpq_buffer[0x500];	/* mpq encryption and decryption buffer. */
-	unsigned char	*block_buffer;		/* buffer (cache) for file block. */
 	mpq_header_s	*mpq_header;		/* mpq file header. */
 	mpq_hash_s	*mpq_hash;		/* hash table. */
 	mpq_block_s	*mpq_block;		/* block table. */
+	mpq_file_s	*mpq_file;		/* pointer to file which is processed. */
 
 	/* non archive structure related members. */
 	mpq_list_s	*mpq_list;		/* handle to filelist (in most cases this is the last file in the archive). */
-	unsigned int	files;			/* number of files in archive, which could be extracted */
+	unsigned int	files;			/* number of files in archive, which could be extracted. */
 } mpq_archive_s;
 
 /* generic information about library. */
@@ -180,9 +181,11 @@ extern int libmpq__archive_close(mpq_archive_s *mpq_archive);
 extern int libmpq__archive_info(mpq_archive_s *mpq_archive, unsigned int infotype);
 
 /* generic file information. */
+extern int libmpq__file_open(mpq_archive_s *mpq_archive, const unsigned int number);
+extern int libmpq__file_close(mpq_archive_s *mpq_archive);
 extern int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int infotype, const unsigned int number);
 extern char *libmpq__file_name(mpq_archive_s *mpq_archive, const unsigned int number);
 extern int libmpq__file_number(mpq_archive_s *mpq_archive, const char *name);
-extern int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number);
+extern int libmpq__file_extract(mpq_archive_s *mpq_archive);
 
 #endif						/* _MPQ_H */
