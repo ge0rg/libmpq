@@ -365,9 +365,10 @@ int libmpq__file_number(mpq_archive_s *mpq_archive, const char *name) {
 int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number) {
 
 	/* some common variables. */
-	mpq_file_s *mpq_file = NULL;
-	int transferred      = 1;
+	int transferred = 1;
+	int result      = 0;
 	unsigned char buffer[0x1000];
+	mpq_file_s *mpq_file;
 
 	/* check if we are in the range of available files. */
 	if (number < 1 || number > mpq_archive->files) {
@@ -409,64 +410,11 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number) 
 	mpq_file->blocks    = (mpq_file->mpq_block->uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size;
 	snprintf(mpq_file->filename, PATH_MAX, (const char *)mpq_archive->mpq_list->file_names[number - 1]);
 
-	/* allocate buffers for decompression. */
-	if (mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) {
+	/* load compressed block offset if necessary. */
+	if ((result = libmpq__read_file_offset(mpq_archive, mpq_file)) != 0) {
 
-		/* allocate buffer for block positions. */
-		if ((mpq_file->compressed_offset = malloc(sizeof(unsigned int) * mpq_file->blocks + 1)) == NULL) {
-
-			/* memory allocation problem. */
-			return LIBMPQ_FILE_ERROR_MALLOC;
-		}
-
-		/* some common variables. */
-		int rb;
-
-		/* seek to block position. */
-		lseek(mpq_archive->fd, mpq_file->mpq_block->offset, SEEK_SET);
-
-		/* read block positions from begin of file. */
-		rb = read(mpq_archive->fd, mpq_file->compressed_offset, (mpq_file->blocks + 1) * sizeof(unsigned int));
-
-		/* check if the archive is protected some way, sometimes the file appears not to be encrypted, but it is. */
-		if (mpq_file->compressed_offset[0] != rb) {
-			mpq_file->mpq_block->flags |= LIBMPQ_FILE_ENCRYPTED;
-		}
-
-		/* decrypt loaded block positions if necessary. */
-		if (mpq_file->mpq_block->flags & LIBMPQ_FILE_ENCRYPTED) {
-
-			/* check if we don't know the file seed, try to find it. */
-			if (!(mpq_file->seed = libmpq__decrypt_key(mpq_archive, mpq_file->compressed_offset, rb))) {
-
-				/* sorry without seed, we cannot extract file. */
-				return LIBMPQ_FILE_ERROR_DECRYPT;
-			}
-
-			/* decrypt block positions. */
-			libmpq__decrypt_mpq_block(mpq_archive, mpq_file->compressed_offset, rb, mpq_file->seed - 1);
-
-			/* check if the block positions are correctly decrypted, sometimes it will result invalid block positions on some files. */
-			if (mpq_file->compressed_offset[0] != rb) {
-
-				/* try once again to detect fileseed and decrypt the blocks. */
-				lseek(mpq_archive->fd, mpq_file->mpq_block->offset, SEEK_SET);
-
-				/* read again. */
-				rb = read(mpq_archive->fd, mpq_file->compressed_offset, (mpq_file->blocks + 1) * sizeof(unsigned int));
-				mpq_file->seed = libmpq__decrypt_key(mpq_archive, mpq_file->compressed_offset, rb);
-
-				/* decrypt mpq block. */
-				libmpq__decrypt_mpq_block(mpq_archive, mpq_file->compressed_offset, rb, mpq_file->seed - 1);
-
-				/* check if the block positions are correctly decrypted. */
-				if (mpq_file->compressed_offset[0] != rb) {
-
-					/* sorry without seed, we cannot extract file. */
-					return LIBMPQ_FILE_ERROR_DECRYPT;
-				}
-			}
-		}
+		/* error on decrypting block positions. */
+		return result;
 	}
 
 	/* loop until whole file content is written. */
