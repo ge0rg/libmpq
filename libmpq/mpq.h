@@ -55,9 +55,6 @@
 
 /* define generic mpq archive information. */
 #define LIBMPQ_MPQ_HEADER_ID			0x1A51504D	/* mpq archive header ('MPQ\x1A') */
-//#define LIBMPQ_MPQ_HEADER_W3M			0x6D9E4B86	/* special value used by w3m map protector. */
-//#define LIBMPQ_MPQ_FLAG_PROTECTED		0x00000002	/* required for protected mpq archives, like w3m maps. */
-//#define LIBMPQ_MPQ_HASH_DELETED			0xFFFFFFFE	/* block index for deleted hash entry. */
 #define LIBMPQ_MPQ_HASH_FREE			0xFFFFFFFF	/* hash table entry is empty and has always been empty. */
 
 #define LIBMPQ_ARCHIVE_VERSION_ONE		0
@@ -65,25 +62,24 @@
 
 /* define generic values for returning archive information. */
 #define LIBMPQ_ARCHIVE_SIZE			1		/* mpq archive size. */
-#define LIBMPQ_ARCHIVE_HASHTABLE_SIZE		2		/* mpq archive hashtable size. */
-#define LIBMPQ_ARCHIVE_BLOCKTABLE_SIZE		3		/* mpq archive blocktable size. */
-#define LIBMPQ_ARCHIVE_BLOCKSIZE		4		/* mpq archive blocksize. */
-#define LIBMPQ_ARCHIVE_NUMFILES			5		/* number of files in the mpq archive */
-#define LIBMPQ_ARCHIVE_COMPRESSED_SIZE		6		/* compressed archive size. */
-#define LIBMPQ_ARCHIVE_UNCOMPRESSED_SIZE	7		/* uncompressed archive size. */
+#define LIBMPQ_ARCHIVE_SIZE_COMPRESSED		2		/* compressed archive size. */
+#define LIBMPQ_ARCHIVE_SIZE_UNCOMPRESSED	3		/* uncompressed archive size. */
+#define LIBMPQ_ARCHIVE_FILES			4		/* number of files in the mpq archive */
+#define LIBMPQ_ARCHIVE_HASH_TABLE_COUNT		5		/* mpq archive hashtable size. */
+#define LIBMPQ_ARCHIVE_BLOCK_TABLE_COUNT	6		/* mpq archive blocktable size. */
+#define LIBMPQ_ARCHIVE_BLOCK_SIZE		7		/* mpq archive blocksize. */
 
 /* define generic values for returning file information. */
-#define LIBMPQ_FILE_COMPRESSED_SIZE		1		/* compressed filesize of the given file in archive. */
-#define LIBMPQ_FILE_UNCOMPRESSED_SIZE		2		/* uncompressed filesize of the given file in archive. */
-#define LIBMPQ_FILE_COMPRESSION_TYPE		3		/* compression type of the given file in archive.*/
+#define LIBMPQ_FILE_SIZE_COMPRESSED		1		/* compressed filesize of the given file in archive. */
+#define LIBMPQ_FILE_SIZE_UNCOMPRESSED		2		/* uncompressed filesize of the given file in archive. */
+#define LIBMPQ_FILE_TYPE_COMPRESSION		3		/* compression type of the given file in archive.*/
 
 /* define values used by blizzard as flags. */
 #define LIBMPQ_FILE_EXISTS			0x80000000	/* set if file exists, reset when the file was deleted. */
 #define LIBMPQ_FILE_ENCRYPTED			0x00010000	/* indicates whether file is encrypted. */
 #define LIBMPQ_FILE_COMPRESSED			0x0000FF00	/* file is compressed. */
-
-#define LIBMPQ_FILE_COMPRESS_PKWARE	0x00000100	/* Compression made by PKWARE Data Compression Library */
-#define LIBMPQ_FILE_COMPRESS_MULTI	0x00000200	/* Multiple compressions */
+#define LIBMPQ_FILE_COMPRESS_PKWARE		0x00000100	/* compression made by pkware data compression library. */
+#define LIBMPQ_FILE_COMPRESS_MULTI		0x00000200	/* multiple compressions. */
 
 /* define true and false, because not all systems have them. */
 #ifndef FALSE
@@ -133,7 +129,7 @@ typedef struct {
 	char		filename[PATH_MAX];	/* filename of the actual file in the archive. */
 	int		fd;			/* file handle. */
 	unsigned int	seed;			/* seed used for file decrypt. */
-	unsigned int	block_count;		/* number of blocks in the file (inclusive the last noncomplete one). */
+	unsigned int	blocks;			/* number of blocks in the file (inclusive the last noncomplete one). */
 	unsigned int	uncompressed_offset;	/* position in file after extraction (bytes copied). */
 	unsigned int	*compressed_offset;	/* position of each file block (only for compressed files). */
 	mpq_hash_s	*mpq_hash;		/* hash table entry. */
@@ -168,7 +164,7 @@ typedef struct {
 
 	/* non archive structure related members. */
 	mpq_list_s	*mpq_list;		/* handle to filelist (in most cases this is the last file in the archive). */
-	unsigned int	file_count;		/* number of files in archive, which could be extracted */
+	unsigned int	files;			/* number of files in archive, which could be extracted */
 	unsigned int	flags;			/* see LIBMPQ_MPQ_FLAG_XXX for more details. */
 } mpq_archive_s;
 
