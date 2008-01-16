@@ -51,7 +51,7 @@ int libmpq__decrypt_mpq_block(mpq_archive_s *mpq_archive, unsigned int *block, u
 	}
 
 	/* if no error was found, return zero. */
-	return 0;
+	return LIBMPQ_SUCCESS;
 }
 
 /* function to decrypt hash table of mpq archive. */
@@ -84,7 +84,7 @@ int libmpq__decrypt_table_hash(mpq_archive_s *mpq_archive, unsigned char *pbKey)
 	}
 
 	/* if no error was found, return zero. */
-	return 0;
+	return LIBMPQ_SUCCESS;
 }
 
 /* function to decrypt blocktable of mpq archive. */
@@ -117,7 +117,7 @@ int libmpq__decrypt_table_block(mpq_archive_s *mpq_archive, unsigned char *pbKey
 	}
 
 	/* if no error was found, return zero. */
-	return 0;
+	return LIBMPQ_SUCCESS;
 }
 
 /* function to detect decryption key. */
@@ -206,7 +206,7 @@ int libmpq__decrypt_buffer_init(mpq_archive_s *mpq_archive) {
 	}
 
 	/* if no error was found, return zero. */
-	return 0;
+	return LIBMPQ_SUCCESS;
 }
 
 /* function to read decrypted hash table. */
@@ -215,11 +215,8 @@ int libmpq__read_table_hash(mpq_archive_s *mpq_archive) {
 	/* some common variables. */
 	int rb = 0;
 
-	/* allocate memory, note that the blocktable should be as large as the hashtable. (for later file additions) */
-	mpq_archive->mpq_hash = malloc(sizeof(mpq_hash_s) * mpq_archive->mpq_header->hash_table_count);
-
 	/* check if memory allocation was successful. */
-	if (!mpq_archive->mpq_hash) {
+	if ((mpq_archive->mpq_hash = malloc(sizeof(mpq_hash_s) * mpq_archive->mpq_header->hash_table_count)) == NULL) {
 
 		/* memory allocation error. */
 		return LIBMPQ_ARCHIVE_ERROR_MALLOC;
@@ -245,7 +242,7 @@ int libmpq__read_table_hash(mpq_archive_s *mpq_archive) {
 	libmpq__decrypt_table_hash(mpq_archive, (unsigned char *)"(hash table)");
 
 	/* if no error was found, return zero. */
-	return 0;
+	return LIBMPQ_SUCCESS;
 }
 
 /* function to read decrypted hash table. */
@@ -254,12 +251,8 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 	/* some common variables. */
 	int rb = 0;
 
-	/* allocate memory, note that the blocktable should be as large as the hashtable. (for later file additions) */
-	mpq_archive->mpq_block = malloc(sizeof(mpq_block_s) * mpq_archive->mpq_header->block_table_count);
-	mpq_archive->block_buffer = malloc(mpq_archive->block_size);
-
 	/* check if memory allocation was successful. */
-	if (!mpq_archive->mpq_block || !mpq_archive->block_buffer) {
+	if ((mpq_archive->mpq_block = malloc(sizeof(mpq_block_s) * mpq_archive->mpq_header->block_table_count)) == NULL ) {
 
 		/* memory allocation error. */
 		return LIBMPQ_ARCHIVE_ERROR_MALLOC;
@@ -267,7 +260,6 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 
 	/* cleanup. */
 	memset(mpq_archive->mpq_block, 0, sizeof(mpq_block_s) * mpq_archive->mpq_header->block_table_count);
-	memset(mpq_archive->block_buffer, 0, mpq_archive->block_size);
 
 	/* seek in file. */
 	lseek(mpq_archive->fd, mpq_archive->mpq_header->block_table_offset + mpq_archive->archive_offset, SEEK_SET);
@@ -290,7 +282,7 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 	}
 
 	/* if no error was found, return zero. */
-	return 0;
+	return LIBMPQ_SUCCESS;
 }
 
 /* function to read decrypted block. */
@@ -583,6 +575,9 @@ int libmpq__read_file_mpq(mpq_archive_s *mpq_archive, mpq_file_s *mpq_file, unsi
 /* function to read variable block positions used in compressed files. */
 int libmpq__read_file_offset(mpq_archive_s *mpq_archive, mpq_file_s *mpq_file) {
 
+	/* some common variables. */
+	int rb = 0;
+
 	/* allocate buffers for decompression. */
 	if (mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) {
 
@@ -593,8 +588,8 @@ int libmpq__read_file_offset(mpq_archive_s *mpq_archive, mpq_file_s *mpq_file) {
 			return LIBMPQ_FILE_ERROR_MALLOC;
 		}
 
-		/* some common variables. */
-		int rb;
+		/* cleanup. */
+		memset(mpq_file->compressed_offset, 0, sizeof(unsigned int) * mpq_file->blocks + 1);
 
 		/* seek to block position. */
 		lseek(mpq_archive->fd, mpq_file->mpq_block->offset, SEEK_SET);
@@ -644,7 +639,7 @@ int libmpq__read_file_offset(mpq_archive_s *mpq_archive, mpq_file_s *mpq_file) {
 	}
 
 	/* if no error was found, return zero. */
-	return 0;
+	return LIBMPQ_SUCCESS;
 }
 
 /* function to read listfile from mpq archive. */
@@ -808,5 +803,5 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 	free(hash_table_indices);
 
 	/* if no error was found, return zero. */
-	return 0;
+	return LIBMPQ_SUCCESS;
 }

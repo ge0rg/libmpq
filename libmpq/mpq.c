@@ -181,13 +181,6 @@ int libmpq__archive_close(mpq_archive_s *mpq_archive) {
 		free(mpq_archive->mpq_list);
 	}
 
-	/* free block buffer if used. */
-	if (mpq_archive->block_buffer != NULL) {
-
-		/* free block buffer. */
-		free(mpq_archive->block_buffer);
-	}
-
 	/* free block table if used. */
 	if (mpq_archive->mpq_block != NULL) {
 
@@ -372,7 +365,7 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number) 
 	}
 
 	/* allocate memory for file structure */
-	if ((mpq_file = malloc(sizeof(mpq_file_s))) == NULL) {
+	if ((mpq_file = malloc(sizeof(mpq_file_s))) == NULL || (mpq_archive->block_buffer = malloc(mpq_archive->block_size)) == NULL) {
 
 		/* memory allocation problem. */
 		return LIBMPQ_FILE_ERROR_MALLOC;
@@ -380,6 +373,7 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number) 
 
 	/* cleanup. */
 	memset(mpq_file, 0, sizeof(mpq_file_s));
+	memset(mpq_archive->block_buffer, 0, mpq_archive->block_size);
 
 	/* open file in write mode. */
 	mpq_file->fd = open(mpq_archive->mpq_list->file_names[number - 1], O_RDWR|O_CREAT|O_TRUNC, 0644);
@@ -439,7 +433,21 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const unsigned int number) 
 		return LIBMPQ_FILE_ERROR_CLOSE;
 	}
 
-	/* freeing the file structure. */
+	/* free block buffer if used. */
+	if (mpq_archive->block_buffer != NULL) {
+
+		/* free block buffer. */
+		free(mpq_archive->block_buffer);
+	}
+
+	/* free the compressed offset table if used. */
+	if (mpq_file->compressed_offset != NULL) {
+
+		/* free the compressed offset table. */
+		free(mpq_file->compressed_offset);
+	}
+
+	/* free the file structure. */
 	free(mpq_file);
 
 	/* if no error was found, return zero. */
