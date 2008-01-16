@@ -93,6 +93,11 @@
 #define min(a, b) ((a < b) ? a : b)
 #endif
 
+/* define max, because not all systems have it. */
+#ifndef max
+#define max(a, b) ((a > b) ? a : b)
+#endif
+
 /* mpq archive header. */
 typedef struct {
 	unsigned int	mpq_magic;		/* the 0x1A51504D ('MPQ\x1A') signature. */
