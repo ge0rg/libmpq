@@ -662,7 +662,7 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 	}
 
 	/* save the number of files. */
-	mpq_archive->file_count = count;
+	mpq_archive->files = count;
 
 	/* allocate memory for the file names. */
 	mpq_archive->mpq_list->file_names = malloc(count * sizeof(char *));
