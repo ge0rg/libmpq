@@ -244,7 +244,7 @@ int libmpq__decompress_multi(unsigned char *out_buf, int *pout_length, unsigned 
 			/* decompress buffer using corresponding function. */
 			dcmp_table[i].decompress(work_buf, &out_length, in_buf, in_length);
 
-			/* ,ove output length to source length for next compression. */
+			/* move output length to source length for next compression. */
 			in_length = out_length;
 			in_buf    = work_buf;
 		}
