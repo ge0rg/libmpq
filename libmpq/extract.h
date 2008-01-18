@@ -29,72 +29,78 @@
 #define LIBMPQ_COMPRESSION_WAVE_MONO		0x40		/* adpcm 4:1 compression. (introduced in starcraft) */
 #define LIBMPQ_COMPRESSION_WAVE_STEREO		0x80		/* adpcm 4:1 compression. (introduced in starcraft) */
 
-/* table for decompression functions. */
-typedef int		(*DECOMPRESS)(unsigned char *, int *, unsigned char *, int);
+/*
+ *  table for decompression functions, return value for all functions
+ *  is the transferred data size or one of the following error constants:
+ *
+ *  LIBMPQ_FILE_ERROR_MALLOC
+ *  LIBMPQ_FILE_ERROR_DECOMPRESS
+ */
+typedef int		(*DECOMPRESS)(unsigned char *, int, unsigned char *, int);
 typedef struct {
 	unsigned int	mask;			/* decompression bit. */
 	DECOMPRESS	decompress;		/* decompression function. */
 } decompress_table_s;
 
 /*
- *  huffmann decompression routine, the in_length parameter is not used,
+ *  huffmann decompression routine, the in_size parameter is not used,
  *  but needs to be specified due to compatibility reasons.
  *
  *  1500F5F0
  */
 extern int libmpq__decompress_huffman(
 	unsigned char	*out_buf,
-	int		*out_length,
+	int		out_size,
 	unsigned char	*in_buf,
-	int		in_length
+	int		in_size
 );
 
 /* decompression using zlib. */
 extern int libmpq__decompress_zlib(
 	unsigned char	*out_buf,
-	int		*out_length,
+	int		out_size,
 	unsigned char	*in_buf,
-	int		in_length
+	int		in_size
 );
 
 /* decompression using pkzip. */
 extern int libmpq__decompress_pkzip(
 	unsigned char	*out_buf,
-	int		*out_length,
+	int		out_size,
 	unsigned char	*in_buf,
-	int		in_length
+	int		in_size
 );
 
 /* decompression using bzip2. */
 extern int libmpq__decompress_bzip2(
 	unsigned char	*out_buf,
-	int		*out_length,
+	int		out_size,
 	unsigned char	*in_buf,
-	int		in_length
+	int		in_size
 );
 
 /* decompression using wave. (1 channel) */
 extern int libmpq__decompress_wave_mono(
 	unsigned char	*out_buf,
-	int		*out_length,
+	int		out_size,
 	unsigned char	*in_buf,
-	int		in_length
+	int		in_size
 );
 
 /* decompression using wave. (2 channels) */
 extern int libmpq__decompress_wave_stereo(
 	unsigned char	*out_buf,
-	int		*out_length,
+	int		out_size,
 	unsigned char	*in_buf,
-	int		in_length
+	int		in_size
 );
 
 /* decompression using multiple of the above algorithm. */
 extern int libmpq__decompress_multi(
 	unsigned char	*out_buf,
-	int		*pout_length,
+	int		out_size,
 	unsigned char	*in_buf,
-	int		in_length
+	int		in_size
 );
 
 #endif						/* _EXTRACT_H */
