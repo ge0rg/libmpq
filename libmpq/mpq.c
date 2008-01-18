@@ -89,10 +89,7 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename) {
 		lseek(mpq_archive->fd, mpq_archive->archive_offset, SEEK_SET);
 
 		/* read header from file. */
-		rb = read(mpq_archive->fd, mpq_archive->mpq_header, sizeof(mpq_header_s));
-
-		/* if different number of bytes read, break the loop. */
-		if (rb != sizeof(mpq_header_s)) {
+		if ((rb = read(mpq_archive->fd, mpq_archive->mpq_header, sizeof(mpq_header_s))) != sizeof(mpq_header_s)) {
 
 			/* no valid mpq archive. */
 			return LIBMPQ_ARCHIVE_ERROR_FORMAT;
@@ -490,6 +487,7 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive) {
 
 	/* some common variables. */
 	int result = 0;
+	int wb     = 0 ;
 
 	int transferred = 1;
 	unsigned char buffer[0x1000];
@@ -512,7 +510,11 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive) {
 		}
 
 		/* write buffer to disk. */
-		write(mpq_archive->mpq_file->fd, mpq_archive->mpq_file->out_buf, mpq_archive->mpq_file->mpq_block->uncompressed_size);
+		if ((wb = write(mpq_archive->mpq_file->fd, mpq_archive->mpq_file->out_buf, mpq_archive->mpq_file->mpq_block->uncompressed_size)) < 0) {
+
+			/* something on write to disk failed. */
+			return LIBMPQ_FILE_ERROR_WRITE;
+		}
 	}
 
 	/* check if file is stored in multiple blocks. */
