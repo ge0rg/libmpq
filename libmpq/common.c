@@ -265,6 +265,68 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 	return LIBMPQ_SUCCESS;
 }
 
+/* function to read a file as single sector. */
+int libmpq__read_file_single(mpq_archive_s *mpq_archive) {
+
+	/* total number of bytes read. */
+	int rb = 0;
+	int tb = 0;
+
+	/* seek in file. */
+	lseek(mpq_archive->fd, mpq_archive->mpq_file->mpq_block->offset, SEEK_SET);
+
+	/* check if file is really compressed and decompress it or copy data only. */
+	if (mpq_archive->mpq_file->mpq_block->compressed_size < mpq_archive->mpq_file->mpq_block->uncompressed_size) {
+
+		/* read the compressed file data. */
+		if ((rb = read(mpq_archive->fd, mpq_archive->mpq_file->in_buf, mpq_archive->mpq_file->mpq_block->compressed_size)) < 0) {
+
+			/* something on read from archive failed. */
+			return LIBMPQ_FILE_ERROR_READ;
+		}
+
+		/* check if the file is compressed with pkware data compression library. */
+		if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESS_PKWARE) {
+
+			/* decompress using pkzip. */
+			if ((tb = libmpq__decompress_pkzip(mpq_archive->mpq_file->out_buf, mpq_archive->mpq_file->mpq_block->uncompressed_size, mpq_archive->mpq_file->in_buf, mpq_archive->mpq_file->mpq_block->compressed_size)) < 0) {
+
+				/* something on decompression failed. */
+				return tb;
+			}
+		}
+
+		/*
+		 *  check if it is a file compressed by blizzard's multiple compression, note that storm.dll
+		 *  version 1.0.9 distributed with warcraft 3 passes the full path name of the opened archive
+		 *  as the new last parameter.
+		 */
+		if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESS_MULTI) {
+
+			/* decompress using mutliple algorithm. */
+			if ((tb = libmpq__decompress_multi(mpq_archive->mpq_file->out_buf, mpq_archive->mpq_file->mpq_block->uncompressed_size, mpq_archive->mpq_file->in_buf, mpq_archive->mpq_file->mpq_block->compressed_size)) < 0) {
+
+				/* something on decompression failed. */
+				return tb;
+			}
+		}
+	} else {
+
+		/* read the uncompressed data. */
+		if ((rb = read(mpq_archive->fd, mpq_archive->mpq_file->out_buf, mpq_archive->mpq_file->mpq_block->compressed_size)) < 0) {
+
+			/* something on read from archive failed. */
+			return LIBMPQ_FILE_ERROR_READ;
+		}
+
+		/* save the number of transferred bytes. */
+		tb = rb;
+	}
+
+	/* return the copied bytes. */
+	return tb;
+}
+
 /* function to read decrypted block. */
 int libmpq__read_file_block(mpq_archive_s *mpq_archive, unsigned int block_offset, unsigned char *buffer, unsigned int blockbytes) {
 
@@ -382,7 +444,9 @@ int libmpq__read_file_block(mpq_archive_s *mpq_archive, unsigned int block_offse
 
 			/* check if the file is compressed with pkware data compression library. */
 			if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESS_PKWARE) {
-				libmpq__decompress_pkzip(buffer, &outlength, &tempbuf[blockstart], blocksize);
+
+				/* decompress using pkzip. */
+				outlength = libmpq__decompress_pkzip(buffer, outlength, &tempbuf[blockstart], blocksize);
 			}
 
 			/*
@@ -391,7 +455,9 @@ int libmpq__read_file_block(mpq_archive_s *mpq_archive, unsigned int block_offse
 			 *  as the new last parameter.
 			 */
 			if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESS_MULTI) {
-				libmpq__decompress_multi(buffer, &outlength, &tempbuf[blockstart], blocksize);
+
+				/* decompress using mutliple algorithm. */
+				outlength = libmpq__decompress_multi(buffer, outlength, &tempbuf[blockstart], blocksize);
 			}
 
 			/* fill values. */
@@ -558,8 +624,9 @@ int libmpq__read_file_offset(mpq_archive_s *mpq_archive) {
 	/* some common variables. */
 	int rb = 0;
 
-	/* allocate buffers for decompression. */
-	if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) {
+	/* check if block is compressed and no single sector. */
+	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) != 0 &&
+	    (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_SINGLE) == 0) {
 
 		/* seek to block position. */
 		lseek(mpq_archive->fd, mpq_archive->mpq_file->mpq_block->offset, SEEK_SET);

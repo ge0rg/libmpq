@@ -62,6 +62,11 @@ int libmpq__read_table_block(
 	mpq_archive_s	*mpq_archive
 );
 
+/* function to read a file as single sector. */
+int libmpq__read_file_single(
+	mpq_archive_s	*mpq_archive
+);
+
 /* function to read decrypted block. */
 int libmpq__read_file_block(
 	mpq_archive_s	*mpq_archive,

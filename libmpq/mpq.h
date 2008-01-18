@@ -53,6 +53,8 @@
 #define LIBMPQ_FILE_ERROR_RANGE			-4		/* filenumber is out of range. */
 #define LIBMPQ_FILE_ERROR_MALLOC		-5		/* memory allocation error for file. */
 #define LIBMPQ_FILE_ERROR_DECRYPT		-6		/* we don't know the decryption seed. */
+#define LIBMPQ_FILE_ERROR_READ			-7		/* read error on file from archive. */
+#define LIBMPQ_FILE_ERROR_DECOMPRESS		-8		/* error on decompression. */
 
 /* define generic mpq archive information. */
 #define LIBMPQ_MPQ_HEADER_ID			0x1A51504D	/* mpq archive header ('MPQ\x1A') */
@@ -78,6 +80,7 @@
 #define LIBMPQ_FILE_COMPRESSED			0x0000FF00	/* file is compressed. */
 #define LIBMPQ_FILE_COMPRESS_PKWARE		0x00000100	/* compression made by pkware data compression library. */
 #define LIBMPQ_FILE_COMPRESS_MULTI		0x00000200	/* multiple compressions. */
+#define LIBMPQ_FILE_SINGLE			0x01000000	/* file is stored in one single sector, first seen in world of warcraft. */
 
 /* define true and false, because not all systems have them. */
 #ifndef FALSE
@@ -137,6 +140,8 @@ typedef struct {
 	unsigned int	*compressed_offset;	/* position of each file block (only for compressed files). */
 	unsigned int	file;			/* file number which is actually processed. */
 	unsigned char	*block_buffer;		/* buffer (cache) for file block. */
+	unsigned char	*in_buf;		/* input buffer (compressed data for compressed files). */
+	unsigned char	*out_buf;		/* output buffer (uncompressed data for extracted files). */
 	mpq_hash_s	*mpq_hash;		/* hash table entry. */
 	mpq_block_s	*mpq_block;		/* file block pointer. */
 } mpq_file_s;

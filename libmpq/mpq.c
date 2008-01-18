@@ -335,8 +335,10 @@ int libmpq__file_open(mpq_archive_s *mpq_archive, const unsigned int number) {
 	mpq_archive->mpq_file->file      = (number - 1);
 	snprintf(mpq_archive->mpq_file->filename, PATH_MAX, (const char *)mpq_archive->mpq_list->file_names[number - 1]);
 
-	/* allocate memory for block buffer and compressed offset table. */
-	if ((mpq_archive->mpq_file->block_buffer      = malloc(mpq_archive->block_size)) == NULL ||
+	/* allocate memory for block buffer and compressed offset table, since world of warcraft the archive has extra data appended after the compressed offset table, so we add one more unsigned int. */
+	if ((mpq_archive->mpq_file->in_buf            = malloc(mpq_archive->mpq_file->mpq_block->compressed_size)) == NULL ||
+	    (mpq_archive->mpq_file->out_buf           = malloc(mpq_archive->mpq_file->mpq_block->uncompressed_size)) == NULL ||
+	    (mpq_archive->mpq_file->block_buffer      = malloc(mpq_archive->block_size)) == NULL ||
 	    (mpq_archive->mpq_file->compressed_offset = malloc(sizeof(unsigned int) * (mpq_archive->mpq_file->blocks + 1))) == NULL) {
 
 		/* memory allocation problem. */
@@ -344,6 +346,8 @@ int libmpq__file_open(mpq_archive_s *mpq_archive, const unsigned int number) {
 	}
 
 	/* cleanup. */
+	memset(mpq_archive->mpq_file->in_buf,            0, mpq_archive->mpq_file->mpq_block->compressed_size);
+	memset(mpq_archive->mpq_file->out_buf,           0, mpq_archive->mpq_file->mpq_block->uncompressed_size);
 	memset(mpq_archive->mpq_file->block_buffer,      0, mpq_archive->block_size);
 	memset(mpq_archive->mpq_file->compressed_offset, 0, sizeof(unsigned int) * (mpq_archive->mpq_file->blocks + 1));
 
@@ -373,6 +377,20 @@ int libmpq__file_close(mpq_archive_s *mpq_archive) {
 
 		/* free block buffer. */
 		free(mpq_archive->mpq_file->block_buffer);
+	}
+
+	/* free output buffer if used. */
+	if (mpq_archive->mpq_file->out_buf != NULL) {
+
+		/* free input buffer. */
+		free(mpq_archive->mpq_file->out_buf);
+	}
+
+	/* free input buffer if used. */
+	if (mpq_archive->mpq_file->in_buf != NULL) {
+
+		/* free input buffer. */
+		free(mpq_archive->mpq_file->in_buf);
 	}
 
 	/* free file structure if used. */
@@ -471,6 +489,8 @@ int libmpq__file_number(mpq_archive_s *mpq_archive, const char *name) {
 int libmpq__file_extract(mpq_archive_s *mpq_archive) {
 
 	/* some common variables. */
+	int result = 0;
+
 	int transferred = 1;
 	unsigned char buffer[0x1000];
 
@@ -481,31 +501,50 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive) {
 		return LIBMPQ_FILE_ERROR_OPEN;
 	}
 
-	/* loop until whole file content is written. */
-	while (transferred > 0) {
+	/* check if file is stored in a single sector - first seen in world of warcraft. */
+	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_SINGLE) != 0) {
 
-		/* read file until its end. */
-		transferred = libmpq__read_file_mpq(mpq_archive, buffer, sizeof(buffer));
+		/* read single sector of file. */
+		if ((result = libmpq__read_file_single(mpq_archive)) < 0) {
 
-		/* check if we reached end of file. */
-		if (transferred == 0) {
-
-			/* break execution. */
-			break;
-		} else {
-
-			/* update file position. */
-			mpq_archive->mpq_file->uncompressed_offset += transferred;
+			/* something on transferring failed. */
+			return result;
 		}
 
-		/* write file to disk. */
-		transferred = write(mpq_archive->mpq_file->fd, buffer, transferred);
+		/* write buffer to disk. */
+		write(mpq_archive->mpq_file->fd, mpq_archive->mpq_file->out_buf, mpq_archive->mpq_file->mpq_block->uncompressed_size);
+	}
 
-		/* check if write operations was successful. */
-		if (transferred == 0) {
+	/* check if file is stored in multiple blocks. */
+	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_SINGLE) == 0) {
 
-			/* break execution. */
-			break;
+		/* TODO: rewrote of this stuff will start here... :) */
+		/* loop until whole file content is written. */
+		while (transferred > 0) {
+
+			/* read file until its end. */
+			transferred = libmpq__read_file_mpq(mpq_archive, buffer, sizeof(buffer));
+
+			/* check if we reached end of file. */
+			if (transferred == 0) {
+
+				/* break execution. */
+				break;
+			} else {
+
+				/* update file position. */
+				mpq_archive->mpq_file->uncompressed_offset += transferred;
+			}
+
+			/* write file to disk. */
+			transferred = write(mpq_archive->mpq_file->fd, buffer, transferred);
+
+			/* check if write operations was successful. */
+			if (transferred == 0) {
+
+				/* break execution. */
+				break;
+			}
 		}
 	}
 
