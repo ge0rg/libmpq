@@ -54,7 +54,8 @@
 #define LIBMPQ_FILE_ERROR_MALLOC		-5		/* memory allocation error for file. */
 #define LIBMPQ_FILE_ERROR_DECRYPT		-6		/* we don't know the decryption seed. */
 #define LIBMPQ_FILE_ERROR_READ			-7		/* read error on file from archive. */
-#define LIBMPQ_FILE_ERROR_DECOMPRESS		-8		/* error on decompression. */
+#define LIBMPQ_FILE_ERROR_WRITE			-8		/* write error on file to disk. */
+#define LIBMPQ_FILE_ERROR_DECOMPRESS		-9		/* error on decompression. */
 
 /* define generic mpq archive information. */
 #define LIBMPQ_MPQ_HEADER_ID			0x1A51504D	/* mpq archive header ('MPQ\x1A') */
