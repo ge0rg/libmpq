@@ -46,17 +46,29 @@ static decompress_table_s dcmp_table[] = {
 };
 
 /* this function decompress a stream using huffman algorithm. */
-int libmpq__decompress_huffman(unsigned char *out_buf, int *out_length, unsigned char *in_buf, int in_length) {
+int libmpq__decompress_huffman(unsigned char *out_buf, int out_size, unsigned char *in_buf, int in_size) {
 
-	/* huffman tree information. */
-	struct huffman_tree_s *ht         = malloc(sizeof(struct huffman_tree_s));
-	struct huffman_input_stream_s *is = malloc(sizeof(struct huffman_input_stream_s));
-	struct huffman_tree_item_s *hi    = malloc(sizeof(struct huffman_tree_item_s));
+	/* TODO: make typdefs of this structs? */
+	/* some common variables. */
+	int result = 0;
+	int tb     = 0;
+	struct huffman_tree_s *ht;
+	struct huffman_tree_item_s *hi;
+	struct huffman_input_stream_s *is;
+
+	/* allocate memory for the huffman tree. */
+	if ((ht = malloc(sizeof(struct huffman_tree_s))) == NULL ||
+	    (hi = malloc(sizeof(struct huffman_tree_item_s))) == NULL ||
+	    (is = malloc(sizeof(struct huffman_input_stream_s))) == NULL) {
+
+		/* memory allocation problem. */
+		return LIBMPQ_ARCHIVE_ERROR_MALLOC;
+	}
 
 	/* cleanup structures. */
 	memset(ht, 0, sizeof(struct huffman_tree_s));
-	memset(is, 0, sizeof(struct huffman_input_stream_s));
 	memset(hi, 0, sizeof(struct huffman_tree_item_s));
+	memset(is, 0, sizeof(struct huffman_input_stream_s));
 
 	/* initialize input stream. */
 	is->bit_buf  = *(unsigned int *)in_buf;
@@ -64,205 +76,307 @@ int libmpq__decompress_huffman(unsigned char *out_buf, int *out_length, unsigned
 	is->in_buf   = (unsigned char *)in_buf;
 	is->bits     = 32;
 
+// TODO: add all the mallocs to init function and add function libmpq__huffman_tree_free() */
+//	if ((result = libmpq__huffman_tree_init(ht, hi, LIBMPQ_HUFF_DECOMPRESS)) < 0) {
+//
+//		/* something on zlib initialization failed. */
+//		return LIBMPQ_FILE_ERROR_DECOMPRESS;
+//	}
+
 	/* initialize the huffman tree for decompression. */
 	libmpq__huffman_tree_init(ht, hi, LIBMPQ_HUFF_DECOMPRESS);
 
 	/* save the number of copied bytes. */
-	*out_length = libmpq__do_decompress_huffman(ht, is, out_buf, *out_length);
+	tb = libmpq__do_decompress_huffman(ht, is, out_buf, out_size);
 
-	/* free allocated memory. */
-	free(hi);
-	free(is);
-	free(ht);
+	/* free input stream if used. */
+	if (is != NULL) {
+
+		/* free input stream. */
+		free(is);
+	}
+
+	/* free huffman item if used. */
+	if (hi != NULL) {
+
+		/* free huffman item stream. */
+		free(hi);
+	}
+
+	/* free huffman tree if used. */
+	if (ht != NULL) {
+
+		/* free huffman tree stream. */
+		free(ht);
+	}
 
 	/* if no error was found, return zero. */
-	return 0;
+	return tb;
 }
 
 /* this function decompress a stream using zlib algorithm. */
-int libmpq__decompress_zlib(unsigned char *out_buf, int *out_length, unsigned char *in_buf, int in_length) {
+int libmpq__decompress_zlib(unsigned char *out_buf, int out_size, unsigned char *in_buf, int in_size) {
 
-	/* stream information for zlib. */
+	/* some common variables. */
+	int result = 0;
+	int tb     = 0;
 	z_stream z;
-	int result;
 
 	/* fill the stream structure for zlib. */
 	z.next_in   = (Bytef *)in_buf;
-	z.avail_in  = (uInt)in_length;
-	z.total_in  = in_length;
+	z.avail_in  = (uInt)in_size;
+	z.total_in  = in_size;
 	z.next_out  = (Bytef *)out_buf;
-	z.avail_out = *out_length;
+	z.avail_out = (uInt)out_size;
 	z.total_out = 0;
 	z.zalloc    = NULL;
 	z.zfree     = NULL;
 
 	/* initialize the decompression structure, storm.dll uses zlib version 1.1.3. */
-	if ((result = inflateInit(&z)) == 0) {
+	if ((result = inflateInit(&z)) != Z_OK) {
 
-		/* call zlib to decompress the data. */
-		result = inflate(&z, Z_FINISH);
-		*out_length = z.total_out;
-		inflateEnd(&z);
+		/* something on zlib initialization failed. */
+		return LIBMPQ_FILE_ERROR_DECOMPRESS;
 	}
 
-	/* return zlib status. */
-	return result;
+	/* call zlib to decompress the data. */
+	if ((result = inflate(&z, Z_FINISH)) != Z_STREAM_END) {
+
+		/* something on zlib decompression failed. */
+		return LIBMPQ_FILE_ERROR_DECOMPRESS;
+	}
+
+	/* save transferred bytes. */
+	tb = z.total_out;
+
+	/* cleanup zlib. */
+	if ((result = inflateEnd(&z)) != Z_OK) {
+
+		/* something on zlib finalization failed. */
+		return LIBMPQ_FILE_ERROR_DECOMPRESS;
+	}
+
+	/* return transferred bytes. */
+	return tb;
 }
 
 /* this function decompress a stream using pkzip algorithm. */
-int libmpq__decompress_pkzip(unsigned char *out_buf, int *out_length, unsigned char *in_buf, int in_length) {
+int libmpq__decompress_pkzip(unsigned char *out_buf, int out_size, unsigned char *in_buf, int in_size) {
 
-	/* data information. */
+	/* some common variables. */
+	int tb = 0;
+	unsigned char *work_buf;
 	pkzip_data_s info;
 
-	/* work buffer. */
-	unsigned char *work_buf = malloc(sizeof(pkzip_cmp_s));
+	/* allocate memory for pkzip data structure. */
+	if ((work_buf = malloc(sizeof(pkzip_cmp_s))) == NULL) {
+
+		/* memory allocation problem. */
+		return LIBMPQ_ARCHIVE_ERROR_MALLOC;
+	}
+
+	/* cleanup. */
+	memset(work_buf, 0, sizeof(pkzip_cmp_s));
 
 	/* fill data information structure. */
 	info.in_buf   = in_buf;
 	info.in_pos   = 0;
-	info.in_bytes = in_length;
+	info.in_bytes = in_size;
 	info.out_buf  = out_buf;
 	info.out_pos  = 0;
-	info.max_out  = *out_length;
+	info.max_out  = out_size;
 
 	/* do the decompression. */
-	libmpq__do_decompress_pkzip(work_buf, &info);
-	*out_length = info.out_pos;
+	if ((tb = libmpq__do_decompress_pkzip(work_buf, &info)) < 0) {
 
-	/* free allocated memory. */
-	free(work_buf);
+		/* free working buffer if used. */
+		if (work_buf != NULL) {
+
+			/* free working buffer. */
+			free(work_buf);
+		}
+
+		/* something failed on pkzip decompression. */
+		return tb;
+	}
+
+	/* save transferred bytes. */
+	tb = info.out_pos;
+
+	/* free working buffer if used. */
+	if (work_buf != NULL) {
+
+		/* free working buffer. */
+		free(work_buf);
+	}
 
 	/* if no error was found, return zero. */
-	return 0;
+	return tb;
 }
 
 /* this function decompress a stream using bzip2 library. */
-int libmpq__decompress_bzip2(unsigned char *out_buf, int *out_length, unsigned char *in_buf, int in_length) {
+int libmpq__decompress_bzip2(unsigned char *out_buf, int out_size, unsigned char *in_buf, int in_size) {
 
 	/* TODO: add bzip2 decompression here. */
 	/* if no error was found, return zero. */
-	return 0;
+	return LIBMPQ_FILE_ERROR_DECOMPRESS;
 }
 
 /* this function decompress a stream using wave algorithm. (1 channel) */
-int libmpq__decompress_wave_mono(unsigned char *out_buf, int *out_length, unsigned char *in_buf, int in_length) {
+int libmpq__decompress_wave_mono(unsigned char *out_buf, int out_size, unsigned char *in_buf, int in_size) {
+
+	/* some common variables. */
+	int tb = 0;
 
 	/* save the number of copied bytes. */
-	*out_length = libmpq__do_decompress_wave(out_buf, *out_length, in_buf, in_length, 1);
+	if ((tb = libmpq__do_decompress_wave(out_buf, out_size, in_buf, in_size, 1)) < 0) {
 
-	/* if no error was found, return zero. */
-	return 0;
+		/* something on wave decompression failed. */
+		return tb;
+	}
+
+	/* return transferred bytes. */
+	return tb;
 }
 
 /* this function decompress a stream using wave algorithm. (2 channels) */
-int libmpq__decompress_wave_stereo(unsigned char *out_buf, int *out_length, unsigned char *in_buf, int in_length) {
+int libmpq__decompress_wave_stereo(unsigned char *out_buf, int out_size, unsigned char *in_buf, int in_size) {
+
+	/* some common variables. */
+	int tb = 0;
 
 	/* save the number of copied bytes. */
-	*out_length = libmpq__do_decompress_wave(out_buf, *out_length, in_buf, in_length, 2);
+	if ((tb = libmpq__do_decompress_wave(out_buf, out_size, in_buf, in_size, 2)) < 0) {
 
-	/* if no error was found, return zero. */
-	return 0;
+		/* something on wave decompression failed. */
+		return tb;
+	}
+
+	/* return transferred bytes. */
+	return tb;
 }
 
 /* this function decompress a stream using a combination of the other compression algorithm. */
-int libmpq__decompress_multi(unsigned char *out_buf, int *pout_length, unsigned char *in_buf, int in_length) {
+int libmpq__decompress_multi(unsigned char *out_buf, int out_size, unsigned char *in_buf, int in_size) {
 
-	/* temporary storage for decompressed data. */
-	unsigned char *temp_buf  = NULL;
-
-	/* where to store decompressed data. */
-	unsigned char *work_buf  = NULL;
-
-	/* for storage number of output bytes. */
-	int out_length = *pout_length;
-
-	/* counter for every use. */
-	unsigned int count   = 0;
-	unsigned int entries = (sizeof(dcmp_table) / sizeof(decompress_table_s));
-
-	/* decompressions applied to the block. */
-	unsigned char fDecompressions1;
-
-	/* another copy of decompressions applied to the block. */
-	unsigned char fDecompressions2;
-
-	/* counter for the loops. */
+	/* some common variables. */
+	int tb                  = 0;
+	unsigned int count      = 0;
+	unsigned int entries    = (sizeof(dcmp_table) / sizeof(decompress_table_s));
+	unsigned char *temp_buf = NULL;
+	unsigned char *work_buf;
+	unsigned char decompress_flag;
 	unsigned int i;
 
-	/* check if the input length is the same as output, so do nothing. */
-	if (in_length == out_length) {
+	/* check if the input size is the same as output size, so do nothing. */
+	if (in_size == out_size) {
 
 		/* check if buffer have same data. */
 		if (in_buf == out_buf) {
-			return 0;
+
+			/* return output buffer size. */
+			return out_size;
 		}
 
 		/* copy buffer to target. */
-		memcpy(out_buf, in_buf, in_length);
-		return 0;
+		memcpy(out_buf, in_buf, in_size);
+
+		/* return output buffer size. */
+		return out_size;
 	}
 
-	/* get applied compression types and decrement data length. */
-	fDecompressions1 = fDecompressions2 = *in_buf++;
-	in_length--;
+	/* get applied compression types. */
+	decompress_flag = *in_buf++;
+
+	/* decrement data size. */
+	in_size--;
 
 	/* search decompression table type and get all types of compression. */
 	for (i = 0; i < entries; i++) {
 
 		/* check if have to apply this decompression. */
-		if (fDecompressions1 & dcmp_table[i].mask) {
+		if (decompress_flag & dcmp_table[i].mask) {
+
+			/* increase counter for used compression algorithms. */
 			count++;
 		}
-
-		/* clear this flag from temporary variable. */
-		fDecompressions2 &= ~dcmp_table[i].mask;
 	}
 
 	/* check if there is some method unhandled. (e.g. compressed by future versions) */
-	if (fDecompressions2 != 0) {
-		/* TODO: Add an error handler here. */
-		/* printf("Unknown Compression\n"); */
-		return 1;
+	if (count == 0) {
+
+		/* compression type is unknown and we need to implement it. :) */
+		return LIBMPQ_FILE_ERROR_DECOMPRESS;
 	}
 
-	/* check if there is more than only one compression, we have to allocate extra buffer. */
-	if (count >= 2) {
-		temp_buf = malloc(out_length);
+	/* if multiple decompressions should be made, we need temporary buffer for the data. */
+	if (count > 1) {
+
+		/* allocate memory for temporary buffer. */
+		if ((temp_buf = malloc(out_size)) == NULL) {
+
+			/* memory allocation problem. */
+			return LIBMPQ_ARCHIVE_ERROR_MALLOC;
+		}
+
+		/* cleanup. */
+		memset(temp_buf, 0, out_size);
 	}
 
 	/* apply all decompressions. */
 	for (i = 0, count = 0; i < entries; i++) {
 
 		/* check if not used this kind of compression. */
-		if (fDecompressions1 & dcmp_table[i].mask) {
+		if (decompress_flag & dcmp_table[i].mask) {
 
-			/* if odd case, use target buffer for output, otherwise use allocated tempbuf. */
-			work_buf   = (count++ & 1) ? temp_buf : out_buf;
-			out_length = *pout_length;
+			/* if multiple decompressions should be made, we need temporary buffer for the data. */
+			if (count == 0) {
+
+				/* use output buffer as working buffer. */
+				work_buf = out_buf;
+			} else {
+
+				/* use temporary buffer as working buffer. */
+				work_buf = temp_buf;
+			}
 
 			/* decompress buffer using corresponding function. */
-			dcmp_table[i].decompress(work_buf, &out_length, in_buf, in_length);
+			if ((tb = dcmp_table[i].decompress(work_buf, out_size, in_buf, in_size)) < 0) {
 
-			/* move output length to source length for next compression. */
-			in_length = out_length;
-			in_buf    = work_buf;
+				/* free temporary buffer if used. */
+				if (temp_buf != NULL) {
+
+					/* free temporary buffer. */
+					free(temp_buf);
+				}
+
+				/* something on decompression failed. */
+				return tb;
+			}
+
+			/* move output size to source size for next compression. */
+			in_size  = out_size;
+			in_buf     = work_buf;
+
+			/* increase counter. */
+			count++;
 		}
 	}
 
-	/* check if output buffer is not the same like target buffer, so we have to copy data. */
+	/* if output buffer is not the same like target buffer, we have to copy data (this will happen on multiple decompressions). */
 	if (work_buf != out_buf) {
-		memcpy(out_buf, in_buf, out_length);
+
+		/* copy buffer. */
+		memcpy(out_buf, in_buf, out_size);
 	}
 
-	/* save copied bytes. */
-	*pout_length = out_length;
-
-	/* delete temporary buffer, if necessary. */
+	/* free temporary buffer if used. */
 	if (temp_buf != NULL) {
+
+		/* free temporary buffer. */
 		free(temp_buf);
 	}
 
-	/* if no error was found, return zero. */
-	return 0;
+	/* return transferred bytes.. */
+	return tb;
 }
