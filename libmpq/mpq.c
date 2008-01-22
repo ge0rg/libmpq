@@ -413,6 +413,10 @@ int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int infotype, const u
 				/* return the compression type multi. */
 				return LIBMPQ_FILE_COMPRESS_MULTI;
 			}
+		case LIBMPQ_ARCHIVE_BLOCK_COUNT:
+
+			/* block number is (uncompressed size / block size). */
+			return mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[number - 1]].uncompressed_size / mpq_archive->block_size + 1;
 		default:
 
 			/* if no error was found, return zero. */
