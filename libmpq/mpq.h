@@ -69,6 +69,7 @@
 #define LIBMPQ_ARCHIVE_HASH_TABLE_COUNT		5		/* mpq archive hashtable size. */
 #define LIBMPQ_ARCHIVE_BLOCK_TABLE_COUNT	6		/* mpq archive blocktable size. */
 #define LIBMPQ_ARCHIVE_BLOCK_SIZE		7		/* mpq archive blocksize. */
+#define LIBMPQ_ARCHIVE_BLOCK_COUNT		8		/* mpq file blocks. */
 
 /* define generic values for returning file information. */
 #define LIBMPQ_FILE_SIZE_COMPRESSED		1		/* compressed filesize of the given file in archive. */
@@ -139,7 +140,6 @@ typedef struct {
 	unsigned int	blocks;			/* number of blocks in the file (inclusive the last noncomplete one). */
 	unsigned int	uncompressed_offset;	/* position in file after extraction (bytes copied). */
 	unsigned int	*compressed_offset;	/* position of each file block (only for compressed files). */
-//	unsigned int	file;			/* file number which is actually processed. */
 	mpq_hash_s	*mpq_hash;		/* hash table entry. */
 	mpq_block_s	*mpq_block;		/* file block pointer. */
 } mpq_file_s;
