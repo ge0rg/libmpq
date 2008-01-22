@@ -69,12 +69,12 @@
 #define LIBMPQ_ARCHIVE_HASH_TABLE_COUNT		5		/* mpq archive hashtable size. */
 #define LIBMPQ_ARCHIVE_BLOCK_TABLE_COUNT	6		/* mpq archive blocktable size. */
 #define LIBMPQ_ARCHIVE_BLOCK_SIZE		7		/* mpq archive blocksize. */
-#define LIBMPQ_ARCHIVE_BLOCK_COUNT		8		/* mpq file blocks. */
 
 /* define generic values for returning file information. */
 #define LIBMPQ_FILE_SIZE_COMPRESSED		1		/* compressed filesize of the given file in archive. */
 #define LIBMPQ_FILE_SIZE_UNCOMPRESSED		2		/* uncompressed filesize of the given file in archive. */
 #define LIBMPQ_FILE_TYPE_COMPRESSION		3		/* compression type of the given file in archive.*/
+#define LIBMPQ_FILE_BLOCK_COUNT			4		/* mpq file blocks. */
 
 /* define values used by blizzard as flags. */
 #define LIBMPQ_FILE_EXISTS			0x80000000	/* set if file exists, reset when the file was deleted. */
