@@ -348,11 +348,16 @@ int libmpq__file_open(mpq_archive_s *mpq_archive, const unsigned int number) {
 	memset(mpq_archive->mpq_file->block_buffer,      0, mpq_archive->block_size);
 	memset(mpq_archive->mpq_file->compressed_offset, 0, sizeof(unsigned int) * (mpq_archive->mpq_file->blocks + 1));
 
-	/* load compressed block offset if necessary. */
-	if ((result = libmpq__read_file_offset(mpq_archive)) != 0) {
+	/* check if block is compressed and no single sector. */
+	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) != 0 &&
+	    (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_SINGLE) == 0) {
 
-		/* error on decrypting block positions. */
-		return result;
+		/* load compressed block offset if necessary. */
+		if ((result = libmpq__read_file_offset(mpq_archive)) != 0) {
+
+			/* error on decrypting block positions. */
+			return result;
+		}
 	}
 
 	/* if no error was found, return zero. */
@@ -486,11 +491,13 @@ int libmpq__file_number(mpq_archive_s *mpq_archive, const char *name) {
 int libmpq__file_extract(mpq_archive_s *mpq_archive) {
 
 	/* some common variables. */
-	int result = 0;
-	int wb     = 0 ;
+	int rb = 0;
+	int wb = 0;
+	unsigned char out_buf[mpq_archive->block_size];
+	unsigned int block_number = 0;
 
-	int transferred = 1;
-	unsigned char buffer[0x1000];
+	/* cleanup. */
+	memset(out_buf, 0, mpq_archive->block_size);
 
 	/* check if file could be written. */
 	if ((mpq_archive->mpq_file->fd = open(mpq_archive->mpq_list->file_names[mpq_archive->mpq_file->file], O_RDWR|O_CREAT|O_TRUNC, 0644)) == -1) {
@@ -503,14 +510,28 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive) {
 	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_SINGLE) != 0) {
 
 		/* read single sector of file. */
-		if ((result = libmpq__read_file_single(mpq_archive)) < 0) {
+		if ((rb = libmpq__read_file_single(mpq_archive)) < 0) {
+
+			/* check if file descriptor is valid. */
+			if ((close(mpq_archive->mpq_file->fd)) == -1) {
+
+				/* file was not opened. */
+				return LIBMPQ_FILE_ERROR_CLOSE;
+			}
 
 			/* something on transferring failed. */
-			return result;
+			return rb;
 		}
 
 		/* write buffer to disk. */
-		if ((wb = write(mpq_archive->mpq_file->fd, mpq_archive->mpq_file->out_buf, mpq_archive->mpq_file->mpq_block->uncompressed_size)) < 0) {
+		if ((wb = write(mpq_archive->mpq_file->fd, mpq_archive->mpq_file->out_buf, rb)) < 0) {
+
+			/* check if file descriptor is valid. */
+			if ((close(mpq_archive->mpq_file->fd)) == -1) {
+
+				/* file was not opened. */
+				return LIBMPQ_FILE_ERROR_CLOSE;
+			}
 
 			/* something on write to disk failed. */
 			return LIBMPQ_FILE_ERROR_WRITE;
@@ -520,34 +541,33 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive) {
 	/* check if file is stored in multiple blocks. */
 	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_SINGLE) == 0) {
 
-		/* TODO: rewrote of this stuff will start here... :) */
-		/* loop until whole file content is written. */
-		while (transferred > 0) {
+		/* loop through all blocks and decompress them. */
+		do {
 
 			/* read file until its end. */
-			transferred = libmpq__read_file_mpq(mpq_archive, buffer, sizeof(buffer));
+			if ((rb = libmpq__read_file_block(mpq_archive, out_buf, sizeof(out_buf), block_number)) < 0) {
 
-			/* check if we reached end of file. */
-			if (transferred == 0) {
+				/* check if file descriptor is valid. */
+				if ((close(mpq_archive->mpq_file->fd)) == -1) {
 
-				/* break execution. */
-				break;
-			} else {
+					/* file was not opened. */
+					return LIBMPQ_FILE_ERROR_CLOSE;
+				}
 
-				/* update file position. */
-				mpq_archive->mpq_file->uncompressed_offset += transferred;
+				/* something on transferring failed. */
+				return rb;
 			}
 
-			/* write file to disk. */
-			transferred = write(mpq_archive->mpq_file->fd, buffer, transferred);
+			/* write buffer to disk. */
+			if ((wb = write(mpq_archive->mpq_file->fd, out_buf, rb)) < 0) {
 
-			/* check if write operations was successful. */
-			if (transferred == 0) {
-
-				/* break execution. */
-				break;
+				/* something on write to disk failed. */
+				return LIBMPQ_FILE_ERROR_WRITE;
 			}
-		}
+
+			/* increase block counter. */
+			block_number++;
+		} while (rb > 0);
 	}
 
 	/* check if file descriptor is valid. */
