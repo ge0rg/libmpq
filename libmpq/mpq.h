@@ -139,10 +139,7 @@ typedef struct {
 	unsigned int	blocks;			/* number of blocks in the file (inclusive the last noncomplete one). */
 	unsigned int	uncompressed_offset;	/* position in file after extraction (bytes copied). */
 	unsigned int	*compressed_offset;	/* position of each file block (only for compressed files). */
-	unsigned int	file;			/* file number which is actually processed. */
-	unsigned char	*block_buffer;		/* buffer (cache) for file block. */
-	unsigned char	*in_buf;		/* input buffer (compressed data for compressed files). */
-	unsigned char	*out_buf;		/* output buffer (uncompressed data for extracted files). */
+//	unsigned int	file;			/* file number which is actually processed. */
 	mpq_hash_s	*mpq_hash;		/* hash table entry. */
 	mpq_block_s	*mpq_block;		/* file block pointer. */
 } mpq_file_s;
@@ -191,7 +188,12 @@ extern int libmpq__file_open(mpq_archive_s *mpq_archive, const unsigned int numb
 extern int libmpq__file_close(mpq_archive_s *mpq_archive);
 extern int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int infotype, const unsigned int number);
 extern char *libmpq__file_name(mpq_archive_s *mpq_archive, const unsigned int number);
-extern int libmpq__file_number(mpq_archive_s *mpq_archive, const char *name);
-extern int libmpq__file_extract(mpq_archive_s *mpq_archive);
+extern int libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename);
+
+/* generic file decompression function to disk. */
+extern int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filename);
+
+/* generic file decompression function to memory. */
+extern int libmpq__file_decompress_memory(mpq_archive_s *mpq_archive, unsigned char *out_buf, unsigned int out_size);
 
 #endif						/* _MPQ_H */
