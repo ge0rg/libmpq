@@ -67,19 +67,12 @@ int libmpq__read_file_single(
 	mpq_archive_s	*mpq_archive
 );
 
-/* function to read decrypted block. */
+/* function to read block from archie and decrypt and decompress it. */
 int libmpq__read_file_block(
 	mpq_archive_s	*mpq_archive,
-	unsigned int	block_offset,
-	unsigned char	*buffer,
-	unsigned int	blockbytes
-);
-
-/* function to read file from mpq archive. */
-int libmpq__read_file_mpq(
-	mpq_archive_s	*mpq_archive,
-	unsigned char	*buffer,
-	unsigned int	toread
+	unsigned char	*out_buf,
+	unsigned int	out_size,
+	unsigned int	block_number
 );
 
 /* function to read variable block positions used in compressed files. */

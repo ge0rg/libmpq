@@ -33,6 +33,9 @@
 /* libmpq generic includes. */
 #include "extract.h"
 
+// TODO: REMOVE THIS.
+#include <fcntl.h>
+
 /* function to decrypt a mpq block.. */
 int libmpq__decrypt_mpq_block(mpq_archive_s *mpq_archive, unsigned int *block, unsigned int length, unsigned int seed1) {
 
@@ -268,7 +271,7 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 /* function to read a file as single sector. */
 int libmpq__read_file_single(mpq_archive_s *mpq_archive) {
 
-	/* total number of bytes read. */
+	/* some common variables. */
 	int rb = 0;
 	int tb = 0;
 
@@ -327,126 +330,90 @@ int libmpq__read_file_single(mpq_archive_s *mpq_archive) {
 	return tb;
 }
 
-/* function to read decrypted block. */
-int libmpq__read_file_block(mpq_archive_s *mpq_archive, unsigned int block_offset, unsigned char *buffer, unsigned int blockbytes) {
+/* function to read a block from mpq archive. */
+int libmpq__read_file_block(mpq_archive_s *mpq_archive, unsigned char *out_buf, unsigned int out_size, unsigned int block_number) {
 
-	/* reading position from the file. */
-	unsigned int readpos;
+	/* some common variables. */
+	int rb = 0;
+	int tb = 0;
 
-	/* block number. (needed for decrypt) */
-	unsigned int blocknum;
+	/* block offset stores the relative block position inside the archive. */
+	unsigned int block_offset = mpq_archive->block_size * block_number;
 
-	/* number of blocks to load. */
-	unsigned int nblocks;
+	/* input buffer for reading data and its size. */
+	unsigned char *in_buf;
+	unsigned int in_size = 0;
 
-	/* block counter. */
-	unsigned int i;
+	/* if remaining bytes are less block size, decrease the block size. */
+	if ((block_offset + mpq_archive->block_size) > mpq_archive->mpq_file->mpq_block->uncompressed_size) {
 
-	/* buffer for reading compressed data from the file. */
-	unsigned char *tempbuf   = NULL;
-
-	/* number of bytes to read. */
-	unsigned int toread      = 0;
-
-	/* total number of bytes read. */
-	unsigned int bytesread   = 0;
-
-	/* number of data bytes remaining up to the end of the file. */
-	unsigned int bytesremain = 0;
-
-	/* check parameters, block position and block size must be blockaligned, block size nonzero. */
-	if ((block_offset & (mpq_archive->block_size - 1)) || blockbytes == 0) {
-		return 0;
+		/* last block is smaller than default block size. */
+		out_size = mpq_archive->mpq_file->mpq_block->uncompressed_size - block_offset;
 	}
 
-	/* check the end of file. */
-	if ((block_offset + blockbytes) > mpq_archive->mpq_file->mpq_block->uncompressed_size) {
-		blockbytes = mpq_archive->mpq_file->mpq_block->uncompressed_size - block_offset;
+	/* if no more remaining bytes, read nothing and return zero. */
+	if (block_offset >= mpq_archive->mpq_file->mpq_block->uncompressed_size) {
+
+		/* if no error was found, return zero. */
+		return LIBMPQ_SUCCESS;
 	}
-
-	/* set blocknumber and number of blocks. */
-	bytesremain = mpq_archive->mpq_file->mpq_block->uncompressed_size - block_offset;
-	blocknum    = block_offset / mpq_archive->block_size;
-	nblocks     = blockbytes / mpq_archive->block_size;
-
-	/* check if some bytes are still open and add a block. */
-	if (blockbytes % mpq_archive->block_size) {
-		nblocks++;
-	}
-
-	/* get file position and number of bytes to read. */
-	readpos = block_offset;
-	toread  = blockbytes;
 
 	/* check if file is compressed. */
-	if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) {
-		readpos = mpq_archive->mpq_file->compressed_offset[blocknum];
-		toread  = mpq_archive->mpq_file->compressed_offset[blocknum + nblocks] - readpos;
-	}
+	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) != 0) {
 
-	/* set new read position. */
-	readpos += mpq_archive->mpq_file->mpq_block->offset;
+		/* get new block size from compressed block. */
+		in_size = mpq_archive->mpq_file->compressed_offset[block_number + 1] - mpq_archive->mpq_file->compressed_offset[block_number];
 
-	/* set pointer to buffer, this is necessary if file is not compressed (such files are used in warcraft 3 - the frozen throne setup.mpq archive). */
-	tempbuf = buffer;
+		/* allocate memory for input buffer. */
+		if ((in_buf = malloc(in_size)) == NULL) {
 
-	/* get work buffer for store read data. */
-	if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) {
-		if ((tempbuf = malloc(toread)) == NULL) {
-
-			/* hmmm... we should add a better error handling here :) */
-			return 0;
-		}
-	}
-
-	/* 15018F87 - read all requested blocks. */
-	bytesread = read(mpq_archive->fd, tempbuf, toread);
-
-	/* index of block start in work buffer. */
-	unsigned int blockstart = 0;
-	unsigned int blocksize  = min(blockbytes, mpq_archive->block_size);
-
-	/* current block index. */
-	unsigned int index      = blocknum;
-
-	/* clear read byte counter. */
-	bytesread               = 0;
-
-	/* walk through all blocks. */
-	for (i = 0; i < nblocks; i++, index++) {
-
-		/* some common variables. */
-		int outlength = mpq_archive->block_size;
-
-		/* cut remaining bytes. */
-		if (bytesremain < outlength) {
-			outlength = bytesremain;
+			/* memory allocation problem. */
+			return LIBMPQ_FILE_ERROR_MALLOC;
 		}
 
-		/* get current block length. */
-		if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) {
-			blocksize = mpq_archive->mpq_file->compressed_offset[index + 1] - mpq_archive->mpq_file->compressed_offset[index];
+		/* cleanup. */
+		memset(in_buf, 0, in_size);
+
+		/* read the compressed file data. */
+		if ((rb = read(mpq_archive->fd, in_buf, in_size)) < 0) {
+
+			/* free input buffer if used. */
+			if (in_buf != NULL) {
+
+				/* free input buffer. */
+				free(in_buf);
+			}
+
+			/* something on read from archive failed. */
+			return LIBMPQ_FILE_ERROR_READ;
 		}
 
 		/* check if block is encrypted, we have to decrypt it. */
 		if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_ENCRYPTED) {
-			if (mpq_archive->mpq_file->seed == 0) {
-				return 0;
-			}
-			libmpq__decrypt_mpq_block(mpq_archive, (unsigned int *)&tempbuf[blockstart], blocksize, mpq_archive->mpq_file->seed + index);
+
+			/* decrypt block in input buffer. */
+			libmpq__decrypt_mpq_block(mpq_archive, (unsigned int *)in_buf, in_size, mpq_archive->mpq_file->seed + block_number);
 		}
 
-		/*
-		 *  check if the block is really compressed, recompress it, note that some block may not be compressed,
-		 *  it can only be determined by comparing uncompressed and compressed size.
-		 */
-		if (blocksize < blockbytes) {
+		/* check if block is really compressed, some blocks have set the compression flag, but are not compressed. */
+		if (in_size < (mpq_archive->mpq_file->mpq_block->uncompressed_size - block_offset)) {
 
 			/* check if the file is compressed with pkware data compression library. */
 			if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESS_PKWARE) {
 
 				/* decompress using pkzip. */
-				outlength = libmpq__decompress_pkzip(buffer, outlength, &tempbuf[blockstart], blocksize);
+				if ((tb = libmpq__decompress_pkzip(out_buf, out_size, in_buf, in_size)) < 0) {
+
+					/* free input buffer if used. */
+					if (in_buf != NULL) {
+
+						/* free input buffer. */
+						free(in_buf);
+					}
+
+					/* something on decompression failed. */
+					return tb;
+				}
 			}
 
 			/*
@@ -457,165 +424,48 @@ int libmpq__read_file_block(mpq_archive_s *mpq_archive, unsigned int block_offse
 			if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESS_MULTI) {
 
 				/* decompress using mutliple algorithm. */
-				outlength = libmpq__decompress_multi(buffer, outlength, &tempbuf[blockstart], blocksize);
-			}
+				if ((tb = libmpq__decompress_multi(out_buf, out_size, in_buf, in_size)) < 0) {
 
-			/* fill values. */
-			bytesread += outlength;
-			buffer    += outlength;
+					/* free input buffer if used. */
+					if (in_buf != NULL) {
+
+						/* free input buffer. */
+						free(in_buf);
+					}
+
+					/* something on decompression failed. */
+					return tb;
+				}
+			}
 		} else {
 
-			/* check if we need to copy something. */
-			if (buffer != tempbuf) {
+			/* block has set compression flag, but is not compressed, so copy data to output buffer. */
+			memcpy(out_buf, in_buf, in_size);
 
-				/* copy into buffer. */
-				memcpy(buffer, tempbuf, blocksize);
-			}
-
-			/* fill values. */
-			bytesread += blocksize;
-			buffer    += blocksize;
-		}
-
-		/* fill values. */
-		blockstart  += blocksize;
-		bytesremain -= outlength;
-	}
-
-	/* delete input buffer, if necessary. */
-	if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) {
-		free(tempbuf);
-	}
-
-	/* return the copied bytes. */
-	return bytesread;
-}
-
-/* function to read file from mpq archive. */
-int libmpq__read_file_mpq(mpq_archive_s *mpq_archive, unsigned char *buffer, unsigned int toread) {
-
-	/* position in the file aligned to the whole blocks. */
-	unsigned int block_offset;
-	unsigned int buffer_offset;
-
-	/* number of bytes read from the file. */
-	unsigned int bytesread = 0;
-	unsigned int loaded    = 0;
-
-	/* check if file position is greater or equal to file size. */
-	if (mpq_archive->mpq_file->uncompressed_offset >= mpq_archive->mpq_file->mpq_block->uncompressed_size) {
-		return 0;
-	}
-
-	/* check if to few bytes in the file remaining, cut them. */
-	if ((mpq_archive->mpq_file->mpq_block->uncompressed_size - mpq_archive->mpq_file->uncompressed_offset) < toread) {
-		toread = (mpq_archive->mpq_file->mpq_block->uncompressed_size - mpq_archive->mpq_file->uncompressed_offset);
-	}
-
-	/* block position in the file. */
-	block_offset = mpq_archive->mpq_file->uncompressed_offset & ~(mpq_archive->block_size - 1);
-
-	/* load the first block, if incomplete, it may be loaded in the cache buffer and we have to check if this block is loaded, if not, load it. */
-	if ((mpq_archive->mpq_file->uncompressed_offset % mpq_archive->block_size) != 0) {
-
-		/* number of bytes remaining in the buffer. */
-		unsigned int tocopy;
-		unsigned int loaded = mpq_archive->block_size;
-
-		/* check if data are loaded in the cache. */
-		if (block_offset < mpq_archive->block_size - 1 || block_offset != mpq_archive->block_offset) {   
-
-			/* load one mpq block into archive buffer. */
-			loaded = libmpq__read_file_block(mpq_archive, block_offset, mpq_archive->mpq_file->block_buffer, mpq_archive->block_size);
-			if (loaded == 0) {
-				return 0;
-			}
-
-			/* save lastly accessed file and block position for later use. */
-			mpq_archive->block_offset = block_offset;
-			buffer_offset   = mpq_archive->mpq_file->uncompressed_offset % mpq_archive->block_size;
-		}
-
-		/* check remaining bytes for copying. */
-		tocopy = loaded - buffer_offset;
-		if (tocopy > toread) {
-			tocopy = toread;
-		}
-
-		/* copy data from block buffer into target buffer. */
-		memcpy(buffer, mpq_archive->mpq_file->block_buffer + buffer_offset, tocopy);
-
-		/* update pointers. */
-		toread        -= tocopy;
-		bytesread     += tocopy;
-		buffer        += tocopy;
-		block_offset  += mpq_archive->block_size;
-		buffer_offset += tocopy;
-
-		/* check if we finish read, so return. */
-		if (toread == 0) {
-			return bytesread;
+			/* save the number of transferred bytes. */
+			tb += in_size;
 		}
 	}
 
-	/* load the whole ("middle") blocks only if there are more or equal one block. */
-	if (toread > mpq_archive->block_size) {
+	/* check if file is not compressed. */
+	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) == 0) {
 
-		/* some common variables. */
-		unsigned int blockbytes = toread & ~(mpq_archive->block_size - 1);
+		/* seek in file. */
+		lseek(mpq_archive->fd, mpq_archive->mpq_file->mpq_block->offset + block_offset, SEEK_SET);
 
-		/* read the mpq block from file. */
-		loaded = libmpq__read_file_block(mpq_archive, block_offset, buffer, blockbytes);
-		if (loaded == 0) {
-			return 0;
+		/* read the uncompressed file data. */
+		if ((rb = read(mpq_archive->fd, out_buf, out_size)) < 0) {
+
+			/* something on read from archive failed. */
+			return LIBMPQ_FILE_ERROR_READ;
 		}
 
-		/* update pointers. */
-		toread    -= loaded;
-		bytesread += loaded;
-		buffer    += loaded;
-		block_offset  += loaded;
-
-		/* check if we finish read, so return. */
-		if (toread == 0) {
-			return bytesread;
-		}
-	}
-
-	/* load the terminating block. */
-	if (toread > 0) {
-
-		/* some common variables. */
-		unsigned int tocopy = mpq_archive->block_size;
-
-		/* check if data are loaded in the cache. */
-		if (block_offset < mpq_archive->block_size - 1 || block_offset != mpq_archive->block_offset) {
-
-			/* load one mpq block into archive buffer. */
-			tocopy = libmpq__read_file_block(mpq_archive, block_offset, mpq_archive->mpq_file->block_buffer, mpq_archive->block_size);
-			if (tocopy == 0) {
-				return 0;
-			}
-
-			/* save lastly accessed file and block position for later use. */
-			mpq_archive->block_offset = block_offset;
-		}
-
-		/* check number of bytes read. */
-		if (tocopy > toread) {
-			tocopy = toread;
-		}
-
-		/* copy data from block buffer into target buffer. */
-		memcpy(buffer, mpq_archive->mpq_file->block_buffer, tocopy);
-
-		/* update pointers. */
-		bytesread     += tocopy;
-		buffer_offset  = tocopy;
+		/* save the number of transferred bytes. */
+		tb = rb;
 	}
 
 	/* return the copied bytes. */
-	return bytesread;
+	return tb;
 }
 
 /* function to read variable block positions used in compressed files. */
@@ -624,53 +474,48 @@ int libmpq__read_file_offset(mpq_archive_s *mpq_archive) {
 	/* some common variables. */
 	int rb = 0;
 
-	/* check if block is compressed and no single sector. */
-	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) != 0 &&
-	    (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_SINGLE) == 0) {
+	/* seek to block position. */
+	lseek(mpq_archive->fd, mpq_archive->mpq_file->mpq_block->offset, SEEK_SET);
 
-		/* seek to block position. */
-		lseek(mpq_archive->fd, mpq_archive->mpq_file->mpq_block->offset, SEEK_SET);
+	/* read block positions from begin of file. */
+	rb = read(mpq_archive->fd, mpq_archive->mpq_file->compressed_offset, (mpq_archive->mpq_file->blocks + 1) * sizeof(unsigned int));
 
-		/* read block positions from begin of file. */
-		rb = read(mpq_archive->fd, mpq_archive->mpq_file->compressed_offset, (mpq_archive->mpq_file->blocks + 1) * sizeof(unsigned int));
+	/* check if the archive is protected some way, sometimes the file appears not to be encrypted, but it is. */
+	if (mpq_archive->mpq_file->compressed_offset[0] != rb) {
+		mpq_archive->mpq_file->mpq_block->flags |= LIBMPQ_FILE_ENCRYPTED;
+	}
 
-		/* check if the archive is protected some way, sometimes the file appears not to be encrypted, but it is. */
-		if (mpq_archive->mpq_file->compressed_offset[0] != rb) {
-			mpq_archive->mpq_file->mpq_block->flags |= LIBMPQ_FILE_ENCRYPTED;
+	/* decrypt loaded block positions if necessary. */
+	if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_ENCRYPTED) {
+
+		/* check if we don't know the file seed, try to find it. */
+		if ((mpq_archive->mpq_file->seed = libmpq__decrypt_key(mpq_archive, rb)) < 0) {
+
+			/* sorry without seed, we cannot extract file. */
+			return LIBMPQ_FILE_ERROR_DECRYPT;
 		}
 
-		/* decrypt loaded block positions if necessary. */
-		if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_ENCRYPTED) {
+		/* decrypt block positions. */
+		libmpq__decrypt_mpq_block(mpq_archive, mpq_archive->mpq_file->compressed_offset, rb, mpq_archive->mpq_file->seed - 1);
 
-			/* check if we don't know the file seed, try to find it. */
-			if ((mpq_archive->mpq_file->seed = libmpq__decrypt_key(mpq_archive, rb)) < 0) {
+		/* check if the block positions are correctly decrypted, sometimes it will result invalid block positions on some files. */
+		if (mpq_archive->mpq_file->compressed_offset[0] != rb) {
+
+			/* try once again to detect fileseed and decrypt the blocks. */
+			lseek(mpq_archive->fd, mpq_archive->mpq_file->mpq_block->offset, SEEK_SET);
+
+			/* read again. */
+			rb = read(mpq_archive->fd, mpq_archive->mpq_file->compressed_offset, (mpq_archive->mpq_file->blocks + 1) * sizeof(unsigned int));
+			mpq_archive->mpq_file->seed = libmpq__decrypt_key(mpq_archive, rb);
+
+			/* decrypt mpq block. */
+			libmpq__decrypt_mpq_block(mpq_archive, mpq_archive->mpq_file->compressed_offset, rb, mpq_archive->mpq_file->seed - 1);
+
+			/* check if the block positions are correctly decrypted. */
+			if (mpq_archive->mpq_file->compressed_offset[0] != rb) {
 
 				/* sorry without seed, we cannot extract file. */
 				return LIBMPQ_FILE_ERROR_DECRYPT;
-			}
-
-			/* decrypt block positions. */
-			libmpq__decrypt_mpq_block(mpq_archive, mpq_archive->mpq_file->compressed_offset, rb, mpq_archive->mpq_file->seed - 1);
-
-			/* check if the block positions are correctly decrypted, sometimes it will result invalid block positions on some files. */
-			if (mpq_archive->mpq_file->compressed_offset[0] != rb) {
-
-				/* try once again to detect fileseed and decrypt the blocks. */
-				lseek(mpq_archive->fd, mpq_archive->mpq_file->mpq_block->offset, SEEK_SET);
-
-				/* read again. */
-				rb = read(mpq_archive->fd, mpq_archive->mpq_file->compressed_offset, (mpq_archive->mpq_file->blocks + 1) * sizeof(unsigned int));
-				mpq_archive->mpq_file->seed = libmpq__decrypt_key(mpq_archive, rb);
-
-				/* decrypt mpq block. */
-				libmpq__decrypt_mpq_block(mpq_archive, mpq_archive->mpq_file->compressed_offset, rb, mpq_archive->mpq_file->seed - 1);
-
-				/* check if the block positions are correctly decrypted. */
-				if (mpq_archive->mpq_file->compressed_offset[0] != rb) {
-
-					/* sorry without seed, we cannot extract file. */
-					return LIBMPQ_FILE_ERROR_DECRYPT;
-				}
 			}
 		}
 	}
