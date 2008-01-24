@@ -62,16 +62,20 @@ int libmpq__read_table_block(
 	mpq_archive_s	*mpq_archive
 );
 
-/* function to read a file as single sector. */
-int libmpq__read_file_single(
+/* function to decompress a input buffer as single sector. */
+int libmpq__decompress_single(
 	mpq_archive_s	*mpq_archive,
+	unsigned char	*in_buf,
+	unsigned int	in_size,
 	unsigned char	*out_buf,
 	unsigned int	out_size
 );
 
-/* function to read block from archie and decrypt and decompress it. */
-int libmpq__read_file_block(
+/* function to decrypt and decompress block from archive. */
+int libmpq__decompress_block(
 	mpq_archive_s	*mpq_archive,
+	unsigned char	*in_buf,
+	unsigned int	in_size,
 	unsigned char	*out_buf,
 	unsigned int	out_size,
 	unsigned int	block_number
