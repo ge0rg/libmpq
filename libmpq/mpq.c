@@ -470,8 +470,13 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 	int rb = 0;
 	int tb = 0;
 	int wb = 0;
+	unsigned char *in_buf;
 	unsigned char *out_buf;
+	unsigned int in_size = 0;
+	unsigned int out_size = 0;
 	unsigned int block_number = 0;
+	unsigned int block_offset = 0;
+	unsigned int read_offset = 0;
 
 	/* check if file could be written. */
 	if ((mpq_archive->mpq_file->fd = open(filename, O_RDWR|O_CREAT|O_TRUNC, 0644)) == -1) {
@@ -483,18 +488,69 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 	/* check if file is stored in a single sector - first seen in world of warcraft. */
 	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_SINGLE) != 0) {
 
-		/* allocate memory for output buffer. */
-		if ((out_buf = malloc(mpq_archive->mpq_file->mpq_block->uncompressed_size)) == NULL) {
+		/* buffer sizes. */
+		in_size  = mpq_archive->mpq_file->mpq_block->compressed_size;
+		out_size = mpq_archive->mpq_file->mpq_block->uncompressed_size;
+
+		/* allocate memory for buffers. */
+		if ((in_buf  = malloc(in_size)) == NULL ||
+		    (out_buf = malloc(out_size)) == NULL) {
+
+			/* check if file descriptor is valid. */
+			if ((close(mpq_archive->mpq_file->fd)) == -1) {
+
+				/* file was not opened. */
+				return LIBMPQ_FILE_ERROR_CLOSE;
+			}
 
 			/* memory allocation problem. */
 			return LIBMPQ_FILE_ERROR_MALLOC;
 		}
 
 		/* cleanup. */
-		memset(out_buf, 0, mpq_archive->mpq_file->mpq_block->uncompressed_size);
+		memset(in_buf,  0, in_size);
+		memset(out_buf, 0, out_size);
+
+		/* seek in file. */
+		lseek(mpq_archive->fd, mpq_archive->mpq_file->mpq_block->offset, SEEK_SET);
+
+		/* read the compressed file data. */
+		if ((rb = read(mpq_archive->fd, in_buf, in_size)) < 0) {
+
+			/* free input buffer if used. */
+			if (in_buf != NULL) {
+
+				/* free input buffer. */
+				free(in_buf);
+			}
+
+			/* free output buffer if used. */
+			if (out_buf != NULL) {
+
+				/* free output buffer. */
+				free(out_buf);
+			}
+
+			/* check if file descriptor is valid. */
+			if ((close(mpq_archive->mpq_file->fd)) == -1) {
+
+				/* file was not opened. */
+				return LIBMPQ_FILE_ERROR_CLOSE;
+			}
+
+			/* something on read from archive failed. */
+			return LIBMPQ_FILE_ERROR_READ;
+		}
 
 		/* read single sector of file. */
-		if ((rb = libmpq__read_file_single(mpq_archive, out_buf, mpq_archive->mpq_file->mpq_block->uncompressed_size)) < 0) {
+		if ((rb = libmpq__decompress_single(mpq_archive, in_buf, in_size, out_buf, out_size)) < 0) {
+
+			/* free input buffer if used. */
+			if (in_buf != NULL) {
+
+				/* free input buffer. */
+				free(in_buf);
+			}
 
 			/* free output buffer if used. */
 			if (out_buf != NULL) {
@@ -517,6 +573,13 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 		/* write buffer to disk. */
 		if ((wb = write(mpq_archive->mpq_file->fd, out_buf, rb)) < 0) {
 
+			/* free input buffer if used. */
+			if (in_buf != NULL) {
+
+				/* free input buffer. */
+				free(in_buf);
+			}
+
 			/* free output buffer if used. */
 			if (out_buf != NULL) {
 
@@ -535,6 +598,13 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 			return LIBMPQ_FILE_ERROR_WRITE;
 		}
 
+		/* free input buffer if used. */
+		if (in_buf != NULL) {
+
+			/* free input buffer. */
+			free(in_buf);
+		}
+
 		/* free output buffer if used. */
 		if (out_buf != NULL) {
 
@@ -549,21 +619,99 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 	/* check if file is stored in multiple blocks. */
 	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_SINGLE) == 0) {
 
-		/* allocate memory for output buffer. */
-		if ((out_buf = malloc(mpq_archive->block_size)) == NULL) {
-
-			/* memory allocation problem. */
-			return LIBMPQ_FILE_ERROR_MALLOC;
-		}
-
-		/* cleanup. */
-		memset(out_buf, 0, mpq_archive->block_size);
-
 		/* loop through all blocks and decompress them. */
-		do {
+		while (block_offset + mpq_archive->block_size < mpq_archive->mpq_file->mpq_block->uncompressed_size) {
 
-			/* read file until its end. */
-			if ((rb = libmpq__read_file_block(mpq_archive, out_buf, mpq_archive->block_size, block_number)) < 0) {
+			/* block offset stores the relative block position inside the archive. */
+			block_offset = mpq_archive->block_size * block_number;
+
+			/* check if file is compressed. */
+			if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) != 0) {
+
+				/* input buffer size for compressed block. */
+				in_size = mpq_archive->mpq_file->compressed_offset[block_number + 1] - mpq_archive->mpq_file->compressed_offset[block_number];
+
+				/* offset for file read. */
+				read_offset = mpq_archive->mpq_file->mpq_block->offset + mpq_archive->mpq_file->compressed_offset[block_number];
+			} else {
+
+				/* input buffer size for uncompressed block. */
+				in_size = mpq_archive->block_size;
+
+				/* offset for file read. */
+				read_offset = mpq_archive->mpq_file->mpq_block->offset + block_offset;
+			}
+
+			/* if remaining bytes are less block size, decrease the block size. */
+			if ((block_offset + mpq_archive->block_size) > mpq_archive->mpq_file->mpq_block->uncompressed_size) {
+
+				/* last block is smaller than default block size. */
+				out_size = mpq_archive->mpq_file->mpq_block->uncompressed_size - block_offset;
+			} else {
+
+				/* not the last block, so use default block size. */
+				out_size = mpq_archive->block_size;
+			}
+
+			/* allocate memory for buffers. */
+			if ((in_buf  = malloc(in_size)) == NULL ||
+			    (out_buf = malloc(out_size)) == NULL) {
+
+				/* check if file descriptor is valid. */
+				if ((close(mpq_archive->mpq_file->fd)) == -1) {
+
+					/* file was not opened. */
+					return LIBMPQ_FILE_ERROR_CLOSE;
+				}
+
+				/* memory allocation problem. */
+				return LIBMPQ_FILE_ERROR_MALLOC;
+			}
+
+			/* cleanup. */
+			memset(in_buf,  0, in_size);
+			memset(out_buf, 0, out_size);
+
+			/* seek in file. */
+			lseek(mpq_archive->fd, read_offset, SEEK_SET);
+
+			/* read the compressed file data. */
+			if ((rb = read(mpq_archive->fd, in_buf, in_size)) < 0) {
+
+				/* free input buffer if used. */
+				if (in_buf != NULL) {
+
+					/* free input buffer. */
+					free(in_buf);
+				}
+
+				/* free output buffer if used. */
+				if (out_buf != NULL) {
+
+					/* free output buffer. */
+					free(out_buf);
+				}
+
+				/* check if file descriptor is valid. */
+				if ((close(mpq_archive->mpq_file->fd)) == -1) {
+
+					/* file was not opened. */
+					return LIBMPQ_FILE_ERROR_CLOSE;
+				}
+
+				/* something on read from archive failed. */
+				return LIBMPQ_FILE_ERROR_READ;
+			}
+
+			/* decrypt and decompress block. */
+			if ((rb = libmpq__decompress_block(mpq_archive, in_buf, in_size, out_buf, out_size, block_number)) < 0) {
+
+				/* free input buffer if used. */
+				if (in_buf != NULL) {
+
+					/* free input buffer. */
+					free(in_buf);
+				}
 
 				/* free output buffer if used. */
 				if (out_buf != NULL) {
@@ -585,6 +733,13 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 
 			/* write buffer to disk. */
 			if ((wb = write(mpq_archive->mpq_file->fd, out_buf, rb)) < 0) {
+
+				/* free input buffer if used. */
+				if (in_buf != NULL) {
+
+					/* free input buffer. */
+					free(in_buf);
+				}
 
 				/* free output buffer if used. */
 				if (out_buf != NULL) {
@@ -609,13 +764,20 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 
 			/* save the number of transferred bytes. */
 			tb += wb;
-		} while (rb > 0);
 
-		/* free output buffer if used. */
-		if (out_buf != NULL) {
+			/* free input buffer if used. */
+			if (in_buf != NULL) {
 
-			/* free output buffer. */
-			free(out_buf);
+				/* free input buffer. */
+				free(in_buf);
+			}
+
+			/* free output buffer if used. */
+			if (out_buf != NULL) {
+
+				/* free output buffer. */
+				free(out_buf);
+			}
 		}
 	}
 
@@ -633,74 +795,5 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 /* this function decompress a file from a mpq archive to memory. */
 int libmpq__file_decompress_memory(mpq_archive_s *mpq_archive, unsigned char *out_buf, unsigned int out_size) {
 
-	/* some common variables. */
-	int rb = 0;
-	int tb = 0;
-	unsigned char *temp_buf;
-	unsigned int block_number = 0;
-
-	/* check if file is stored in a single sector - first seen in world of warcraft. */
-	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_SINGLE) != 0) {
-
-		/* read single sector of file. */
-		if ((rb = libmpq__read_file_single(mpq_archive, out_buf, mpq_archive->mpq_file->mpq_block->uncompressed_size)) < 0) {
-
-			/* something on transferring failed. */
-			return rb;
-		}
-
-		/* save the number of transferred bytes. */
-		tb += rb;
-	}
-
-	/* check if file is stored in multiple blocks. */
-	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_SINGLE) == 0) {
-
-		/* allocate memory for output buffer. */
-		if ((temp_buf = malloc(mpq_archive->block_size)) == NULL) {
-
-			/* memory allocation problem. */
-			return LIBMPQ_FILE_ERROR_MALLOC;
-		}
-
-		/* cleanup. */
-		memset(temp_buf, 0, mpq_archive->block_size);
-
-		/* loop through all blocks and decompress them. */
-		do {
-
-			/* read file until its end. */
-			if ((rb = libmpq__read_file_block(mpq_archive, temp_buf, mpq_archive->block_size, block_number)) < 0) {
-
-				/* free output buffer if used. */
-				if (temp_buf != NULL) {
-
-					/* free output buffer. */
-					free(temp_buf);
-				}
-
-				/* something on transferring failed. */
-				return rb;
-			}
-
-			/* copy temporary buffer to output buffer at right position for next block. */;
-			memcpy(out_buf + (block_number * mpq_archive->block_size), temp_buf, rb);
-
-			/* increase block counter. */
-			block_number++;
-
-			/* save the number of transferred bytes. */
-			tb += rb;
-		} while (rb > 0);
-
-		/* free output buffer if used. */
-		if (temp_buf != NULL) {
-
-			/* free output buffer. */
-			free(temp_buf);
-		}
-	}
-
-	/* if no error was found, return zero. */
-	return tb;
+	return 0;
 }
