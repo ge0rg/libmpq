@@ -3,7 +3,7 @@ AUTOMAKE_OPTIONS		= 1.6
 
 # library information and headers which should not be installed.
 lib_LTLIBRARIES			= libmpq.la
-noinst_HEADERS			= common.h explode.h extract.h huffman.h wave.h
+noinst_HEADERS			= common.h explode.h extract.h huffman.h mpq-internal.h wave.h
 
 # directory where the include files will be installed.
 libmpq_includedir		= $(includedir)/libmpq
