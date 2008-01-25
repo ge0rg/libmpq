@@ -318,15 +318,19 @@ int libmpq__decompress_block(mpq_archive_s *mpq_archive, unsigned char *in_buf, 
 
 	/* some common variables. */
 	int tb = 0;
+	unsigned char *temp_buf;
 
 	/* check if file is compressed. */
 	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) != 0) {
+
+		/* assign input buffer to temporary buffer. */
+		temp_buf = in_buf;
 
 		/* check if block is encrypted, we have to decrypt it. */
 		if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_ENCRYPTED) {
 
 			/* decrypt block in input buffer. */
-			libmpq__decrypt_mpq_block(mpq_archive, (unsigned int *)in_buf, in_size, mpq_archive->mpq_file->seed + block_number);
+			libmpq__decrypt_mpq_block(mpq_archive, (unsigned int *)temp_buf, in_size, mpq_archive->mpq_file->seed + block_number);
 		}
 
 		/* check if block is really compressed, some blocks have set the compression flag, but are not compressed. */
@@ -336,7 +340,7 @@ int libmpq__decompress_block(mpq_archive_s *mpq_archive, unsigned char *in_buf, 
 			if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESS_PKWARE) {
 
 				/* decompress using pkzip. */
-				if ((tb = libmpq__decompress_pkzip(out_buf, out_size, in_buf, in_size)) < 0) {
+				if ((tb = libmpq__decompress_pkzip(out_buf, out_size, temp_buf, in_size)) < 0) {
 
 					/* something on decompression failed. */
 					return tb;
@@ -351,7 +355,7 @@ int libmpq__decompress_block(mpq_archive_s *mpq_archive, unsigned char *in_buf, 
 			if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESS_MULTI) {
 
 				/* decompress using mutliple algorithm. */
-				if ((tb = libmpq__decompress_multi(out_buf, out_size, in_buf, in_size)) < 0) {
+				if ((tb = libmpq__decompress_multi(out_buf, out_size, temp_buf, in_size)) < 0) {
 
 					/* something on decompression failed. */
 					return tb;
