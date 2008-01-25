@@ -29,6 +29,7 @@
 
 /* libmpq main includes. */
 #include "mpq.h"
+#include "mpq-internal.h"
 
 /* libmpq generic includes. */
 #include "extract.h"
@@ -380,62 +381,6 @@ int libmpq__decompress_block(mpq_archive_s *mpq_archive, unsigned char *in_buf, 
 	return tb;
 }
 
-/* function to read variable block positions used in compressed files. */
-int libmpq__read_file_offset(mpq_archive_s *mpq_archive) {
-
-	/* some common variables. */
-	int rb = 0;
-
-	/* seek to block position. */
-	lseek(mpq_archive->fd, mpq_archive->mpq_file->mpq_block->offset, SEEK_SET);
-
-	/* read block positions from begin of file. */
-	rb = read(mpq_archive->fd, mpq_archive->mpq_file->compressed_offset, (mpq_archive->mpq_file->blocks + 1) * sizeof(unsigned int));
-
-	/* check if the archive is protected some way, sometimes the file appears not to be encrypted, but it is. */
-	if (mpq_archive->mpq_file->compressed_offset[0] != rb) {
-		mpq_archive->mpq_file->mpq_block->flags |= LIBMPQ_FILE_ENCRYPTED;
-	}
-
-	/* decrypt loaded block positions if necessary. */
-	if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_ENCRYPTED) {
-
-		/* check if we don't know the file seed, try to find it. */
-		if ((mpq_archive->mpq_file->seed = libmpq__decrypt_key(mpq_archive, rb)) < 0) {
-
-			/* sorry without seed, we cannot extract file. */
-			return LIBMPQ_FILE_ERROR_DECRYPT;
-		}
-
-		/* decrypt block positions. */
-		libmpq__decrypt_mpq_block(mpq_archive, mpq_archive->mpq_file->compressed_offset, rb, mpq_archive->mpq_file->seed - 1);
-
-		/* check if the block positions are correctly decrypted, sometimes it will result invalid block positions on some files. */
-		if (mpq_archive->mpq_file->compressed_offset[0] != rb) {
-
-			/* try once again to detect fileseed and decrypt the blocks. */
-			lseek(mpq_archive->fd, mpq_archive->mpq_file->mpq_block->offset, SEEK_SET);
-
-			/* read again. */
-			rb = read(mpq_archive->fd, mpq_archive->mpq_file->compressed_offset, (mpq_archive->mpq_file->blocks + 1) * sizeof(unsigned int));
-			mpq_archive->mpq_file->seed = libmpq__decrypt_key(mpq_archive, rb);
-
-			/* decrypt mpq block. */
-			libmpq__decrypt_mpq_block(mpq_archive, mpq_archive->mpq_file->compressed_offset, rb, mpq_archive->mpq_file->seed - 1);
-
-			/* check if the block positions are correctly decrypted. */
-			if (mpq_archive->mpq_file->compressed_offset[0] != rb) {
-
-				/* sorry without seed, we cannot extract file. */
-				return LIBMPQ_FILE_ERROR_DECRYPT;
-			}
-		}
-	}
-
-	/* if no error was found, return zero. */
-	return LIBMPQ_SUCCESS;
-}
-
 /* function to read listfile from mpq archive. */
 int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 
@@ -583,6 +528,62 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 		mpq_archive->mpq_list->block_table_indices[parent] = temp_block;
 		mpq_archive->mpq_list->hash_table_indices[parent]  = temp_hash;
 		mpq_archive->mpq_list->file_names[parent]          = temp_file;
+	}
+
+	/* if no error was found, return zero. */
+	return LIBMPQ_SUCCESS;
+}
+
+/* this function reads variable block positions used in compressed files. */
+int libmpq__read_file_offset(mpq_archive_s *mpq_archive) {
+
+	/* some common variables. */
+	int rb = 0;
+
+	/* seek to block position. */
+	lseek(mpq_archive->fd, mpq_archive->mpq_file->mpq_block->offset, SEEK_SET);
+
+	/* read block positions from begin of file. */
+	rb = read(mpq_archive->fd, mpq_archive->mpq_file->compressed_offset, (mpq_archive->mpq_file->blocks + 1) * sizeof(unsigned int));
+
+	/* check if the archive is protected some way, sometimes the file appears not to be encrypted, but it is. */
+	if (mpq_archive->mpq_file->compressed_offset[0] != rb) {
+		mpq_archive->mpq_file->mpq_block->flags |= LIBMPQ_FILE_ENCRYPTED;
+	}
+
+	/* decrypt loaded block positions if necessary. */
+	if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_ENCRYPTED) {
+
+		/* check if we don't know the file seed, try to find it. */
+		if ((mpq_archive->mpq_file->seed = libmpq__decrypt_key(mpq_archive, rb)) < 0) {
+
+			/* sorry without seed, we cannot extract file. */
+			return LIBMPQ_FILE_ERROR_DECRYPT;
+		}
+
+		/* decrypt block positions. */
+		libmpq__decrypt_mpq_block(mpq_archive, mpq_archive->mpq_file->compressed_offset, rb, mpq_archive->mpq_file->seed - 1);
+
+		/* check if the block positions are correctly decrypted, sometimes it will result invalid block positions on some files. */
+		if (mpq_archive->mpq_file->compressed_offset[0] != rb) {
+
+			/* try once again to detect fileseed and decrypt the blocks. */
+			lseek(mpq_archive->fd, mpq_archive->mpq_file->mpq_block->offset, SEEK_SET);
+
+			/* read again. */
+			rb = read(mpq_archive->fd, mpq_archive->mpq_file->compressed_offset, (mpq_archive->mpq_file->blocks + 1) * sizeof(unsigned int));
+			mpq_archive->mpq_file->seed = libmpq__decrypt_key(mpq_archive, rb);
+
+			/* decrypt mpq block. */
+			libmpq__decrypt_mpq_block(mpq_archive, mpq_archive->mpq_file->compressed_offset, rb, mpq_archive->mpq_file->seed - 1);
+
+			/* check if the block positions are correctly decrypted. */
+			if (mpq_archive->mpq_file->compressed_offset[0] != rb) {
+
+				/* sorry without seed, we cannot extract file. */
+				return LIBMPQ_FILE_ERROR_DECRYPT;
+			}
+		}
 	}
 
 	/* if no error was found, return zero. */
