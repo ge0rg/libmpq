@@ -69,6 +69,7 @@
 #define LIBMPQ_ARCHIVE_HASH_TABLE_COUNT		5		/* mpq archive hashtable size. */
 #define LIBMPQ_ARCHIVE_BLOCK_TABLE_COUNT	6		/* mpq archive blocktable size. */
 #define LIBMPQ_ARCHIVE_BLOCK_SIZE		7		/* mpq archive blocksize. */
+#define LIBMPQ_ARCHIVE_VERSION			8		/* mpq archive version. */
 
 /* define generic values for returning file information. */
 #define LIBMPQ_FILE_SIZE_COMPRESSED		1		/* compressed filesize of the given file in archive. */
@@ -119,7 +120,6 @@ typedef struct {
 	char		filename[PATH_MAX];	/* filename of the actual file in the archive. */
 	int		fd;			/* file handle. */
 	unsigned int	seed;			/* seed used for file decrypt. */
-	unsigned int	blocks;			/* number of blocks in the file (inclusive the last noncomplete one). */
 	unsigned int	uncompressed_offset;	/* position in file after extraction (bytes copied). */
 	unsigned int	*compressed_offset;	/* position of each file block (only for compressed files). */
 	mpq_hash_s	*mpq_hash;		/* hash table entry. */
@@ -171,9 +171,9 @@ extern char *libmpq__file_name(mpq_archive_s *mpq_archive, const unsigned int nu
 extern int libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename);
 
 /* generic file decompression function to disk. */
-extern int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const unsigned int number, const char *filename);
+extern int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filename, const unsigned int number);
 
 /* generic file decompression function to memory. */
-extern int libmpq__file_decompress_memory(mpq_archive_s *mpq_archive, const unsigned int number, unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size);
+extern int libmpq__file_decompress_memory(mpq_archive_s *mpq_archive, unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, const unsigned int number);
 
 #endif						/* _MPQ_H */
