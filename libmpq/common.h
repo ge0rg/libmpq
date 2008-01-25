@@ -81,13 +81,13 @@ int libmpq__decompress_block(
 	unsigned int	block_number
 );
 
-/* function to read variable block positions used in compressed files. */
-int libmpq__read_file_offset(
+/* function to read listfile from mpq archive. */
+int libmpq__read_file_list(
 	mpq_archive_s	*mpq_archive
 );
 
-/* function to read listfile from mpq archive. */
-int libmpq__read_file_list(
+/* function to read variable block positions used in compressed files. */
+int libmpq__read_file_offset(
 	mpq_archive_s	*mpq_archive
 );
 

@@ -36,6 +36,7 @@
 
 /* libmpq main includes. */
 #include "mpq.h"
+#include "mpq-internal.h"
 
 /* libmpq generic includes. */
 #include "huffman.h"

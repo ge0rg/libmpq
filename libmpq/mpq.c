@@ -28,6 +28,7 @@
 
 /* libmpq main includes. */
 #include "mpq.h"
+#include "mpq-internal.h"
 
 /* libmpq generic includes. */
 #include "common.h"
@@ -126,7 +127,8 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename) {
 	    (mpq_archive->mpq_hash                      = malloc(sizeof(mpq_hash_s)   * mpq_archive->mpq_header->hash_table_count)) == NULL ||
 	    (mpq_archive->mpq_list->file_names          = malloc(sizeof(char *)       * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count))) == NULL ||
 	    (mpq_archive->mpq_list->block_table_indices = malloc(sizeof(unsigned int) * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count))) == NULL ||
-	    (mpq_archive->mpq_list->hash_table_indices  = malloc(sizeof(unsigned int) * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count))) == NULL) {
+	    (mpq_archive->mpq_list->hash_table_indices  = malloc(sizeof(unsigned int) * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count))) == NULL ||
+	    (mpq_archive->mpq_file                      = malloc(sizeof(mpq_file_s))) == NULL) {
 
 		/* memory allocation problem. */
 		return LIBMPQ_ARCHIVE_ERROR_MALLOC;
@@ -138,6 +140,7 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename) {
 	memset(mpq_archive->mpq_list->file_names,          0, sizeof(char *)       * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count));
 	memset(mpq_archive->mpq_list->block_table_indices, 0, sizeof(unsigned int) * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count));
 	memset(mpq_archive->mpq_list->hash_table_indices,  0, sizeof(unsigned int) * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count));
+	memset(mpq_archive->mpq_file,                      0, sizeof(mpq_file_s));
 
 	/* try to read and decrypt the hash table. */
 	if ((result = libmpq__read_table_hash(mpq_archive)) != 0) {
@@ -182,6 +185,13 @@ int libmpq__archive_close(mpq_archive_s *mpq_archive) {
 			/* free the filelist element. */
 			free(mpq_archive->mpq_list->file_names[i]);
 		}
+	}
+
+	/* free file structure if used. */
+	if (mpq_archive->mpq_file != NULL) {
+
+		/* free file structure. */
+		free(mpq_archive->mpq_file);
 	}
 
 	/* free hash table indices if used. */
@@ -302,82 +312,6 @@ int libmpq__archive_info(mpq_archive_s *mpq_archive, unsigned int infotype) {
 	return LIBMPQ_SUCCESS;
 }
 
-/* this function creates everything to extract or decompress a file from the mpq archive. */
-int libmpq__file_open(mpq_archive_s *mpq_archive, const unsigned int number) {
-
-	/* some common variables. */
-	int result = 0;
-
-	/* check if we are in the range of available files. */
-	if (number < 1 || number > mpq_archive->files) {
-
-		/* file not found by number, so return with error. */
-		return LIBMPQ_FILE_ERROR_RANGE;
-	}
-
-	/* allocate memory for file structure */
-	if ((mpq_archive->mpq_file = malloc(sizeof(mpq_file_s))) == NULL) {
-
-		/* memory allocation problem. */
-		return LIBMPQ_FILE_ERROR_MALLOC;
-	}
-
-	/* cleanup. */
-	memset(mpq_archive->mpq_file, 0, sizeof(mpq_file_s));
-
-	/* initialize file structure. */
-	mpq_archive->mpq_file->mpq_block = &mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[number - 1]];
-	mpq_archive->mpq_file->mpq_hash  = &mpq_archive->mpq_hash[mpq_archive->mpq_list->hash_table_indices[number - 1]];
-	mpq_archive->mpq_file->blocks    = (mpq_archive->mpq_file->mpq_block->uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size;
-	snprintf(mpq_archive->mpq_file->filename, PATH_MAX, (const char *)mpq_archive->mpq_list->file_names[number - 1]);
-
-	/* allocate memory for block buffer and compressed offset table, since world of warcraft the archive has extra data appended after the compressed offset table, so we add one more unsigned int. */
-	if ((mpq_archive->mpq_file->compressed_offset = malloc(sizeof(unsigned int) * (mpq_archive->mpq_file->blocks + 1))) == NULL) {
-
-		/* memory allocation problem. */
-		return LIBMPQ_FILE_ERROR_MALLOC;
-	}
-
-	/* cleanup. */
-	memset(mpq_archive->mpq_file->compressed_offset, 0, sizeof(unsigned int) * (mpq_archive->mpq_file->blocks + 1));
-
-	/* check if block is compressed and no single sector. */
-	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) != 0 &&
-	    (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_SINGLE) == 0) {
-
-		/* load compressed block offset if necessary. */
-		if ((result = libmpq__read_file_offset(mpq_archive)) != 0) {
-
-			/* error on decrypting block positions. */
-			return result;
-		}
-	}
-
-	/* if no error was found, return zero. */
-	return LIBMPQ_SUCCESS;
-}
-
-/* this function frees the file structure. */
-int libmpq__file_close(mpq_archive_s *mpq_archive) {
-
-	/* free the compressed offset table if used. */
-	if (mpq_archive->mpq_file->compressed_offset != NULL) {
-
-		/* free the compressed offset table. */
-		free(mpq_archive->mpq_file->compressed_offset);
-	}
-
-	/* free file structure if used. */
-	if (mpq_archive->mpq_file != NULL) {
-
-		/* free file structure. */
-		free(mpq_archive->mpq_file);
-	}
-
-	/* if no error was found, return zero. */
-	return LIBMPQ_SUCCESS;
-}
-
 /* this function returns some useful file information. */
 int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int infotype, const unsigned int number) {
 
@@ -464,12 +398,13 @@ int libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename) {
 }
 
 /* this function decompress a file from a mpq archive to disk. */
-int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filename) {
+int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const unsigned int number, const char *filename) {
 
 	/* some common variables. */
 	int rb = 0;
 	int tb = 0;
 	int wb = 0;
+	int result = 0;
 	unsigned char *in_buf;
 	unsigned char *out_buf;
 	unsigned int in_size = 0;
@@ -477,6 +412,19 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 	unsigned int block_number = 0;
 	unsigned int block_offset = 0;
 	unsigned int read_offset = 0;
+
+	/* check if we are in the range of available files. */
+	if (number < 1 || number > mpq_archive->files) {
+
+		/* file not found by number, so return with error. */
+		return LIBMPQ_FILE_ERROR_RANGE;
+	}
+
+        /* initialize file structure. */
+	mpq_archive->mpq_file->mpq_block = &mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[number - 1]];
+	mpq_archive->mpq_file->mpq_hash  = &mpq_archive->mpq_hash[mpq_archive->mpq_list->hash_table_indices[number - 1]];
+	mpq_archive->mpq_file->blocks    = (mpq_archive->mpq_file->mpq_block->uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size;
+	snprintf(mpq_archive->mpq_file->filename, PATH_MAX, (const char *)mpq_archive->mpq_list->file_names[number - 1]);
 
 	/* check if file could be written. */
 	if ((mpq_archive->mpq_file->fd = open(filename, O_RDWR|O_CREAT|O_TRUNC, 0644)) == -1) {
@@ -616,6 +564,49 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 		tb += wb;
 	}
 
+	/* check if block is compressed and no single sector. */
+	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) != 0 &&
+	    (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_SINGLE) == 0) {
+
+		/* allocate memory for block buffer and compressed offset table, since world of warcraft the archive has extra data appended after the compressed offset table, so we add one more unsigned int. */
+		if ((mpq_archive->mpq_file->compressed_offset = malloc(sizeof(unsigned int) * (mpq_archive->mpq_file->blocks + 1))) == NULL) {
+
+			/* check if file descriptor is valid. */
+			if ((close(mpq_archive->mpq_file->fd)) == -1) {
+
+				/* file was not opened. */
+				return LIBMPQ_FILE_ERROR_CLOSE;
+			}
+
+			/* memory allocation problem. */
+			return LIBMPQ_FILE_ERROR_MALLOC;
+		}
+
+		/* cleanup. */
+		memset(mpq_archive->mpq_file->compressed_offset, 0, sizeof(unsigned int) * (mpq_archive->mpq_file->blocks + 1));
+
+		/* load compressed block offset if necessary. */
+		if ((result = libmpq__read_file_offset(mpq_archive)) < 0) {
+
+			/* free compressed block offset structure if used. */
+			if (mpq_archive->mpq_file->compressed_offset != NULL) {
+
+				/* free compressed block offset structure. */
+				free(mpq_archive->mpq_file->compressed_offset);
+			}
+
+			/* check if file descriptor is valid. */
+			if ((close(mpq_archive->mpq_file->fd)) == -1) {
+
+				/* file was not opened. */
+				return LIBMPQ_FILE_ERROR_CLOSE;
+			}
+
+			/* error on decrypting block positions. */
+			return result;
+		}
+	}
+
 	/* check if file is stored in multiple blocks. */
 	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_SINGLE) == 0) {
 
@@ -657,6 +648,13 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 			if ((in_buf  = malloc(in_size)) == NULL ||
 			    (out_buf = malloc(out_size)) == NULL) {
 
+				/* free compressed block offset structure if used. */
+				if (mpq_archive->mpq_file->compressed_offset != NULL) {
+
+					/* free compressed block offset structure. */
+					free(mpq_archive->mpq_file->compressed_offset);
+				}
+
 				/* check if file descriptor is valid. */
 				if ((close(mpq_archive->mpq_file->fd)) == -1) {
 
@@ -677,6 +675,13 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 
 			/* read the compressed file data. */
 			if ((rb = read(mpq_archive->fd, in_buf, in_size)) < 0) {
+
+				/* free compressed block offset structure if used. */
+				if (mpq_archive->mpq_file->compressed_offset != NULL) {
+
+					/* free compressed block offset structure. */
+					free(mpq_archive->mpq_file->compressed_offset);
+				}
 
 				/* free input buffer if used. */
 				if (in_buf != NULL) {
@@ -706,6 +711,13 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 			/* decrypt and decompress block. */
 			if ((rb = libmpq__decompress_block(mpq_archive, in_buf, in_size, out_buf, out_size, block_number)) < 0) {
 
+				/* free compressed block offset structure if used. */
+				if (mpq_archive->mpq_file->compressed_offset != NULL) {
+
+					/* free compressed block offset structure. */
+					free(mpq_archive->mpq_file->compressed_offset);
+				}
+
 				/* free input buffer if used. */
 				if (in_buf != NULL) {
 
@@ -733,6 +745,13 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 
 			/* write buffer to disk. */
 			if ((wb = write(mpq_archive->mpq_file->fd, out_buf, rb)) < 0) {
+
+				/* free compressed block offset structure if used. */
+				if (mpq_archive->mpq_file->compressed_offset != NULL) {
+
+					/* free compressed block offset structure. */
+					free(mpq_archive->mpq_file->compressed_offset);
+				}
 
 				/* free input buffer if used. */
 				if (in_buf != NULL) {
@@ -781,6 +800,13 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 		}
 	}
 
+	/* free compressed block offset structure if used. */
+	if (mpq_archive->mpq_file->compressed_offset != NULL) {
+
+		/* free compressed block offset structure. */
+		free(mpq_archive->mpq_file->compressed_offset);
+	}
+
 	/* check if file descriptor is valid. */
 	if ((close(mpq_archive->mpq_file->fd)) == -1) {
 
@@ -793,7 +819,7 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 }
 
 /* this function decompress a file from a mpq archive to memory. */
-int libmpq__file_decompress_memory(mpq_archive_s *mpq_archive, unsigned char *out_buf, unsigned int out_size) {
+int libmpq__file_decompress_memory(mpq_archive_s *mpq_archive, const unsigned int number, unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size) {
 
 	return 0;
 }

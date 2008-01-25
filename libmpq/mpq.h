@@ -84,24 +84,6 @@
 #define LIBMPQ_FILE_COMPRESS_MULTI		0x00000200	/* multiple compressions. */
 #define LIBMPQ_FILE_SINGLE			0x01000000	/* file is stored in one single sector, first seen in world of warcraft. */
 
-/* define true and false, because not all systems have them. */
-#ifndef FALSE
-#define FALSE 0
-#endif
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-/* define min, because not all systems have it. */
-#ifndef min
-#define min(a, b) ((a < b) ? a : b)
-#endif
-
-/* define max, because not all systems have it. */
-#ifndef max
-#define max(a, b) ((a > b) ? a : b)
-#endif
-
 /* mpq archive header. */
 typedef struct {
 	unsigned int	mpq_magic;		/* the 0x1A51504D ('MPQ\x1A') signature. */
@@ -184,16 +166,14 @@ extern int libmpq__archive_close(mpq_archive_s *mpq_archive);
 extern int libmpq__archive_info(mpq_archive_s *mpq_archive, unsigned int infotype);
 
 /* generic file information. */
-extern int libmpq__file_open(mpq_archive_s *mpq_archive, const unsigned int number);
-extern int libmpq__file_close(mpq_archive_s *mpq_archive);
 extern int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int infotype, const unsigned int number);
 extern char *libmpq__file_name(mpq_archive_s *mpq_archive, const unsigned int number);
 extern int libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename);
 
 /* generic file decompression function to disk. */
-extern int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filename);
+extern int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const unsigned int number, const char *filename);
 
 /* generic file decompression function to memory. */
-extern int libmpq__file_decompress_memory(mpq_archive_s *mpq_archive, unsigned char *out_buf, unsigned int out_size);
+extern int libmpq__file_decompress_memory(mpq_archive_s *mpq_archive, const unsigned int number, unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size);
 
 #endif						/* _MPQ_H */
