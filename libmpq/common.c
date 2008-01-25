@@ -539,7 +539,7 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 }
 
 /* this function reads variable block positions used in compressed files. */
-int libmpq__read_file_offset(mpq_archive_s *mpq_archive) {
+int libmpq__read_file_offset(mpq_archive_s *mpq_archive, unsigned int block_count) {
 
 	/* some common variables. */
 	int rb = 0;
@@ -548,7 +548,7 @@ int libmpq__read_file_offset(mpq_archive_s *mpq_archive) {
 	lseek(mpq_archive->fd, mpq_archive->mpq_file->mpq_block->offset, SEEK_SET);
 
 	/* read block positions from begin of file. */
-	rb = read(mpq_archive->fd, mpq_archive->mpq_file->compressed_offset, (mpq_archive->mpq_file->mpq_block->uncompressed_size / mpq_archive->block_size + 2) * sizeof(unsigned int));
+	rb = read(mpq_archive->fd, mpq_archive->mpq_file->compressed_offset, sizeof(unsigned int) * (block_count + 1));
 
 	/* check if the archive is protected some way, sometimes the file appears not to be encrypted, but it is. */
 	if (mpq_archive->mpq_file->compressed_offset[0] != rb) {
@@ -575,7 +575,7 @@ int libmpq__read_file_offset(mpq_archive_s *mpq_archive) {
 			lseek(mpq_archive->fd, mpq_archive->mpq_file->mpq_block->offset, SEEK_SET);
 
 			/* read again. */
-			rb = read(mpq_archive->fd, mpq_archive->mpq_file->compressed_offset, (mpq_archive->mpq_file->mpq_block->uncompressed_size / mpq_archive->block_size + 2) * sizeof(unsigned int));
+			rb = read(mpq_archive->fd, mpq_archive->mpq_file->compressed_offset, sizeof(unsigned int) * (block_count + 1));
 			mpq_archive->mpq_file->seed = libmpq__decrypt_key(mpq_archive, rb);
 
 			/* decrypt mpq block. */
