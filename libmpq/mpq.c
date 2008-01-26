@@ -358,7 +358,7 @@ int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int infotype, const u
 		case LIBMPQ_FILE_BLOCK_COUNT:
 
 			/* block number is (uncompressed size / block size). */
-			return mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[number - 1]].uncompressed_size / mpq_archive->block_size + 1;
+			return (mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[number - 1]].uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size;
 		default:
 
 			/* if no error was found, return zero. */
@@ -417,6 +417,7 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 	unsigned char *out_buf;
 	unsigned int in_size = 0;
 	unsigned int out_size = 0;
+	unsigned int block_count = 0;
 	unsigned int block_number = 0;
 	unsigned int block_offset = 0;
 	unsigned int read_offset = 0;
@@ -439,6 +440,9 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 		/* file could not be created, so return with error. */
 		return LIBMPQ_FILE_ERROR_OPEN;
 	}
+
+	/* get the number of blocks for the file. */
+	block_count = (mpq_archive->mpq_file->mpq_block->uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size;
 
 	/* check if file is stored in a single sector - first seen in world of warcraft. */
 	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_SINGLE) != 0) {
@@ -576,7 +580,7 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 	    (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_SINGLE) == 0) {
 
 		/* allocate memory for block buffer and compressed offset table, since world of warcraft the archive has extra data appended after the compressed offset table, so we add one more unsigned int. */
-		if ((mpq_archive->mpq_file->compressed_offset = malloc(sizeof(unsigned int) * (mpq_archive->mpq_file->mpq_block->uncompressed_size / mpq_archive->block_size + 2))) == NULL) {
+		if ((mpq_archive->mpq_file->compressed_offset = malloc(sizeof(unsigned int) * (block_count + 1))) == NULL) {
 
 			/* check if file descriptor is valid. */
 			if ((close(mpq_archive->mpq_file->fd)) == -1) {
@@ -590,10 +594,10 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 		}
 
 		/* cleanup. */
-		memset(mpq_archive->mpq_file->compressed_offset, 0, sizeof(unsigned int) * (mpq_archive->mpq_file->mpq_block->uncompressed_size / mpq_archive->block_size + 2));
+		memset(mpq_archive->mpq_file->compressed_offset, 0, sizeof(unsigned int) * (block_count + 1));
 
 		/* load compressed block offset if necessary. */
-		if ((result = libmpq__read_file_offset(mpq_archive)) < 0) {
+		if ((result = libmpq__read_file_offset(mpq_archive, block_count)) < 0) {
 
 			/* free compressed block offset structure if used. */
 			if (mpq_archive->mpq_file->compressed_offset != NULL) {
@@ -618,7 +622,7 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_SINGLE) == 0) {
 
 		/* loop through all blocks and decompress them. */
-		while (block_offset + mpq_archive->block_size < mpq_archive->mpq_file->mpq_block->uncompressed_size) {
+		do {
 
 			/* block offset stores the relative block position inside the archive. */
 			block_offset = mpq_archive->block_size * block_number;
@@ -804,7 +808,7 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 				/* free output buffer. */
 				free(out_buf);
 			}
-		}
+		} while (block_offset + mpq_archive->block_size < mpq_archive->mpq_file->mpq_block->uncompressed_size);
 	}
 
 	/* free compressed block offset structure if used. */
