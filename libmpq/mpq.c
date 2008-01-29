@@ -259,7 +259,7 @@ int libmpq__archive_close(mpq_archive_s *mpq_archive) {
 }
 
 /* this function returns some information for the requested type of a mpq archive. */
-int libmpq__archive_info(mpq_archive_s *mpq_archive, unsigned int infotype) {
+int libmpq__archive_info(mpq_archive_s *mpq_archive, unsigned int info_type) {
 
 	/* some common variables. */
 	unsigned int uncompressed_size = 0;
@@ -267,7 +267,7 @@ int libmpq__archive_info(mpq_archive_s *mpq_archive, unsigned int infotype) {
 	unsigned int i;
 
 	/* check which information type should be returned. */
-	switch (infotype) {
+	switch (info_type) {
 		case LIBMPQ_ARCHIVE_SIZE:
 
 			/* return the archive size. */
@@ -321,7 +321,7 @@ int libmpq__archive_info(mpq_archive_s *mpq_archive, unsigned int infotype) {
 }
 
 /* this function returns some useful file information. */
-int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int infotype, const unsigned int number) {
+int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int info_type, const unsigned int number) {
 
 	/* check if given number is not out of range. */
 	if (number < 1 || number > mpq_archive->files) {
@@ -331,7 +331,7 @@ int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int infotype, const u
 	}
 
 	/* check which information type should be returned. */
-	switch (infotype) {
+	switch (info_type) {
 		case LIBMPQ_FILE_SIZE_COMPRESSED:
 
 			/* return the compressed size of the file in the mpq archive. */
@@ -851,7 +851,7 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 }
 
 /* this function decompress a file from a mpq archive to memory. */
-int libmpq__file_decompress_memory(mpq_archive_s *mpq_archive, unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, const unsigned int number) {
+int libmpq__file_decompress_memory(mpq_archive_s *mpq_archive, unsigned char *out_buf, unsigned int out_size, const unsigned int number) {
 
 	return 0;
 }

@@ -46,7 +46,7 @@ static decompress_table_s dcmp_table[] = {
 };
 
 /* this function decompress a stream using huffman algorithm. */
-int libmpq__decompress_huffman(unsigned char *out_buf, int out_size, unsigned char *in_buf, int in_size) {
+int libmpq__decompress_huffman(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size) {
 
 	/* TODO: make typdefs of this structs? */
 	/* some common variables. */
@@ -115,7 +115,7 @@ int libmpq__decompress_huffman(unsigned char *out_buf, int out_size, unsigned ch
 }
 
 /* this function decompress a stream using zlib algorithm. */
-int libmpq__decompress_zlib(unsigned char *out_buf, int out_size, unsigned char *in_buf, int in_size) {
+int libmpq__decompress_zlib(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size) {
 
 	/* some common variables. */
 	int result = 0;
@@ -161,7 +161,7 @@ int libmpq__decompress_zlib(unsigned char *out_buf, int out_size, unsigned char 
 }
 
 /* this function decompress a stream using pkzip algorithm. */
-int libmpq__decompress_pkzip(unsigned char *out_buf, int out_size, unsigned char *in_buf, int in_size) {
+int libmpq__decompress_pkzip(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size) {
 
 	/* some common variables. */
 	int tb = 0;
@@ -215,7 +215,7 @@ int libmpq__decompress_pkzip(unsigned char *out_buf, int out_size, unsigned char
 }
 
 /* this function decompress a stream using bzip2 library. */
-int libmpq__decompress_bzip2(unsigned char *out_buf, int out_size, unsigned char *in_buf, int in_size) {
+int libmpq__decompress_bzip2(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size) {
 
 	/* TODO: add bzip2 decompression here. */
 	/* if no error was found, return zero. */
@@ -223,7 +223,7 @@ int libmpq__decompress_bzip2(unsigned char *out_buf, int out_size, unsigned char
 }
 
 /* this function decompress a stream using wave algorithm. (1 channel) */
-int libmpq__decompress_wave_mono(unsigned char *out_buf, int out_size, unsigned char *in_buf, int in_size) {
+int libmpq__decompress_wave_mono(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size) {
 
 	/* some common variables. */
 	int tb = 0;
@@ -240,7 +240,7 @@ int libmpq__decompress_wave_mono(unsigned char *out_buf, int out_size, unsigned 
 }
 
 /* this function decompress a stream using wave algorithm. (2 channels) */
-int libmpq__decompress_wave_stereo(unsigned char *out_buf, int out_size, unsigned char *in_buf, int in_size) {
+int libmpq__decompress_wave_stereo(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size) {
 
 	/* some common variables. */
 	int tb = 0;
@@ -257,7 +257,7 @@ int libmpq__decompress_wave_stereo(unsigned char *out_buf, int out_size, unsigne
 }
 
 /* this function decompress a stream using a combination of the other compression algorithm. */
-int libmpq__decompress_multi(unsigned char *out_buf, int out_size, unsigned char *in_buf, int in_size) {
+int libmpq__decompress_multi(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size) {
 
 	/* some common variables. */
 	int tb                  = 0;
@@ -341,7 +341,7 @@ int libmpq__decompress_multi(unsigned char *out_buf, int out_size, unsigned char
 			}
 
 			/* decompress buffer using corresponding function. */
-			if ((tb = dcmp_table[i].decompress(work_buf, out_size, in_buf, in_size)) < 0) {
+			if ((tb = dcmp_table[i].decompress(in_buf, in_size, work_buf, out_size)) < 0) {
 
 				/* free temporary buffer if used. */
 				if (temp_buf != NULL) {

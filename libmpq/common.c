@@ -279,7 +279,7 @@ int libmpq__decompress_single(mpq_archive_s *mpq_archive, unsigned char *in_buf,
 		if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESS_PKWARE) {
 
 			/* decompress using pkzip. */
-			if ((tb = libmpq__decompress_pkzip(out_buf, out_size, in_buf, in_size)) < 0) {
+			if ((tb = libmpq__decompress_pkzip(in_buf, in_size, out_buf, out_size)) < 0) {
 
 				/* something on decompression failed. */
 				return tb;
@@ -294,7 +294,7 @@ int libmpq__decompress_single(mpq_archive_s *mpq_archive, unsigned char *in_buf,
 		if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESS_MULTI) {
 
 			/* decompress using mutliple algorithm. */
-			if ((tb = libmpq__decompress_multi(out_buf, out_size, in_buf, in_size)) < 0) {
+			if ((tb = libmpq__decompress_multi(in_buf, in_size, out_buf, out_size)) < 0) {
 
 				/* something on decompression failed. */
 				return tb;
@@ -340,7 +340,7 @@ int libmpq__decompress_block(mpq_archive_s *mpq_archive, unsigned char *in_buf, 
 			if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESS_PKWARE) {
 
 				/* decompress using pkzip. */
-				if ((tb = libmpq__decompress_pkzip(out_buf, out_size, temp_buf, in_size)) < 0) {
+				if ((tb = libmpq__decompress_pkzip(temp_buf, in_size, out_buf, out_size)) < 0) {
 
 					/* something on decompression failed. */
 					return tb;
@@ -355,7 +355,7 @@ int libmpq__decompress_block(mpq_archive_s *mpq_archive, unsigned char *in_buf, 
 			if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESS_MULTI) {
 
 				/* decompress using mutliple algorithm. */
-				if ((tb = libmpq__decompress_multi(out_buf, out_size, temp_buf, in_size)) < 0) {
+				if ((tb = libmpq__decompress_multi(temp_buf, in_size, out_buf, out_size)) < 0) {
 
 					/* something on decompression failed. */
 					return tb;
