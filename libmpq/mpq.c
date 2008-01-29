@@ -659,11 +659,15 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 			if ((in_buf  = malloc(in_size)) == NULL ||
 			    (out_buf = malloc(out_size)) == NULL) {
 
-				/* free compressed block offset structure if used. */
-				if (mpq_archive->mpq_file->compressed_offset != NULL) {
+				/* check if file is compressed. */
+				if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) != 0) {
 
-					/* free compressed block offset structure. */
-					free(mpq_archive->mpq_file->compressed_offset);
+					/* free compressed block offset structure if used. */
+					if (mpq_archive->mpq_file->compressed_offset != NULL) {
+
+						/* free compressed block offset structure. */
+						free(mpq_archive->mpq_file->compressed_offset);
+					}
 				}
 
 				/* check if file descriptor is valid. */
@@ -687,11 +691,15 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 			/* read the compressed file data. */
 			if ((rb = read(mpq_archive->fd, in_buf, in_size)) < 0) {
 
-				/* free compressed block offset structure if used. */
-				if (mpq_archive->mpq_file->compressed_offset != NULL) {
+				/* check if file is compressed. */
+				if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) != 0) {
 
-					/* free compressed block offset structure. */
-					free(mpq_archive->mpq_file->compressed_offset);
+					/* free compressed block offset structure if used. */
+					if (mpq_archive->mpq_file->compressed_offset != NULL) {
+
+						/* free compressed block offset structure. */
+						free(mpq_archive->mpq_file->compressed_offset);
+					}
 				}
 
 				/* free input buffer if used. */
@@ -722,11 +730,15 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 			/* decrypt and decompress block. */
 			if ((rb = libmpq__decompress_block(mpq_archive, in_buf, in_size, out_buf, out_size, block_number)) < 0) {
 
-				/* free compressed block offset structure if used. */
-				if (mpq_archive->mpq_file->compressed_offset != NULL) {
+				/* check if file is compressed. */
+				if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) != 0) {
 
-					/* free compressed block offset structure. */
-					free(mpq_archive->mpq_file->compressed_offset);
+					/* free compressed block offset structure if used. */
+					if (mpq_archive->mpq_file->compressed_offset != NULL) {
+
+						/* free compressed block offset structure. */
+						free(mpq_archive->mpq_file->compressed_offset);
+					}
 				}
 
 				/* free input buffer if used. */
@@ -757,11 +769,15 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 			/* write buffer to disk. */
 			if ((wb = write(mpq_archive->mpq_file->fd, out_buf, rb)) < 0) {
 
-				/* free compressed block offset structure if used. */
-				if (mpq_archive->mpq_file->compressed_offset != NULL) {
+				/* check if file is compressed. */
+				if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) != 0) {
 
-					/* free compressed block offset structure. */
-					free(mpq_archive->mpq_file->compressed_offset);
+					/* free compressed block offset structure if used. */
+					if (mpq_archive->mpq_file->compressed_offset != NULL) {
+
+						/* free compressed block offset structure. */
+						free(mpq_archive->mpq_file->compressed_offset);
+					}
 				}
 
 				/* free input buffer if used. */
@@ -811,11 +827,16 @@ int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filenam
 		} while (block_offset + mpq_archive->block_size < mpq_archive->mpq_file->mpq_block->uncompressed_size);
 	}
 
-	/* free compressed block offset structure if used. */
-	if (mpq_archive->mpq_file->compressed_offset != NULL) {
+	/* check if block is compressed and no single sector. */
+	if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_COMPRESSED) != 0 &&
+	    (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FILE_SINGLE) == 0) {
 
-		/* free compressed block offset structure. */
-		free(mpq_archive->mpq_file->compressed_offset);
+		/* free compressed block offset structure if used. */
+		if (mpq_archive->mpq_file->compressed_offset != NULL) {
+
+			/* free compressed block offset structure. */
+			free(mpq_archive->mpq_file->compressed_offset);
+		}
 	}
 
 	/* check if file descriptor is valid. */
