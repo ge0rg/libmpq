@@ -163,10 +163,10 @@ extern unsigned char *libmpq__version();
 /* generic mpq archive information. */
 extern int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename);
 extern int libmpq__archive_close(mpq_archive_s *mpq_archive);
-extern int libmpq__archive_info(mpq_archive_s *mpq_archive, unsigned int infotype);
+extern int libmpq__archive_info(mpq_archive_s *mpq_archive, unsigned int info_type);
 
 /* generic file information. */
-extern int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int infotype, const unsigned int number);
+extern int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int info_type, const unsigned int number);
 extern char *libmpq__file_name(mpq_archive_s *mpq_archive, const unsigned int number);
 extern int libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename);
 
@@ -174,6 +174,6 @@ extern int libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename)
 extern int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filename, const unsigned int number);
 
 /* generic file decompression function to memory. */
-extern int libmpq__file_decompress_memory(mpq_archive_s *mpq_archive, unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, const unsigned int number);
+extern int libmpq__file_decompress_memory(mpq_archive_s *mpq_archive, unsigned char *out_buf, unsigned int out_size, const unsigned int number);
 
 #endif						/* _MPQ_H */
