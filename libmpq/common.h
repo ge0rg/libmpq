@@ -21,35 +21,40 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
+/* function to initialize decryption buffer. */
+int libmpq__decrypt_buffer_init(
+	unsigned int	*buffer
+);
+
 /* function to decrypt a mpq block. */
 int libmpq__decrypt_mpq_block(
-	mpq_archive_s	*mpq_archive,
+	unsigned int	*buffer,
 	unsigned int	*block,
-	unsigned int	length,
+	unsigned int	size,
 	unsigned int	seed1
 );
 
 /* function to decrypt hash table of mpq archive. */
 int libmpq__decrypt_table_hash(
-	mpq_archive_s	*mpq_archive,
-	unsigned char	*pbKey
+	unsigned int	*buffer,
+	unsigned int	*hash,
+	unsigned char	*key,
+	unsigned int	size
 );
 
 /* function to decrypt hash table of mpq archive. */
 int libmpq__decrypt_table_block(
-	mpq_archive_s	*mpq_archive,
-	unsigned char	*pbKey
+	unsigned int	*buffer,
+	unsigned int	*block,
+	unsigned char	*key,
+	unsigned int	size
 );
 
 /* function to detect decryption key. */
 int libmpq__decrypt_key(
-	mpq_archive_s	*mpq_archive,
+	unsigned int	*buffer,
+	unsigned int	*block,
 	unsigned int	decrypted
-);
-
-/* function to initialize decryption buffer. */
-int libmpq__decrypt_buffer_init(
-	mpq_archive_s	*mpq_archive
 );
 
 /* function to read decrypted hash table. */
