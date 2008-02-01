@@ -72,7 +72,7 @@
 #define LIBMPQ_FILE_SINGLE			6		/* return true if file is stored in single sector. */
 #define LIBMPQ_FILE_OFFSET			7		/* return absolute start position of file in archive. */
 #define LIBMPQ_FILE_BLOCKS			8		/* return the number of blocks for the file, if file is stored in single sector return one. */
-#define LIBMPQ_FILE_BLOCKSIZE			9		/* return the blocksize for file, if file is stored in single sector return uncompressed size. */
+#define LIBMPQ_FILE_BLOCKSIZE			9		/* return the blocksize for the file, if file is stored in single sector return uncompressed size. */
 
 /* mpq archive header. */
 typedef struct {
