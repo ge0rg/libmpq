@@ -38,8 +38,8 @@
 #define LIBMPQ_ARCHIVE_ERROR_OPEN		-1		/* open error on archive file. */
 #define LIBMPQ_ARCHIVE_ERROR_CLOSE		-2		/* close error on archive file. */
 #define LIBMPQ_ARCHIVE_ERROR_FORMAT		-3		/* archive format errror. */
-#define LIBMPQ_ARCHIVE_ERROR_HASH_TABLE		-4		/* hash table in archive is broken. */
-#define LIBMPQ_ARCHIVE_ERROR_BLOCK_TABLE	-5		/* block table in archive is broken. */
+#define LIBMPQ_ARCHIVE_ERROR_HASHTABLE		-4		/* hash table in archive is broken. */
+#define LIBMPQ_ARCHIVE_ERROR_BLOCKTABLE		-5		/* block table in archive is broken. */
 #define LIBMPQ_ARCHIVE_ERROR_MALLOC		-6		/* memory allocation error for archive. */
 
 /* define file errors. */
@@ -58,34 +58,21 @@
 #define LIBMPQ_ARCHIVE_SIZE_COMPRESSED		2		/* compressed archive size. */
 #define LIBMPQ_ARCHIVE_SIZE_UNCOMPRESSED	3		/* uncompressed archive size. */
 #define LIBMPQ_ARCHIVE_FILES			4		/* number of files in the mpq archive */
-#define LIBMPQ_ARCHIVE_HASH_TABLE_COUNT		5		/* mpq archive hashtable size. */
-#define LIBMPQ_ARCHIVE_BLOCK_TABLE_COUNT	6		/* mpq archive blocktable size. */
-#define LIBMPQ_ARCHIVE_BLOCK_SIZE		7		/* mpq archive blocksize. */
+#define LIBMPQ_ARCHIVE_HASHTABLE_ENTRIES	5		/* mpq archive hashtable size. */
+#define LIBMPQ_ARCHIVE_BLOCKTABLE_ENTRIES	6		/* mpq archive blocktable size. */
+#define LIBMPQ_ARCHIVE_BLOCKSIZE		7		/* mpq archive blocksize. */
 #define LIBMPQ_ARCHIVE_VERSION			8		/* mpq archive version. */
 
 /* define generic values for returning file information. */
 #define LIBMPQ_FILE_SIZE_COMPRESSED		1		/* compressed size of the given file in archive. */
 #define LIBMPQ_FILE_SIZE_UNCOMPRESSED		2		/* uncompressed size of the given file in archive. */
 #define LIBMPQ_FILE_ENCRYPTED			3		/* return true if file is encrypted. */
-#define LIBMPQ_FILE_COMPRESSED			4		/* return true if file is compressed. */
-#define LIBMPQ_FILE_BLOCKS			5		/* return number of blocks for file. */
-#define LIBMPQ_FILE_OFFSET			6		/* return absolute start position of file in archive. */
-
- /* define generic mpq archive information. */
-#define LIBMPQ_HEADER				0x1A51504D	/* mpq archive header ('MPQ\x1A') */
-
-/* define the known archive versions. */
-#define LIBMPQ_ARCHIVE_VERSION_ONE		0		/* version one used until world of warcraft. */
-#define LIBMPQ_ARCHIVE_VERSION_TWO		1		/* version two used from world of warcraft - the burning crusade. */
-
-/* define values used by blizzard as flags. */
-#define LIBMPQ_FLAG_EXISTS			0x80000000	/* set if file exists, reset when the file was deleted. */
-#define LIBMPQ_FLAG_ENCRYPTED			0x00010000	/* indicates whether file is encrypted. */
-#define LIBMPQ_FLAG_COMPRESSED			0x0000FF00	/* file is compressed. */
-#define LIBMPQ_FLAG_COMPRESS_PKWARE		0x00000100	/* compression made by pkware data compression library. */
-#define LIBMPQ_FLAG_COMPRESS_MULTI		0x00000200	/* multiple compressions. */
-#define LIBMPQ_FLAG_SINGLE			0x01000000	/* file is stored in one single sector, first seen in world of warcraft. */
-#define LIBMPQ_FLAG_HASH_FREE			0xFFFFFFFF	/* hash table entry is empty and has always been empty. */
+#define LIBMPQ_FILE_COMPRESSED			4		/* return true if file is compressed using multiple compression algorithm. */
+#define LIBMPQ_FILE_IMPLODED			5		/* return true if file is imploded using pkware implode algorithm. */
+#define LIBMPQ_FILE_SINGLE			6		/* return true if file is stored in single sector. */
+#define LIBMPQ_FILE_OFFSET			7		/* return absolute start position of file in archive. */
+#define LIBMPQ_FILE_BLOCKS			8		/* return the number of blocks for the file, if file is stored in single sector return one. */
+#define LIBMPQ_FILE_BLOCKSIZE			9		/* return the blocksize for file, if file is stored in single sector return uncompressed size. */
 
 /* mpq archive header. */
 typedef struct {
@@ -170,10 +157,16 @@ extern int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int info_type,
 extern char *libmpq__file_name(mpq_archive_s *mpq_archive, const unsigned int number);
 extern int libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename);
 
-/* generic file decompression function to disk. */
-extern int libmpq__file_decompress_disk(mpq_archive_s *mpq_archive, const char *filename, const unsigned int number);
+/* generic file extract function. */
+extern int libmpq__file_extract(mpq_archive_s *mpq_archive, const char *filename, const unsigned int number);
 
-/* generic file decompression function to memory. */
-extern int libmpq__file_decompress_memory(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int block_size);
+/* generic memory decrypt function. */
+extern int libmpq__memory_decrypt(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int block_count);
+
+/* generic memory decompress function. */
+extern int libmpq__memory_decompress(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int block_size);
+
+/* generic memory explode function. */
+extern int libmpq__memory_explode(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int block_size);
 
 #endif						/* _MPQ_H */

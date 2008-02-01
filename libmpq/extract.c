@@ -268,23 +268,6 @@ int libmpq__decompress_multi(unsigned char *in_buf, unsigned int in_size, unsign
 	unsigned char decompress_flag;
 	unsigned int i;
 
-	/* check if the input size is the same as output size, so do nothing. */
-	if (in_size == out_size) {
-
-		/* check if buffer have same data. */
-		if (in_buf == out_buf) {
-
-			/* return output buffer size. */
-			return out_size;
-		}
-
-		/* copy buffer to target. */
-		memcpy(out_buf, in_buf, in_size);
-
-		/* return output buffer size. */
-		return out_size;
-	}
-
 	/* get applied compression types. */
 	decompress_flag = *in_buf++;
 
