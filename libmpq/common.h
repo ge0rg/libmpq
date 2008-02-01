@@ -91,10 +91,4 @@ int libmpq__read_file_list(
 	mpq_archive_s	*mpq_archive
 );
 
-/* function to read variable block positions used in compressed files. */
-int libmpq__read_file_offset(
-	mpq_archive_s	*mpq_archive,
-	unsigned int	block_count
-);
-
 #endif						/* _COMMON_H */

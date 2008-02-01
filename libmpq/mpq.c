@@ -440,7 +440,6 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const char *filename, const
 	int rb = 0;
 	int tb = 0;
 	int wb = 0;
-	int result = 0;
 	unsigned char *in_buf;
 	unsigned char *out_buf;
 	unsigned int in_size = 0;
@@ -641,8 +640,11 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const char *filename, const
 			/* cleanup. */
 			memset(mpq_archive->mpq_file->compressed_offset, 0, sizeof(unsigned int) * (block_count + 1));
 
-			/* load compressed block offset if necessary. */
-			if ((result = libmpq__read_file_offset(mpq_archive, block_count)) < 0) {
+			/* seek to block position. */
+			lseek(mpq_archive->fd, mpq_archive->mpq_file->mpq_block->offset, SEEK_SET);
+
+			/* read block positions from begin of file. */
+			if ((rb = read(mpq_archive->fd, mpq_archive->mpq_file->compressed_offset, sizeof(unsigned int) * (block_count + 1))) < 0) {
 
 				/* free compressed block offset structure if used. */
 				if (mpq_archive->mpq_file->compressed_offset != NULL) {
@@ -658,8 +660,64 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const char *filename, const
 					return LIBMPQ_FILE_ERROR_CLOSE;
 				}
 
-				/* error on decrypting block positions. */
-				return result;
+				/* something on read from archive failed. */
+				return LIBMPQ_FILE_ERROR_READ;
+			}
+
+			/* check if the archive is protected some way, sometimes the file appears not to be encrypted, but it is. */
+			if (mpq_archive->mpq_file->compressed_offset[0] != rb) {
+
+				/* file is encrypted. */
+				mpq_archive->mpq_file->mpq_block->flags |= LIBMPQ_FLAG_ENCRYPTED;
+			}
+
+			/* check if compressed offset block is encrypted, we have to decrypt it. */
+			if (mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FLAG_ENCRYPTED) {
+
+				/* check if we don't know the file seed, try to find it. */
+				if ((mpq_archive->mpq_file->seed = libmpq__decrypt_key(mpq_archive->mpq_buffer, mpq_archive->mpq_file->compressed_offset, sizeof(unsigned int) * (block_count + 1))) < 0) {
+
+					/* free compressed block offset structure if used. */
+					if (mpq_archive->mpq_file->compressed_offset != NULL) {
+
+						/* free compressed block offset structure. */
+						free(mpq_archive->mpq_file->compressed_offset);
+					}
+
+					/* check if file descriptor is valid. */
+					if ((close(mpq_archive->mpq_file->fd)) == -1) {
+
+						/* file was not opened. */
+						return LIBMPQ_FILE_ERROR_CLOSE;
+					}
+
+					/* sorry without seed, we cannot extract file. */
+					return LIBMPQ_FILE_ERROR_DECRYPT;
+				}
+
+				/* decrypt block in input buffer. */
+				libmpq__decrypt_mpq_block(mpq_archive->mpq_buffer, mpq_archive->mpq_file->compressed_offset, sizeof(unsigned int) * (block_count + 1), mpq_archive->mpq_file->seed - 1);
+
+				/* check if the block positions are correctly decrypted. */
+				if (mpq_archive->mpq_file->compressed_offset[0] != sizeof(unsigned int) * (block_count + 1)) {
+
+					/* free compressed block offset structure if used. */
+					if (mpq_archive->mpq_file->compressed_offset != NULL) {
+
+						/* free compressed block offset structure. */
+						free(mpq_archive->mpq_file->compressed_offset);
+					}
+
+					/* check if file descriptor is valid. */
+					if ((close(mpq_archive->mpq_file->fd)) == -1) {
+
+						/* file was not opened. */
+						return LIBMPQ_FILE_ERROR_CLOSE;
+					}
+
+					/* sorry without seed, we cannot extract file. */
+					return LIBMPQ_FILE_ERROR_DECRYPT;
+				}
 			}
 		}
 
@@ -945,11 +1003,22 @@ int libmpq__memory_decrypt(unsigned char *in_buf, unsigned int in_size, unsigned
 	/* copy compressed offset block from input buffer. */
 	memcpy(compressed_offset, in_buf, sizeof(unsigned int) * (block_count + 1));
 
-	/* detect decryption key. */
-	seed = libmpq__decrypt_key(mpq_buffer, compressed_offset, sizeof(unsigned int) * (block_count + 1));
+	/* check if we don't know the file seed, try to find it. */
+	if ((seed = libmpq__decrypt_key(mpq_buffer, compressed_offset, sizeof(unsigned int) * (block_count + 1))) < 0) {
+
+		/* sorry without seed, we cannot extract file. */
+		return LIBMPQ_FILE_ERROR_DECRYPT;
+	}
 
 	/* decrypt the compressed offset block. */
 	libmpq__decrypt_mpq_block(mpq_buffer, compressed_offset, sizeof(unsigned int) * (block_count + 1), seed - 1);
+
+	/* check if the block positions are correctly decrypted. */
+	if (compressed_offset[0] != sizeof(unsigned int) * (block_count + 1)) {
+
+		/* sorry without seed, we cannot extract file. */
+		return LIBMPQ_FILE_ERROR_DECRYPT;
+	}
 
 	/* copy compressed offset as first block to output buffer. */
 	memcpy(out_buf, compressed_offset, sizeof(unsigned int) * (block_count + 1));
