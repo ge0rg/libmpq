@@ -438,6 +438,7 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const char *filename, const
 
 	/* some common variables. */
 	int rb = 0;
+	int db = 0;
 	int tb = 0;
 	int wb = 0;
 	unsigned char *in_buf;
@@ -544,7 +545,7 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const char *filename, const
 		}
 
 		/* decompress or explode single sector of file. */
-		if ((rb = libmpq__decompress_block(in_buf, in_size, out_buf, out_size, compression_type)) < 0) {
+		if ((db = libmpq__decompress_block(in_buf, in_size, out_buf, out_size, compression_type)) < 0) {
 
 			/* free input buffer if used. */
 			if (in_buf != NULL) {
@@ -567,12 +568,12 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const char *filename, const
 				return LIBMPQ_FILE_ERROR_CLOSE;
 			}
 
-			/* something on transferring failed. */
-			return rb;
+			/* something on decompressing failed. */
+			return db;
 		}
 
 		/* write buffer to disk. */
-		if ((wb = write(mpq_archive->mpq_file->fd, out_buf, rb)) < 0) {
+		if ((wb = write(mpq_archive->mpq_file->fd, out_buf, db)) < 0) {
 
 			/* free input buffer if used. */
 			if (in_buf != NULL) {
@@ -788,7 +789,7 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const char *filename, const
 			/* seek in file. */
 			lseek(mpq_archive->fd, read_offset, SEEK_SET);
 
-			/* read the compressed file data. */
+			/* read the file data. */
 			if ((rb = read(mpq_archive->fd, in_buf, in_size)) < 0) {
 
 				/* check if file is compressed. */
@@ -852,7 +853,7 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const char *filename, const
 				}
 
 				/* decompress or explode block. */
-				if ((rb = libmpq__decompress_block(in_buf, in_size, out_buf, out_size, compression_type)) < 0) {
+				if ((db = libmpq__decompress_block(in_buf, in_size, out_buf, out_size, compression_type)) < 0) {
 
 					/* free compressed block offset structure if used. */
 					if (mpq_archive->mpq_file->compressed_offset != NULL) {
@@ -882,17 +883,20 @@ int libmpq__file_extract(mpq_archive_s *mpq_archive, const char *filename, const
 						return LIBMPQ_FILE_ERROR_CLOSE;
 					}
 
-					/* something on transferring failed. */
-					return rb;
+					/* something on decompressing failed. */
+					return db;
 				}
 			} else {
 
 				/* no compressed data, so copy input buffer to output buffer. */
 				memcpy(out_buf, in_buf, out_size);
+
+				/* store number of bytes copied. */
+				db = out_size;
 			}
 
 			/* write buffer to disk. */
-			if ((wb = write(mpq_archive->mpq_file->fd, out_buf, rb)) < 0) {
+			if ((wb = write(mpq_archive->mpq_file->fd, out_buf, db)) < 0) {
 
 				/* check if file is compressed. */
 				if ((mpq_archive->mpq_file->mpq_block->flags & LIBMPQ_FLAG_COMPRESSED) != 0) {
