@@ -115,7 +115,7 @@ typedef struct {
 	mpq_block_s	*mpq_block;		/* file block pointer. */
 } mpq_file_s;
 
-/* filelist structure. */
+/* file list structure. */
 typedef struct {
 	char		**file_names;		/* file name for archive members. */
 	unsigned int	*block_table_indices;	/* pointer which stores the mapping for file number to block entry. */
@@ -140,7 +140,7 @@ typedef struct {
 	mpq_file_s	*mpq_file;		/* pointer to file which is processed. */
 
 	/* non archive structure related members. */
-	mpq_list_s	*mpq_list;		/* handle to filelist (in most cases this is the last file in the archive). */
+	mpq_list_s	*mpq_list;		/* handle to file list (in most cases this is the last file in the archive). */
 	unsigned int	files;			/* number of files in archive, which could be extracted. */
 } mpq_archive_s;
 
