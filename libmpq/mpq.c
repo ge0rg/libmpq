@@ -37,10 +37,10 @@
 #include "config.h"
 
 /* this function returns the library version information. */
-unsigned char *libmpq__version() {
+char *libmpq__version() {
 
 	/* return version information. */
-	return (unsigned char *)VERSION;
+	return VERSION;
 }
 
 /* this function reads a file and verify if it is a valid mpq archive, then it reads and decrypts the hash table. */
@@ -1010,6 +1010,20 @@ int libmpq__memory_decrypt(unsigned char *in_buf, unsigned int in_size, unsigned
 	/* check if we don't know the file seed, try to find it. */
 	if ((seed = libmpq__decrypt_key(mpq_buffer, compressed_offset, sizeof(unsigned int) * (block_count + 1))) < 0) {
 
+		/* free compressed offset block structure if used. */
+		if (compressed_offset != NULL) {
+
+			/* free compressed offset block structure. */
+			free(compressed_offset);
+		}
+
+		/* free mpq buffer structure if used. */
+		if (mpq_buffer != NULL) {
+
+			/* free mpq buffer structure. */
+			free(mpq_buffer);
+		}
+
 		/* sorry without seed, we cannot extract file. */
 		return LIBMPQ_FILE_ERROR_DECRYPT;
 	}
@@ -1020,7 +1034,21 @@ int libmpq__memory_decrypt(unsigned char *in_buf, unsigned int in_size, unsigned
 	/* check if the block positions are correctly decrypted. */
 	if (compressed_offset[0] != sizeof(unsigned int) * (block_count + 1)) {
 
-		/* sorry without seed, we cannot extract file. */
+		/* free compressed offset block structure if used. */
+		if (compressed_offset != NULL) {
+
+			/* free compressed offset block structure. */
+			free(compressed_offset);
+		}
+
+		/* free mpq buffer structure if used. */
+		if (mpq_buffer != NULL) {
+
+			/* free mpq buffer structure. */
+			free(mpq_buffer);
+		}
+
+		/* sorry without compressed offset table, we cannot extract file. */
 		return LIBMPQ_FILE_ERROR_DECRYPT;
 	}
 

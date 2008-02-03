@@ -129,7 +129,7 @@ typedef struct {
 	char		filename[PATH_MAX];	/* archive file name. */
 	int		fd;			/* file handle. */
 
-	/* generic position information. */
+	/* generic size information. */
 	unsigned int	block_size;		/* size of the mpq block. */
 
 	/* archive related buffers and tables. */
@@ -145,7 +145,7 @@ typedef struct {
 } mpq_archive_s;
 
 /* generic information about library. */
-extern unsigned char *libmpq__version();
+extern char *libmpq__version();
 
 /* generic mpq archive information. */
 extern int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename);

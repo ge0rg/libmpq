@@ -295,6 +295,20 @@ int libmpq__decompress_memory(unsigned char *in_buf, unsigned int in_size, unsig
 			/* copy compressed offset block from input buffer. */
 			memcpy(compressed_offset, in_buf, sizeof(unsigned int) * (block_count + 1));
 
+			/* check if the file can be decompressed. */
+			if (compressed_offset[0] != sizeof(unsigned int) * (block_count + 1)) {
+
+				/* free compressed offset block structure if used. */
+				if (compressed_offset != NULL) {
+
+					/* free compressed offset block structure. */
+					free(compressed_offset);
+				}
+
+				/* sorry without compressed offset table, we cannot extract file. */
+				return LIBMPQ_FILE_ERROR_DECOMPRESS;
+			}
+
 			/* loop through all blocks and decompress them. */
 			for (i = 0; i < block_count; i++) {
 
