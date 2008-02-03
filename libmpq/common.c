@@ -263,56 +263,80 @@ int libmpq__decompress_memory(unsigned char *in_buf, unsigned int in_size, unsig
 	unsigned char *work_buf;
 	unsigned int block_count;
 
-	/* check if we are working with multiple sectors. */
-	if (block_size < out_size) {
+	/* check if buffer is not compressed. */
+	if (compression_type == LIBMPQ_FLAG_COMPRESS_NONE) {
 
-		/* get the number of blocks for the file. */
-		block_count = (out_size + block_size - 1) / block_size;
+		/* no compressed data, so copy input buffer to output buffer. */
+		memcpy(out_buf, in_buf, out_size);
 
-		/* allocate memory for the buffers. */
-		if ((compressed_offset = malloc(sizeof(unsigned int) * (block_count + 1))) == NULL) {
+		/* store number of bytes copied. */
+		tb = out_size;
+	}
 
-			/* memory allocation problem. */
-			return LIBMPQ_ARCHIVE_ERROR_MALLOC;
-		}
+	if (compression_type == LIBMPQ_FLAG_COMPRESS_PKWARE ||
+	    compression_type == LIBMPQ_FLAG_COMPRESS_MULTI) {
 
-		/* cleanup. */
-		memset(compressed_offset, 0, sizeof(unsigned int) * (block_count + 1));
+		/* check if we are working with multiple sectors. */
+		if (block_size < out_size) {
 
-		/* copy compressed offset block from input buffer. */
-		memcpy(compressed_offset, in_buf, sizeof(unsigned int) * (block_count + 1));
-
-		/* loop through all blocks and decompress them. */
-		for (i = 0; i < block_count; i++) {
+			/* get the number of blocks for the file. */
+			block_count = (out_size + block_size - 1) / block_size;
 
 			/* allocate memory for the buffers. */
-			if ((work_buf = malloc(compressed_offset[i + 1] - compressed_offset[i])) == NULL) {
-
-				/* free compressed offset block structure if used. */
-				if (compressed_offset != NULL) {
-
-					/* free compressed offset block structure. */
-					free(compressed_offset);
-				}
+			if ((compressed_offset = malloc(sizeof(unsigned int) * (block_count + 1))) == NULL) {
 
 				/* memory allocation problem. */
 				return LIBMPQ_ARCHIVE_ERROR_MALLOC;
 			}
 
 			/* cleanup. */
-			memset(work_buf, 0, compressed_offset[i + 1] - compressed_offset[i]);
+			memset(compressed_offset, 0, sizeof(unsigned int) * (block_count + 1));
 
-			/* copy block from input buffer to working buffer. */
-			memcpy(work_buf, in_buf + compressed_offset[i], compressed_offset[i + 1] - compressed_offset[i]);
+			/* copy compressed offset block from input buffer. */
+			memcpy(compressed_offset, in_buf, sizeof(unsigned int) * (block_count + 1));
 
-			/* decompress using mutliple algorithm. */
-			if ((rb = libmpq__decompress_block(work_buf, compressed_offset[i + 1] - compressed_offset[i], out_buf + block_size * i, (block_size * i + block_size > out_size) ? out_size - block_size * i : block_size, compression_type)) < 0) {
+			/* loop through all blocks and decompress them. */
+			for (i = 0; i < block_count; i++) {
 
-				/* free compressed offset block structure if used. */
-				if (compressed_offset != NULL) {
+				/* allocate memory for the buffers. */
+				if ((work_buf = malloc(compressed_offset[i + 1] - compressed_offset[i])) == NULL) {
 
-					/* free compressed offset block structure. */
-					free(compressed_offset);
+					/* free compressed offset block structure if used. */
+					if (compressed_offset != NULL) {
+
+						/* free compressed offset block structure. */
+						free(compressed_offset);
+					}
+
+					/* memory allocation problem. */
+					return LIBMPQ_ARCHIVE_ERROR_MALLOC;
+				}
+
+				/* cleanup. */
+				memset(work_buf, 0, compressed_offset[i + 1] - compressed_offset[i]);
+
+				/* copy block from input buffer to working buffer. */
+				memcpy(work_buf, in_buf + compressed_offset[i], compressed_offset[i + 1] - compressed_offset[i]);
+
+				/* decompress using mutliple algorithm. */
+				if ((rb = libmpq__decompress_block(work_buf, compressed_offset[i + 1] - compressed_offset[i], out_buf + block_size * i, (block_size * i + block_size > out_size) ? out_size - block_size * i : block_size, compression_type)) < 0) {
+
+					/* free compressed offset block structure if used. */
+					if (compressed_offset != NULL) {
+
+						/* free compressed offset block structure. */
+						free(compressed_offset);
+					}
+
+					/* free working buffer structure if used. */
+					if (work_buf != NULL) {
+
+						/* free working buffer structure. */
+						free(work_buf);
+					}
+
+					/* something on decompression failed. */
+					return rb;
 				}
 
 				/* free working buffer structure if used. */
@@ -322,37 +346,27 @@ int libmpq__decompress_memory(unsigned char *in_buf, unsigned int in_size, unsig
 					free(work_buf);
 				}
 
+				/* save the number of transferred bytes. */
+				tb += rb;
+			}
+
+			/* free compressed offset block structure if used. */
+			if (compressed_offset != NULL) {
+
+				/* free compressed offset block structure. */
+				free(compressed_offset);
+			}
+		}
+
+		/* check if we are working with single sector. */
+		if (block_size == out_size) {
+
+			/* decompress using mutliple algorithm. */
+			if ((rb = libmpq__decompress_block(in_buf, in_size, out_buf, out_size, compression_type)) < 0) {
+
 				/* something on decompression failed. */
 				return rb;
 			}
-
-			/* free working buffer structure if used. */
-			if (work_buf != NULL) {
-
-				/* free working buffer structure. */
-				free(work_buf);
-			}
-
-			/* save the number of transferred bytes. */
-			tb += rb;
-		}
-
-		/* free compressed offset block structure if used. */
-		if (compressed_offset != NULL) {
-
-			/* free compressed offset block structure. */
-			free(compressed_offset);
-		}
-	}
-
-	/* check if we are working with single sector. */
-	if (block_size == out_size) {
-
-		/* decompress using mutliple algorithm. */
-		if ((rb = libmpq__decompress_block(in_buf, in_size, out_buf, out_size, compression_type)) < 0) {
-
-			/* something on decompression failed. */
-			return rb;
 		}
 	}
 

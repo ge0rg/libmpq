@@ -1128,3 +1128,20 @@ int libmpq__memory_explode(unsigned char *in_buf, unsigned int in_size, unsigned
 	/* if no error was found, return transferred bytes. */
 	return tb;
 }
+
+/* this function copy the given input buffer to output buffer. */
+int libmpq__memory_copy(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int block_size) {
+
+	/* some common variables. */
+	int tb = 0;
+
+	/* call real decompress function. */
+	if ((tb = libmpq__decompress_memory(in_buf, in_size, out_buf, out_size, block_size, LIBMPQ_FLAG_COMPRESS_NONE)) < 0) {
+
+		/* something on decompression failed. */
+		return tb;
+	}
+
+	/* if no error was found, return transferred bytes. */
+	return tb;
+}
