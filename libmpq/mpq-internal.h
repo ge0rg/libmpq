@@ -36,6 +36,7 @@
 #define LIBMPQ_FLAG_COMPRESSED			0x0000FF00	/* file is compressed. */
 #define LIBMPQ_FLAG_COMPRESS_PKWARE		0x00000100	/* compression made by pkware data compression library. */
 #define LIBMPQ_FLAG_COMPRESS_MULTI		0x00000200	/* multiple compressions. */
+#define LIBMPQ_FLAG_COMPRESS_NONE		0x00000300	/* no compression (no blizzard flag used by myself). */
 #define LIBMPQ_FLAG_SINGLE			0x01000000	/* file is stored in one single sector, first seen in world of warcraft. */
 #define LIBMPQ_FLAG_HASH_FREE			0xFFFFFFFF	/* hash table entry is empty and has always been empty. */
 

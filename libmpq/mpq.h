@@ -169,4 +169,7 @@ extern int libmpq__memory_decompress(unsigned char *in_buf, unsigned int in_size
 /* generic memory explode function. */
 extern int libmpq__memory_explode(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int block_size);
 
+/* generic memory copy function. */
+extern int libmpq__memory_copy(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int block_size);
+
 #endif						/* _MPQ_H */
