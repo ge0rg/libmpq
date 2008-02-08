@@ -338,118 +338,62 @@ int libmpq__file_open(mpq_archive_s *mpq_archive, unsigned int file_number) {
 	int rb = 0;
 	int tb = 0;
 
-	/* check if file is already opened. */
-	if (mpq_archive->mpq_file[file_number - 1] == NULL) {
+	/* allocate memory for the file. */
+	if ((mpq_archive->mpq_file[file_number - 1] = malloc(sizeof(mpq_file_s))) == NULL) {
 
-		/* allocate memory for the file. */
-		if ((mpq_archive->mpq_file[file_number - 1] = malloc(sizeof(mpq_file_s))) == NULL) {
+		/* memory allocation problem. */
+		return LIBMPQ_ERROR_MALLOC;
+	}
 
-			/* memory allocation problem. */
-			return LIBMPQ_ERROR_MALLOC;
+	/* cleanup. */
+	memset(mpq_archive->mpq_file[file_number - 1], 0, sizeof(mpq_file_s));
+
+	/* allocate memory for the compressed block offset table. */
+	if ((mpq_archive->mpq_file[file_number - 1]->compressed_offset = malloc(compressed_size)) == NULL) {
+
+		/* memory allocation problem. */
+		return LIBMPQ_ERROR_MALLOC;
+	}
+
+	/* cleanup. */
+	memset(mpq_archive->mpq_file[file_number - 1]->compressed_offset, 0, compressed_size);
+
+	/* check if we need to load the compressed block offset table, we will maintain this table for uncompressed files too. */
+	if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_COMPRESSED) != 0 &&
+	    (mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) == 0) {
+
+		/* seek to block position. */
+		lseek(mpq_archive->fd, mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].offset, SEEK_SET);
+
+		/* read block positions from begin of file. */
+		if ((rb = read(mpq_archive->fd, mpq_archive->mpq_file[file_number - 1]->compressed_offset, compressed_size)) < 0) {
+
+			/* something on read from archive failed. */
+			return LIBMPQ_ERROR_READ;
 		}
 
-		/* cleanup. */
-		memset(mpq_archive->mpq_file[file_number - 1], 0, sizeof(mpq_file_s));
+		/* check if the archive is protected some way, sometimes the file appears not to be encrypted, but it is. */
+		if (mpq_archive->mpq_file[file_number - 1]->compressed_offset[0] != rb) {
 
-		/* allocate memory for the compressed block offset table. */
-		if ((mpq_archive->mpq_file[file_number - 1]->compressed_offset = malloc(compressed_size)) == NULL) {
-
-			/* memory allocation problem. */
-			return LIBMPQ_ERROR_MALLOC;
+			/* file is encrypted. */
+			mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags |= LIBMPQ_FLAG_ENCRYPTED;
 		}
 
-		/* cleanup. */
-		memset(mpq_archive->mpq_file[file_number - 1]->compressed_offset, 0, compressed_size);
+		/* check if compressed offset block is encrypted, we have to decrypt it. */
+		if (mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_ENCRYPTED) {
 
-		/* check if we need to load the compressed block offset table, we will maintain this table for uncompressed files too. */
-		if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_COMPRESSED) != 0 &&
-		    (mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) == 0) {
+			/* allocate memory for the buffers. */
+			if ((mpq_buf = malloc(mpq_size)) == NULL) {
 
-			/* seek to block position. */
-			lseek(mpq_archive->fd, mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].offset, SEEK_SET);
-
-			/* read block positions from begin of file. */
-			if ((rb = read(mpq_archive->fd, mpq_archive->mpq_file[file_number - 1]->compressed_offset, compressed_size)) < 0) {
-
-				/* something on read from archive failed. */
-				return LIBMPQ_ERROR_READ;
+				/* memory allocation problem. */
+				return LIBMPQ_ERROR_MALLOC;
 			}
 
-			/* check if the archive is protected some way, sometimes the file appears not to be encrypted, but it is. */
-			if (mpq_archive->mpq_file[file_number - 1]->compressed_offset[0] != rb) {
+			/* cleanup. */
+			memset(mpq_buf, 0, mpq_size);
 
-				/* file is encrypted. */
-				mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags |= LIBMPQ_FLAG_ENCRYPTED;
-			}
-
-			/* check if compressed offset block is encrypted, we have to decrypt it. */
-			if (mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_ENCRYPTED) {
-
-				/* allocate memory for the buffers. */
-				if ((mpq_buf = malloc(mpq_size)) == NULL) {
-
-					/* memory allocation problem. */
-					return LIBMPQ_ERROR_MALLOC;
-				}
-
-				/* cleanup. */
-				memset(mpq_buf, 0, mpq_size);
-
-				/* initialize the decryption buffer. */
-				if ((tb = libmpq__decrypt_buffer_init(mpq_buf)) < 0) {
-
-					/* free mpq buffer structure if used. */
-					if (mpq_buf != NULL) {
-
-						/* free mpq buffer structure. */
-						free(mpq_buf);
-					}
-
-					/* sorry without seed, we cannot extract file. */
-					return tb;
-				}
-
-				/* check if we don't know the file seed, try to find it. */
-				if ((mpq_archive->mpq_file[file_number - 1]->seed = libmpq__decrypt_key((unsigned char *)mpq_archive->mpq_file[file_number - 1]->compressed_offset, compressed_size, (unsigned char *)mpq_archive->mpq_file[file_number - 1]->compressed_offset, compressed_size, mpq_buf)) < 0) {
-
-					/* free mpq buffer structure if used. */
-					if (mpq_buf != NULL) {
-
-						/* free mpq buffer structure. */
-						free(mpq_buf);
-					}
-
-					/* sorry without seed, we cannot extract file. */
-					return LIBMPQ_ERROR_DECRYPT;
-				}
-
-				/* decrypt block in input buffer. */
-				if ((tb = libmpq__decrypt_block((unsigned char *)mpq_archive->mpq_file[file_number - 1]->compressed_offset, compressed_size, (unsigned char *)mpq_archive->mpq_file[file_number - 1]->compressed_offset, compressed_size, mpq_archive->mpq_file[file_number - 1]->seed - 1, mpq_buf)) < 0 ) {
-
-					/* free mpq buffer structure if used. */
-					if (mpq_buf != NULL) {
-
-						/* free mpq buffer structure. */
-						free(mpq_buf);
-					}
-
-					/* something on decrypt failed. */
-					return tb;
-				}
-
-				/* check if the block positions are correctly decrypted. */
-				if (mpq_archive->mpq_file[file_number - 1]->compressed_offset[0] != compressed_size) {
-
-					/* free mpq buffer structure if used. */
-					if (mpq_buf != NULL) {
-
-						/* free mpq buffer structure. */
-						free(mpq_buf);
-					}
-
-					/* sorry without seed, we cannot extract file. */
-					return LIBMPQ_ERROR_DECRYPT;
-				}
+			/* initialize the decryption buffer. */
+			if ((tb = libmpq__decrypt_buffer_init(mpq_buf)) < 0) {
 
 				/* free mpq buffer structure if used. */
 				if (mpq_buf != NULL) {
@@ -457,22 +401,74 @@ int libmpq__file_open(mpq_archive_s *mpq_archive, unsigned int file_number) {
 					/* free mpq buffer structure. */
 					free(mpq_buf);
 				}
+
+				/* sorry without seed, we cannot extract file. */
+				return tb;
 			}
-		} else {
 
-			/* loop through all blocks and create compressed block offset table based on block size. */
-			for (i = 0; i < ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size + 1); i++) {
+			/* check if we don't know the file seed, try to find it. */
+			if ((mpq_archive->mpq_file[file_number - 1]->seed = libmpq__decrypt_key((unsigned char *)mpq_archive->mpq_file[file_number - 1]->compressed_offset, compressed_size, (unsigned char *)mpq_archive->mpq_file[file_number - 1]->compressed_offset, compressed_size, mpq_buf)) < 0) {
 
-				/* check if we process the last block. */
-				if (i == ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size)) {
+				/* free mpq buffer structure if used. */
+				if (mpq_buf != NULL) {
 
-					/* store size of last block. */
-					mpq_archive->mpq_file[file_number - 1]->compressed_offset[i] = mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size;
-				} else {
-
-					/* store default block size. */
-					mpq_archive->mpq_file[file_number - 1]->compressed_offset[i] = i * mpq_archive->block_size;
+					/* free mpq buffer structure. */
+					free(mpq_buf);
 				}
+
+				/* sorry without seed, we cannot extract file. */
+				return LIBMPQ_ERROR_DECRYPT;
+			}
+
+			/* decrypt block in input buffer. */
+			if ((tb = libmpq__decrypt_block((unsigned char *)mpq_archive->mpq_file[file_number - 1]->compressed_offset, compressed_size, (unsigned char *)mpq_archive->mpq_file[file_number - 1]->compressed_offset, compressed_size, mpq_archive->mpq_file[file_number - 1]->seed - 1, mpq_buf)) < 0 ) {
+
+				/* free mpq buffer structure if used. */
+				if (mpq_buf != NULL) {
+
+					/* free mpq buffer structure. */
+					free(mpq_buf);
+				}
+
+				/* something on decrypt failed. */
+				return tb;
+			}
+
+			/* check if the block positions are correctly decrypted. */
+			if (mpq_archive->mpq_file[file_number - 1]->compressed_offset[0] != compressed_size) {
+
+				/* free mpq buffer structure if used. */
+				if (mpq_buf != NULL) {
+
+					/* free mpq buffer structure. */
+					free(mpq_buf);
+				}
+
+				/* sorry without seed, we cannot extract file. */
+				return LIBMPQ_ERROR_DECRYPT;
+			}
+
+			/* free mpq buffer structure if used. */
+			if (mpq_buf != NULL) {
+
+				/* free mpq buffer structure. */
+				free(mpq_buf);
+			}
+		}
+	} else {
+
+		/* loop through all blocks and create compressed block offset table based on block size. */
+		for (i = 0; i < ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size + 1); i++) {
+
+			/* check if we process the last block. */
+			if (i == ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size)) {
+
+				/* store size of last block. */
+				mpq_archive->mpq_file[file_number - 1]->compressed_offset[i] = mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size;
+			} else {
+
+				/* store default block size. */
+				mpq_archive->mpq_file[file_number - 1]->compressed_offset[i] = i * mpq_archive->block_size;
 			}
 		}
 	}
