@@ -3,9 +3,9 @@
  *
  *  Copyright (c) 2003-2008 Maik Broemme <mbroemme@plusserver.de>
  *
- *  This source was adepted from the C++ version of StormLib.h and
- *  StormPort.h included in stormlib. The C++ version belongs to
- *  the following authors:
+ *  Some parts (the encryption and decryption stuff) were adapted from
+ *  the C++ version of StormLib.h and StormPort.h included in stormlib.
+ *  The C++ version belongs to the following authors:
  *
  *  Ladislav Zezula <ladik@zezula.net>
  *  Marko Friedemann <marko.friedemann@bmx-chemnitz.de>
@@ -34,45 +34,50 @@
 /* define return value if nothing failed. */
 #define LIBMPQ_SUCCESS				0		/* return value for all functions which success. */
 
-/* define archive errors. */
-#define LIBMPQ_ARCHIVE_ERROR_OPEN		-1		/* open error on archive file. */
-#define LIBMPQ_ARCHIVE_ERROR_CLOSE		-2		/* close error on archive file. */
-#define LIBMPQ_ARCHIVE_ERROR_FORMAT		-3		/* archive format errror. */
-#define LIBMPQ_ARCHIVE_ERROR_HASHTABLE		-4		/* hash table in archive is broken. */
-#define LIBMPQ_ARCHIVE_ERROR_BLOCKTABLE		-5		/* block table in archive is broken. */
-#define LIBMPQ_ARCHIVE_ERROR_MALLOC		-6		/* memory allocation error for archive. */
-
-/* define file errors. */
-#define LIBMPQ_FILE_ERROR_OPEN			-1		/* open error on file. */
-#define LIBMPQ_FILE_ERROR_CLOSE			-2		/* close error on file. */
-#define LIBMPQ_FILE_ERROR_EXIST			-3		/* file does not exist in archive. */
-#define LIBMPQ_FILE_ERROR_RANGE			-4		/* filenumber is out of range. */
-#define LIBMPQ_FILE_ERROR_MALLOC		-5		/* memory allocation error for file. */
-#define LIBMPQ_FILE_ERROR_DECRYPT		-6		/* we don't know the decryption seed. */
-#define LIBMPQ_FILE_ERROR_READ			-7		/* read error on file from archive. */
-#define LIBMPQ_FILE_ERROR_WRITE			-8		/* write error on file to disk. */
-#define LIBMPQ_FILE_ERROR_DECOMPRESS		-9		/* error on decompression. */
+/* define errors. */
+#define LIBMPQ_ERROR_OPEN			-1		/* open error on file. */
+#define LIBMPQ_ERROR_CLOSE			-2		/* close error on file. */
+#define LIBMPQ_ERROR_READ			-3		/* read error on file. */
+#define LIBMPQ_ERROR_WRITE			-4		/* write error on file. */
+#define LIBMPQ_ERROR_MALLOC			-5		/* memory allocation error. */
+#define LIBMPQ_ERROR_FORMAT			-6		/* format errror. */
+#define LIBMPQ_ERROR_HASHTABLE			-7		/* hash table in archive is broken. */
+#define LIBMPQ_ERROR_BLOCKTABLE			-8		/* block table in archive is broken. */
+#define LIBMPQ_ERROR_EXIST			-9		/* file or block does not exist in archive. */
+#define LIBMPQ_ERROR_RANGE			-10		/* file or block number is out of range. */
+#define LIBMPQ_ERROR_DECRYPT			-11		/* we don't know the decryption seed. */
+#define LIBMPQ_ERROR_DECOMPRESS			-12		/* error on decompression. */
 
 /* define generic values for returning archive information. */
 #define LIBMPQ_ARCHIVE_SIZE			1		/* mpq archive size. */
-#define LIBMPQ_ARCHIVE_SIZE_COMPRESSED		2		/* compressed archive size. */
-#define LIBMPQ_ARCHIVE_SIZE_UNCOMPRESSED	3		/* uncompressed archive size. */
+#define LIBMPQ_ARCHIVE_COMPRESSED_SIZE		2		/* compressed archive size. */
+#define LIBMPQ_ARCHIVE_UNCOMPRESSED_SIZE	3		/* uncompressed archive size. */
 #define LIBMPQ_ARCHIVE_FILES			4		/* number of files in the mpq archive */
 #define LIBMPQ_ARCHIVE_HASHTABLE_ENTRIES	5		/* mpq archive hashtable size. */
 #define LIBMPQ_ARCHIVE_BLOCKTABLE_ENTRIES	6		/* mpq archive blocktable size. */
-#define LIBMPQ_ARCHIVE_BLOCKSIZE		7		/* mpq archive blocksize. */
+#define LIBMPQ_ARCHIVE_BLOCKSIZE		7		/* mpq archive block size. */
 #define LIBMPQ_ARCHIVE_VERSION			8		/* mpq archive version. */
 
 /* define generic values for returning file information. */
-#define LIBMPQ_FILE_SIZE_COMPRESSED		1		/* compressed size of the given file in archive. */
-#define LIBMPQ_FILE_SIZE_UNCOMPRESSED		2		/* uncompressed size of the given file in archive. */
-#define LIBMPQ_FILE_ENCRYPTED			3		/* return true if file is encrypted. */
-#define LIBMPQ_FILE_COMPRESSED			4		/* return true if file is compressed using multiple compression algorithm. */
-#define LIBMPQ_FILE_IMPLODED			5		/* return true if file is imploded using pkware implode algorithm. */
-#define LIBMPQ_FILE_SINGLE			6		/* return true if file is stored in single sector. */
-#define LIBMPQ_FILE_OFFSET			7		/* return absolute start position of file in archive. */
-#define LIBMPQ_FILE_BLOCKS			8		/* return the number of blocks for the file, if file is stored in single sector return one. */
-#define LIBMPQ_FILE_BLOCKSIZE			9		/* return the blocksize for the file, if file is stored in single sector return uncompressed size. */
+#define LIBMPQ_FILE_COMPRESSED_SIZE		1		/* compressed size of the given file in archive. */
+#define LIBMPQ_FILE_UNCOMPRESSED_SIZE		2		/* uncompressed size of the given file in archive. */
+#define LIBMPQ_FILE_ENCRYPTED_SIZE		3		/* encrypted size of the given file in archive. */
+#define LIBMPQ_FILE_DECRYPTED_SIZE		4		/* decrypted size of the given file in archive. */
+#define LIBMPQ_FILE_ENCRYPTED			5		/* return true if file is encrypted. */
+#define LIBMPQ_FILE_COMPRESSED			6		/* return true if file is compressed using multiple compression algorithm. */
+#define LIBMPQ_FILE_IMPLODED			7		/* return true if file is imploded using pkware implode algorithm. */
+#define LIBMPQ_FILE_SINGLE			8		/* return true if file is stored in single sector. */
+#define LIBMPQ_FILE_OFFSET			9		/* return absolute start position of file in archive. */
+#define LIBMPQ_FILE_BLOCKS			10		/* return the number of blocks for the file, if file is stored in single sector return one. */
+#define LIBMPQ_FILE_BLOCKSIZE			11		/* return the block size for the file, if file is stored in single sector return uncompressed size. */
+
+/* define generic values for returning block information. */
+#define LIBMPQ_BLOCK_COMPRESSED_SIZE		1		/* compressed size of the given block in archive. */
+#define LIBMPQ_BLOCK_UNCOMPRESSED_SIZE		2		/* uncompressed size of the given block in archive. */
+#define LIBMPQ_BLOCK_ENCRYPTED_SIZE		3		/* encrypted size of the given block in archive. */
+#define LIBMPQ_BLOCK_DECRYPTED_SIZE		4		/* decrypted size of the given block in archive. */
+#define LIBMPQ_BLOCK_OFFSET			5		/* return absolute start position of block in archive. */
+#define LIBMPQ_BLOCK_SEED			6		/* return the block seed used for decryption. */
 
 /* mpq archive header. */
 typedef struct {
@@ -106,13 +111,8 @@ typedef struct {
 
 /* file structure used since diablo 1.00 (0x38 bytes). */
 typedef struct {
-	char		filename[PATH_MAX];	/* filename of the actual file in the archive. */
-	int		fd;			/* file handle. */
 	unsigned int	seed;			/* seed used for file decrypt. */
-	unsigned int	uncompressed_offset;	/* position in file after extraction (bytes copied). */
 	unsigned int	*compressed_offset;	/* position of each file block (only for compressed files). */
-	mpq_hash_s	*mpq_hash;		/* hash table entry. */
-	mpq_block_s	*mpq_block;		/* file block pointer. */
 } mpq_file_s;
 
 /* file list structure. */
@@ -133,11 +133,10 @@ typedef struct {
 	unsigned int	block_size;		/* size of the mpq block. */
 
 	/* archive related buffers and tables. */
-	unsigned int	*mpq_buffer;		/* decryption and encryption buffer. */
 	mpq_header_s	*mpq_header;		/* mpq file header. */
 	mpq_hash_s	*mpq_hash;		/* hash table. */
 	mpq_block_s	*mpq_block;		/* block table. */
-	mpq_file_s	*mpq_file;		/* pointer to file which is processed. */
+	mpq_file_s	**mpq_file;		/* pointer to the file pointers which are opened. */
 
 	/* non archive structure related members. */
 	mpq_list_s	*mpq_list;		/* handle to file list (in most cases this is the last file in the archive). */
@@ -148,17 +147,31 @@ typedef struct {
 extern char *libmpq__version();
 
 /* generic mpq archive information. */
-extern int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename);
+extern int libmpq__archive_open(mpq_archive_s *mpq_archive, char *mpq_filename);
 extern int libmpq__archive_close(mpq_archive_s *mpq_archive);
 extern int libmpq__archive_info(mpq_archive_s *mpq_archive, unsigned int info_type);
 
 /* generic file information. */
-extern int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int info_type, const unsigned int number);
-extern char *libmpq__file_name(mpq_archive_s *mpq_archive, const unsigned int number);
-extern int libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename);
+extern int libmpq__file_open(mpq_archive_s *mpq_archive, unsigned int file_number);
+extern int libmpq__file_close(mpq_archive_s *mpq_archive, unsigned int file_number);
+extern int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int info_type, unsigned int file_number);
+extern char *libmpq__file_name(mpq_archive_s *mpq_archive, unsigned int file_number);
+extern int libmpq__file_number(mpq_archive_s *mpq_archive, char *filename);
 
-/* generic file extract function. */
-extern int libmpq__file_extract(mpq_archive_s *mpq_archive, const char *filename, const unsigned int number);
+/* generic block information. */
+extern int libmpq__block_info(mpq_archive_s *mpq_archive, unsigned int info_type, unsigned int file_number, unsigned int block_number);
+
+/* generic block decrypt function. */
+extern int libmpq__block_decrypt(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int seed);
+
+/* generic block decompress function. */
+extern int libmpq__block_decompress(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size);
+
+/* generic block explode function. */
+extern int libmpq__block_explode(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size);
+
+/* generic block copy function. */
+extern int libmpq__block_copy(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size);
 
 /* generic memory decrypt function. */
 extern int libmpq__memory_decrypt(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int block_count);

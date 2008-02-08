@@ -67,27 +67,6 @@ int libmpq__decrypt_buffer_init(unsigned int *buffer) {
 	return LIBMPQ_SUCCESS;
 }
 
-/* function to decrypt a mpq block.. */
-int libmpq__decrypt_mpq_block(unsigned int *buffer, unsigned int *block, unsigned int size, unsigned int seed1) {
-
-	/* some common variables. */
-	unsigned int seed2 = 0xEEEEEEEE;
-	unsigned int ch;
-
-	/* round to unsigned int's. */
-	size >>= 2;
-	while (size-- > 0) {
-		seed2    += buffer[0x400 + (seed1 & 0xFF)];
-		ch        = *block ^ (seed1 + seed2);
-		seed1     = ((~seed1 << 0x15) + 0x11111111) | (seed1 >> 0x0B);
-		seed2     = ch + seed2 + (seed2 << 5) + 3;
-		*block++  = ch;
-	}
-
-	/* if no error was found, return zero. */
-	return LIBMPQ_SUCCESS;
-}
-
 /* function to decrypt hash table of mpq archive. */
 int libmpq__decrypt_table_hash(unsigned int *buffer, unsigned int *hash, unsigned char *key, unsigned int size) {
 
@@ -151,17 +130,20 @@ int libmpq__decrypt_table_block(unsigned int *buffer, unsigned int *block, unsig
 }
 
 /* function to detect decryption key. */
-int libmpq__decrypt_key(unsigned int *buffer, unsigned int *block, unsigned int decrypted) {
+int libmpq__decrypt_key(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int *mpq_buf) {
 
 	/* some common variables. */
 	unsigned int saveseed1;
 
 	/* temp = seed1 + seed2 */
-	unsigned int temp  = *block ^ decrypted;
-	unsigned int i     = 0;
+	unsigned int temp;
+	unsigned int i = 0;
+
+	/* leave input buffer untouched. */
+	memcpy(out_buf, in_buf, out_size);
 
 	/* temp = seed1 + buffer[0x400 + (seed1 & 0xFF)] */
-	temp -= 0xEEEEEEEE;
+	temp = (*(unsigned int *)out_buf ^ out_size) - 0xEEEEEEEE;
 
 	/* try all 255 possibilities. */
 	for (i = 0; i < 0x100; i++) {
@@ -172,11 +154,11 @@ int libmpq__decrypt_key(unsigned int *buffer, unsigned int *block, unsigned int 
 		unsigned int ch;
 
 		/* try the first unsigned int's (we exactly know the value). */
-		seed1  = temp - buffer[0x400 + i];
-		seed2 += buffer[0x400 + (seed1 & 0xFF)];
-		ch     = block[0] ^ (seed1 + seed2);
+		seed1  = temp - mpq_buf[0x400 + i];
+		seed2 += mpq_buf[0x400 + (seed1 & 0xFF)];
+		ch     = ((unsigned int *)out_buf)[0] ^ (seed1 + seed2);
 
-		if (ch != decrypted) {
+		if (ch != out_size) {
 			continue;
 		}
 
@@ -190,8 +172,8 @@ int libmpq__decrypt_key(unsigned int *buffer, unsigned int *block, unsigned int 
 		 */
 		seed1  = ((~seed1 << 0x15) + 0x11111111) | (seed1 >> 0x0B);
 		seed2  = ch + seed2 + (seed2 << 5) + 3;
-		seed2 += buffer[0x400 + (seed1 & 0xFF)];
-		ch     = block[1] ^ (seed1 + seed2);
+		seed2 += mpq_buf[0x400 + (seed1 & 0xFF)];
+		ch     = ((unsigned int *)out_buf)[1] ^ (seed1 + seed2);
 
 		/* check if we found the file seed. */
 		if ((ch & 0xFFFF0000) == 0) {
@@ -202,7 +184,81 @@ int libmpq__decrypt_key(unsigned int *buffer, unsigned int *block, unsigned int 
 	}
 
 	/* if no file seed was found return with error. */
-	return LIBMPQ_FILE_ERROR_DECRYPT;
+	return LIBMPQ_ERROR_DECRYPT;
+}
+
+/* function to decrypt a block. */
+int libmpq__decrypt_block(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int seed, unsigned int *mpq_buf) {
+
+	/* some common variables. */
+	unsigned int seed2 = 0xEEEEEEEE;
+	unsigned int ch;
+
+	/* leave input buffer untouched. */
+	memcpy(out_buf, in_buf, out_size);
+
+	/* round to unsigned int's. */
+	out_size >>= 2;
+	while (out_size-- > 0) {
+		seed2                    += mpq_buf[0x400 + (seed & 0xFF)];
+		ch                        = *(unsigned int *)out_buf ^ (seed + seed2);
+		seed                      = ((~seed << 0x15) + 0x11111111) | (seed >> 0x0B);
+		seed2                     = ch + seed2 + (seed2 << 5) + 3;
+		*(unsigned int *)out_buf  = ch;
+		out_buf                  += sizeof(unsigned int);
+	}
+
+	/* if no error was found, return decrypted bytes. */
+	return in_size;
+}
+
+/* function to decrypt whole read buffer. */
+int libmpq__decrypt_memory(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int block_count, unsigned int *mpq_buf) {
+
+	/* some common variables. */
+	unsigned int i;
+	unsigned int seed;
+	unsigned int out_offset = sizeof(unsigned int) * (block_count + 1);
+	int rb = 0;
+	int tb = 0;
+
+	/* check if we don't know the file seed, try to find it. */
+	if ((seed = libmpq__decrypt_key(in_buf, out_offset, out_buf, out_offset, mpq_buf)) < 0) {
+
+		/* sorry without seed, we cannot extract file. */
+		return LIBMPQ_ERROR_DECRYPT;
+	}
+
+	/* decrypt the compressed offset block. */
+	if ((tb = libmpq__decrypt_block(out_buf, out_offset, out_buf, out_offset, seed - 1, mpq_buf)) < 0) {
+
+		/* something on decrypt failed. */
+		return tb;
+	}
+
+	/* check if the block positions are correctly decrypted, we need to cast here, because internally libmpq used only char buffers. */
+	if (((unsigned int *)out_buf)[0] != out_offset) {
+
+		/* sorry without compressed offset table, we cannot extract file. */
+		return LIBMPQ_ERROR_DECRYPT;
+	}
+
+	/* loop through all blocks and decrypt them. */
+	for (i = 0; i < block_count; i++) {
+
+		/* decrypt block. */
+		if ((rb = libmpq__decrypt_block(in_buf + ((unsigned int *)out_buf)[i], ((unsigned int *)out_buf)[i + 1] - ((unsigned int *)out_buf)[i], out_buf + tb, ((unsigned int *)out_buf)[i + 1] - ((unsigned int *)out_buf)[i], seed + i, mpq_buf)) < 0) {
+
+			/* something on decrypt failed. */
+			return rb;
+		}
+
+		/* store working buffer size as offset for next block. */
+		tb += rb;
+	}
+
+	/* if no error was found, return transferred bytes. */
+	return tb;
 }
 
 /* function to decompress or explode a block from mpq archive. */
@@ -242,13 +298,13 @@ int libmpq__decompress_block(unsigned char *in_buf, unsigned int in_size, unsign
 	} else {
 
 		/* block has set compression flag, but is not compressed, so copy data to output buffer. */
-		memcpy(out_buf, in_buf, in_size);
+		memcpy(out_buf, in_buf, out_size);
 
 		/* save the number of transferred bytes. */
 		tb += in_size;
 	}
 
-	/* return the copied bytes. */
+	/* if no error was found, return transferred bytes. */
 	return tb;
 }
 
@@ -258,10 +314,7 @@ int libmpq__decompress_memory(unsigned char *in_buf, unsigned int in_size, unsig
 	/* some common variables. */
 	int tb = 0;
 	int rb = 0;
-	unsigned int *compressed_offset;
 	unsigned int i;
-	unsigned char *work_buf;
-	unsigned int block_count;
 
 	/* check if buffer is not compressed. */
 	if (compression_type == LIBMPQ_FLAG_COMPRESS_NONE) {
@@ -273,102 +326,25 @@ int libmpq__decompress_memory(unsigned char *in_buf, unsigned int in_size, unsig
 		tb = out_size;
 	}
 
+	/* check if one compression mode is used. */
 	if (compression_type == LIBMPQ_FLAG_COMPRESS_PKWARE ||
 	    compression_type == LIBMPQ_FLAG_COMPRESS_MULTI) {
 
 		/* check if we are working with multiple sectors. */
-		if (block_size < out_size) {
-
-			/* get the number of blocks for the file. */
-			block_count = (out_size + block_size - 1) / block_size;
-
-			/* allocate memory for the buffers. */
-			if ((compressed_offset = malloc(sizeof(unsigned int) * (block_count + 1))) == NULL) {
-
-				/* memory allocation problem. */
-				return LIBMPQ_ARCHIVE_ERROR_MALLOC;
-			}
-
-			/* cleanup. */
-			memset(compressed_offset, 0, sizeof(unsigned int) * (block_count + 1));
-
-			/* copy compressed offset block from input buffer. */
-			memcpy(compressed_offset, in_buf, sizeof(unsigned int) * (block_count + 1));
-
-			/* check if the file can be decompressed. */
-			if (compressed_offset[0] != sizeof(unsigned int) * (block_count + 1)) {
-
-				/* free compressed offset block structure if used. */
-				if (compressed_offset != NULL) {
-
-					/* free compressed offset block structure. */
-					free(compressed_offset);
-				}
-
-				/* sorry without compressed offset table, we cannot extract file. */
-				return LIBMPQ_FILE_ERROR_DECOMPRESS;
-			}
+		if (block_size != out_size) {
 
 			/* loop through all blocks and decompress them. */
-			for (i = 0; i < block_count; i++) {
-
-				/* allocate memory for the buffers. */
-				if ((work_buf = malloc(compressed_offset[i + 1] - compressed_offset[i])) == NULL) {
-
-					/* free compressed offset block structure if used. */
-					if (compressed_offset != NULL) {
-
-						/* free compressed offset block structure. */
-						free(compressed_offset);
-					}
-
-					/* memory allocation problem. */
-					return LIBMPQ_ARCHIVE_ERROR_MALLOC;
-				}
-
-				/* cleanup. */
-				memset(work_buf, 0, compressed_offset[i + 1] - compressed_offset[i]);
-
-				/* copy block from input buffer to working buffer. */
-				memcpy(work_buf, in_buf + compressed_offset[i], compressed_offset[i + 1] - compressed_offset[i]);
+			for (i = 0; i < (out_size + block_size - 1) / block_size; i++) {
 
 				/* decompress using mutliple algorithm. */
-				if ((rb = libmpq__decompress_block(work_buf, compressed_offset[i + 1] - compressed_offset[i], out_buf + block_size * i, (block_size * i + block_size > out_size) ? out_size - block_size * i : block_size, compression_type)) < 0) {
-
-					/* free compressed offset block structure if used. */
-					if (compressed_offset != NULL) {
-
-						/* free compressed offset block structure. */
-						free(compressed_offset);
-					}
-
-					/* free working buffer structure if used. */
-					if (work_buf != NULL) {
-
-						/* free working buffer structure. */
-						free(work_buf);
-					}
+				if ((rb = libmpq__decompress_block(in_buf + ((unsigned int *)in_buf)[i], ((unsigned int *)in_buf)[i + 1] - ((unsigned int *)in_buf)[i], out_buf + block_size * i, (block_size * i + block_size > out_size) ? out_size - block_size * i : block_size, compression_type)) < 0) {
 
 					/* something on decompression failed. */
 					return rb;
 				}
 
-				/* free working buffer structure if used. */
-				if (work_buf != NULL) {
-
-					/* free working buffer structure. */
-					free(work_buf);
-				}
-
 				/* save the number of transferred bytes. */
 				tb += rb;
-			}
-
-			/* free compressed offset block structure if used. */
-			if (compressed_offset != NULL) {
-
-				/* free compressed offset block structure. */
-				free(compressed_offset);
 			}
 		}
 
@@ -381,6 +357,9 @@ int libmpq__decompress_memory(unsigned char *in_buf, unsigned int in_size, unsig
 				/* something on decompression failed. */
 				return rb;
 			}
+
+			/* save the number of transferred bytes. */
+			tb += rb;
 		}
 	}
 
@@ -392,6 +371,7 @@ int libmpq__decompress_memory(unsigned char *in_buf, unsigned int in_size, unsig
 int libmpq__read_table_hash(mpq_archive_s *mpq_archive) {
 
 	/* some common variables. */
+	unsigned int *mpq_buffer;
 	int rb = 0;
 
 	/* seek in the file. */
@@ -404,11 +384,31 @@ int libmpq__read_table_hash(mpq_archive_s *mpq_archive) {
 	if (rb != (mpq_archive->mpq_header->hash_table_count * sizeof(mpq_hash_s))) {
 
 		/* something on read failed. */
-		return LIBMPQ_ARCHIVE_ERROR_HASHTABLE;
+		return LIBMPQ_ERROR_HASHTABLE;
 	}
 
+	/* allocate memory for the buffers. */
+	if ((mpq_buffer = malloc(sizeof(unsigned int) * LIBMPQ_BUFFER_SIZE)) == NULL) {
+
+		/* memory allocation problem. */
+		return LIBMPQ_ERROR_MALLOC;
+	}
+
+	/* cleanup. */
+	memset(mpq_buffer, 0, sizeof(unsigned int) * LIBMPQ_BUFFER_SIZE);
+
+	/* initialize the decryption buffer. */
+	libmpq__decrypt_buffer_init(mpq_buffer);
+
 	/* decrypt the hashtable. */
-	libmpq__decrypt_table_hash(mpq_archive->mpq_buffer, (unsigned int *)(mpq_archive->mpq_hash), (unsigned char *)"(hash table)", mpq_archive->mpq_header->hash_table_count * 4);
+	libmpq__decrypt_table_hash(mpq_buffer, (unsigned int *)(mpq_archive->mpq_hash), (unsigned char *)"(hash table)", mpq_archive->mpq_header->hash_table_count * 4);
+
+	/* free mpq buffer structure if used. */
+	if (mpq_buffer != NULL) {
+
+		/* free mpq buffer structure. */
+		free(mpq_buffer);
+	}
 
 	/* if no error was found, return zero. */
 	return LIBMPQ_SUCCESS;
@@ -418,6 +418,7 @@ int libmpq__read_table_hash(mpq_archive_s *mpq_archive) {
 int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 
 	/* some common variables. */
+	unsigned int *mpq_buffer;
 	int rb = 0;
 
 	/* seek in file. */
@@ -430,14 +431,34 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 	if (rb != (mpq_archive->mpq_header->block_table_count * sizeof(mpq_block_s))) {
 
 		/* something on read failed. */
-		return LIBMPQ_ARCHIVE_ERROR_BLOCKTABLE;
+		return LIBMPQ_ERROR_BLOCKTABLE;
 	}
 
 	/* decrypt block table only if it is encrypted. */
 	if (mpq_archive->mpq_header->header_size != mpq_archive->mpq_block->offset) {
 
+		/* allocate memory for the buffers. */
+		if ((mpq_buffer = malloc(sizeof(unsigned int) * LIBMPQ_BUFFER_SIZE)) == NULL) {
+
+			/* memory allocation problem. */
+			return LIBMPQ_ERROR_MALLOC;
+		}
+
+		/* cleanup. */
+		memset(mpq_buffer, 0, sizeof(unsigned int) * LIBMPQ_BUFFER_SIZE);
+
+		/* initialize the decryption buffer. */
+		libmpq__decrypt_buffer_init(mpq_buffer);
+
 		/* decrypt block table. */
-		libmpq__decrypt_table_block(mpq_archive->mpq_buffer, (unsigned int *)(mpq_archive->mpq_block), (unsigned char *)"(block table)", mpq_archive->mpq_header->block_table_count * 4);
+		libmpq__decrypt_table_block(mpq_buffer, (unsigned int *)(mpq_archive->mpq_block), (unsigned char *)"(block table)", mpq_archive->mpq_header->block_table_count * 4);
+
+		/* free mpq buffer structure if used. */
+		if (mpq_buffer != NULL) {
+
+			/* free mpq buffer structure. */
+			free(mpq_buffer);
+		}
 	}
 
 	/* if no error was found, return zero. */
@@ -477,21 +498,18 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 		/* create proper formatted filename. */
 		tempsize = snprintf(tempfile, PATH_MAX, "file%06i.xxx", mpq_archive->mpq_hash[i].block_table_index + 1);
 
-		/* allocate memory for the filelist element. */
-		mpq_archive->mpq_list->file_names[count] = malloc(tempsize);
-
-		/* check if memory allocation was successful. */
-		if (mpq_archive->mpq_list->file_names[count] == NULL) {
+		/* allocate memory for the file list element. */
+		if ((mpq_archive->mpq_list->file_names[count] = malloc(tempsize + 1)) == NULL) {
 
 			/* memory allocation problem. */
-			return LIBMPQ_ARCHIVE_ERROR_MALLOC;
+			return LIBMPQ_ERROR_MALLOC;
 		}
 
 		/* cleanup. */
-		memset(mpq_archive->mpq_list->file_names[count], 0, tempsize);
+		memset(mpq_archive->mpq_list->file_names[count], 0, tempsize + 1);
 
 		/* create the filename. */
-		mpq_archive->mpq_list->file_names[count]          = memcpy(mpq_archive->mpq_list->file_names[count], tempfile, tempsize);
+		mpq_archive->mpq_list->file_names[count]          = memcpy(mpq_archive->mpq_list->file_names[count], tempfile, tempsize + 1);
 		mpq_archive->mpq_list->block_table_indices[count] = mpq_archive->mpq_hash[i].block_table_index;
 		mpq_archive->mpq_list->hash_table_indices[count]  = i;
 
