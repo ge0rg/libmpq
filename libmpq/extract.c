@@ -62,7 +62,7 @@ int libmpq__decompress_huffman(unsigned char *in_buf, unsigned int in_size, unsi
 	    (is = malloc(sizeof(struct huffman_input_stream_s))) == NULL) {
 
 		/* memory allocation problem. */
-		return LIBMPQ_ARCHIVE_ERROR_MALLOC;
+		return LIBMPQ_ERROR_MALLOC;
 	}
 
 	/* cleanup structures. */
@@ -80,7 +80,7 @@ int libmpq__decompress_huffman(unsigned char *in_buf, unsigned int in_size, unsi
 //	if ((result = libmpq__huffman_tree_init(ht, hi, LIBMPQ_HUFF_DECOMPRESS)) < 0) {
 //
 //		/* something on zlib initialization failed. */
-//		return LIBMPQ_FILE_ERROR_DECOMPRESS;
+//		return LIBMPQ_ERROR_DECOMPRESS;
 //	}
 
 	/* initialize the huffman tree for decompression. */
@@ -136,14 +136,14 @@ int libmpq__decompress_zlib(unsigned char *in_buf, unsigned int in_size, unsigne
 	if ((result = inflateInit(&z)) != Z_OK) {
 
 		/* something on zlib initialization failed. */
-		return LIBMPQ_FILE_ERROR_DECOMPRESS;
+		return LIBMPQ_ERROR_DECOMPRESS;
 	}
 
 	/* call zlib to decompress the data. */
 	if ((result = inflate(&z, Z_FINISH)) != Z_STREAM_END) {
 
 		/* something on zlib decompression failed. */
-		return LIBMPQ_FILE_ERROR_DECOMPRESS;
+		return LIBMPQ_ERROR_DECOMPRESS;
 	}
 
 	/* save transferred bytes. */
@@ -153,7 +153,7 @@ int libmpq__decompress_zlib(unsigned char *in_buf, unsigned int in_size, unsigne
 	if ((result = inflateEnd(&z)) != Z_OK) {
 
 		/* something on zlib finalization failed. */
-		return LIBMPQ_FILE_ERROR_DECOMPRESS;
+		return LIBMPQ_ERROR_DECOMPRESS;
 	}
 
 	/* return transferred bytes. */
@@ -172,7 +172,7 @@ int libmpq__decompress_pkzip(unsigned char *in_buf, unsigned int in_size, unsign
 	if ((work_buf = malloc(sizeof(pkzip_cmp_s))) == NULL) {
 
 		/* memory allocation problem. */
-		return LIBMPQ_ARCHIVE_ERROR_MALLOC;
+		return LIBMPQ_ERROR_MALLOC;
 	}
 
 	/* cleanup. */
@@ -219,7 +219,7 @@ int libmpq__decompress_bzip2(unsigned char *in_buf, unsigned int in_size, unsign
 
 	/* TODO: add bzip2 decompression here. */
 	/* if no error was found, return zero. */
-	return LIBMPQ_FILE_ERROR_DECOMPRESS;
+	return LIBMPQ_ERROR_DECOMPRESS;
 }
 
 /* this function decompress a stream using wave algorithm. (1 channel) */
@@ -289,7 +289,7 @@ int libmpq__decompress_multi(unsigned char *in_buf, unsigned int in_size, unsign
 	if (count == 0) {
 
 		/* compression type is unknown and we need to implement it. :) */
-		return LIBMPQ_FILE_ERROR_DECOMPRESS;
+		return LIBMPQ_ERROR_DECOMPRESS;
 	}
 
 	/* if multiple decompressions should be made, we need temporary buffer for the data. */
@@ -299,7 +299,7 @@ int libmpq__decompress_multi(unsigned char *in_buf, unsigned int in_size, unsign
 		if ((temp_buf = malloc(out_size)) == NULL) {
 
 			/* memory allocation problem. */
-			return LIBMPQ_ARCHIVE_ERROR_MALLOC;
+			return LIBMPQ_ERROR_MALLOC;
 		}
 
 		/* cleanup. */

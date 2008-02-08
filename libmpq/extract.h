@@ -33,8 +33,8 @@
  *  table for decompression functions, return value for all functions
  *  is the transferred data size or one of the following error constants:
  *
- *  LIBMPQ_FILE_ERROR_MALLOC
- *  LIBMPQ_FILE_ERROR_DECOMPRESS
+ *  LIBMPQ_ERROR_MALLOC
+ *  LIBMPQ_ERROR_DECOMPRESS
  */
 typedef int		(*DECOMPRESS)(unsigned char *, unsigned int, unsigned char *, unsigned int);
 typedef struct {
