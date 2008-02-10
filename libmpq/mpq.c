@@ -100,6 +100,13 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, char *mpq_filename) {
 			/* check if we process old mpq archive version. */
 			if (mpq_archive->mpq_header->version == LIBMPQ_ARCHIVE_VERSION_ONE) {
 
+				/* check if the archive is protected. */
+				if (mpq_archive->mpq_header->header_size != sizeof(mpq_header_s)) {
+
+					/* correct header size. */
+					mpq_archive->mpq_header->header_size = sizeof(mpq_header_s);
+				}
+
 				/* break the loop, because header was found. */
 				break;
 			}
