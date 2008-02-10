@@ -479,7 +479,7 @@ int libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 	for (i = 0; i < mpq_archive->mpq_header->hash_table_count; i++) {
 
 		/* check if hashtable is valid for this file. */
-		if (mpq_archive->mpq_hash[i].block_table_index == LIBMPQ_FLAG_HASH_FREE) {
+		if (mpq_archive->mpq_hash[i].block_table_index == LIBMPQ_HASH_FREE) {
 
 			/* continue because this is an empty hash entry. */
 			continue;
