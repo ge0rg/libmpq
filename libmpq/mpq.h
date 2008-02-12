@@ -31,9 +31,6 @@
 /* generic includes. */
 #include <limits.h>
 
-/* define return value if nothing failed. */
-#define LIBMPQ_SUCCESS				0		/* return value for all functions which success. */
-
 /* define errors. */
 #define LIBMPQ_ERROR_OPEN			-1		/* open error on file. */
 #define LIBMPQ_ERROR_CLOSE			-2		/* close error on file. */
@@ -44,9 +41,8 @@
 #define LIBMPQ_ERROR_HASHTABLE			-7		/* hash table in archive is broken. */
 #define LIBMPQ_ERROR_BLOCKTABLE			-8		/* block table in archive is broken. */
 #define LIBMPQ_ERROR_EXIST			-9		/* file or block does not exist in archive. */
-#define LIBMPQ_ERROR_RANGE			-10		/* file or block number is out of range. */
-#define LIBMPQ_ERROR_DECRYPT			-11		/* we don't know the decryption seed. */
-#define LIBMPQ_ERROR_DECOMPRESS			-12		/* error on decompression. */
+#define LIBMPQ_ERROR_DECRYPT			-10		/* we don't know the decryption seed. */
+#define LIBMPQ_ERROR_DECOMPRESS			-11		/* error on decompression. */
 
 /* define generic values for returning archive information. */
 #define LIBMPQ_ARCHIVE_SIZE			1		/* mpq archive size. */
