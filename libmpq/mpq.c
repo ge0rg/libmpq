@@ -517,7 +517,7 @@ int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int info_type, unsign
 	if (file_number < 1 || file_number > mpq_archive->files) {
 
 		/* file number is out of range. */
-		return LIBMPQ_ERROR_RANGE;
+		return LIBMPQ_ERROR_EXIST;
 	}
 
 	/* check which information type should be returned. */
@@ -644,14 +644,14 @@ int libmpq__block_info(mpq_archive_s *mpq_archive, unsigned int info_type, unsig
 	if (file_number < 1 || file_number > mpq_archive->files) {
 
 		/* file number is out of range. */
-		return LIBMPQ_ERROR_RANGE;
+		return LIBMPQ_ERROR_EXIST;
 	}
 
 	/* check if given block number is not out of range. */
 	if (block_number < 1 || block_number > ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) != 0 ? 1 : (mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size)) {
 
 		/* file number is out of range. */
-		return LIBMPQ_ERROR_RANGE;
+		return LIBMPQ_ERROR_EXIST;
 	}
 
 	/* check which information type should be returned. */

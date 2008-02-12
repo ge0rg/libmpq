@@ -22,6 +22,9 @@
 #ifndef _MPQ_INTERNAL_H
 #define _MPQ_INTERNAL_H
 
+/* define return value if nothing failed. */
+#define LIBMPQ_SUCCESS				0		/* return value for all functions which success. */
+
 /* define generic mpq archive information. */
 #define LIBMPQ_HEADER				0x1A51504D	/* mpq archive header ('MPQ\x1A') */
 #define LIBMPQ_BUFFER_SIZE			0x500		/* mpq decryption and encryption buffer size. */
