@@ -52,9 +52,22 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, char *mpq_filename) {
 	unsigned int i              = 0;
 	int result                  = 0;
 
+	/* check if file exists and is readable */
+	if ((mpq_archive->fd = open(mpq_filename, O_RDONLY)) < 0) {
+
+		/* file could not be opened. */
+		return LIBMPQ_ERROR_OPEN;
+	}
+
 	/* allocate memory for the mpq header and file list. */
-	if ((mpq_archive->mpq_header = malloc(sizeof(mpq_header_s))) == NULL ||
-	    (mpq_archive->mpq_list   = malloc(sizeof(mpq_list_s))) == NULL) {
+	if ((mpq_archive->mpq_header = malloc(sizeof(mpq_header_s))) == NULL) {
+
+		/* check if file descriptor is valid. */
+		if ((close(mpq_archive->fd)) < 0) {
+
+			/* file was not opened. */
+			return LIBMPQ_ERROR_CLOSE;
+		}
 
 		/* memory allocation problem. */
 		return LIBMPQ_ERROR_MALLOC;
@@ -62,14 +75,6 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, char *mpq_filename) {
 
 	/* cleanup. */
 	memset(mpq_archive->mpq_header, 0, sizeof(mpq_header_s));
-	memset(mpq_archive->mpq_list,   0, sizeof(mpq_list_s));
-
-	/* check if file exists and is readable */
-	if ((mpq_archive->fd = open(mpq_filename, O_RDONLY)) < 0) {
-
-		/* file could not be opened. */
-		return LIBMPQ_ERROR_OPEN;
-	}
 
 	/* fill the structures with informations. */
 	strncpy(mpq_archive->filename, mpq_filename, strlen(mpq_filename));
@@ -87,12 +92,40 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, char *mpq_filename) {
 		/* seek in file. */
 		if (lseek(mpq_archive->fd, archive_offset, SEEK_SET) < 0) {
 
+			/* free mpq header if used. */
+			if (mpq_archive->mpq_header != NULL) {
+
+				/* free the allocated memory for mpq header. */
+				free(mpq_archive->mpq_header);
+			}
+
+			/* check if file descriptor is valid. */
+			if ((close(mpq_archive->fd)) < 0) {
+
+				/* file was not opened. */
+				return LIBMPQ_ERROR_CLOSE;
+			}
+
 			/* seek in file failed. */
 			return LIBMPQ_ERROR_LSEEK;
 		}
 
 		/* read header from file. */
 		if ((rb = read(mpq_archive->fd, mpq_archive->mpq_header, sizeof(mpq_header_s))) != sizeof(mpq_header_s)) {
+
+			/* free mpq header if used. */
+			if (mpq_archive->mpq_header != NULL) {
+
+				/* free the allocated memory for mpq header. */
+				free(mpq_archive->mpq_header);
+			}
+
+			/* check if file descriptor is valid. */
+			if ((close(mpq_archive->fd)) < 0) {
+
+				/* file was not opened. */
+				return LIBMPQ_ERROR_CLOSE;
+			}
 
 			/* no valid mpq archive. */
 			return LIBMPQ_ERROR_FORMAT;
@@ -118,6 +151,20 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, char *mpq_filename) {
 			/* check if we process new mpq archive version. */
 			if (mpq_archive->mpq_header->version == LIBMPQ_ARCHIVE_VERSION_TWO) {
 
+				/* free mpq header if used. */
+				if (mpq_archive->mpq_header != NULL) {
+
+					/* free the allocated memory for mpq header. */
+					free(mpq_archive->mpq_header);
+				}
+
+				/* check if file descriptor is valid. */
+				if ((close(mpq_archive->fd)) < 0) {
+
+					/* file was not opened. */
+					return LIBMPQ_ERROR_CLOSE;
+				}
+
 				/* TODO: add support for mpq version two. */
 				/* support for version two will be added soon. */
 				return LIBMPQ_ERROR_FORMAT;
@@ -136,28 +183,62 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, char *mpq_filename) {
 	mpq_archive->mpq_header->hash_table_offset  += archive_offset;
 	mpq_archive->mpq_header->block_table_offset += archive_offset;
 
-	/* allocate memory for the block table and hash table, some mpq archives have block table greater than hash table, avoid buffer overruns. */
-	if ((mpq_archive->mpq_block                     = malloc(sizeof(mpq_block_s)  * mpq_archive->mpq_header->block_table_count)) == NULL ||
-	    (mpq_archive->mpq_hash                      = malloc(sizeof(mpq_hash_s)   * mpq_archive->mpq_header->hash_table_count)) == NULL ||
-	    (mpq_archive->mpq_file                      = malloc(sizeof(mpq_file_s)   * mpq_archive->mpq_header->hash_table_count)) == NULL ||
-	    (mpq_archive->mpq_list->file_names          = malloc(sizeof(char *)       * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count))) == NULL ||
-	    (mpq_archive->mpq_list->block_table_indices = malloc(sizeof(unsigned int) * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count))) == NULL ||
-	    (mpq_archive->mpq_list->hash_table_indices  = malloc(sizeof(unsigned int) * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count))) == NULL) {
+	/* allocate memory for the block table and hash table. */
+	if ((mpq_archive->mpq_block = malloc(sizeof(mpq_block_s)  * mpq_archive->mpq_header->block_table_count)) == NULL ||
+	    (mpq_archive->mpq_hash  = malloc(sizeof(mpq_hash_s)   * mpq_archive->mpq_header->hash_table_count)) == NULL) {
+
+		/* free mpq header if used. */
+		if (mpq_archive->mpq_header != NULL) {
+
+			/* free the allocated memory for mpq header. */
+			free(mpq_archive->mpq_header);
+		}
+
+		/* check if file descriptor is valid. */
+		if ((close(mpq_archive->fd)) < 0) {
+
+			/* file was not opened. */
+			return LIBMPQ_ERROR_CLOSE;
+		}
 
 		/* memory allocation problem. */
 		return LIBMPQ_ERROR_MALLOC;
 	}
 
 	/* cleanup. */
-	memset(mpq_archive->mpq_block,                     0, sizeof(mpq_block_s)  * mpq_archive->mpq_header->block_table_count);
-	memset(mpq_archive->mpq_hash,                      0, sizeof(mpq_hash_s)   * mpq_archive->mpq_header->hash_table_count);
-	memset(mpq_archive->mpq_file,                      0, sizeof(mpq_file_s)   * mpq_archive->mpq_header->hash_table_count);
-	memset(mpq_archive->mpq_list->file_names,          0, sizeof(char *)       * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count));
-	memset(mpq_archive->mpq_list->block_table_indices, 0, sizeof(unsigned int) * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count));
-	memset(mpq_archive->mpq_list->hash_table_indices,  0, sizeof(unsigned int) * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count));
+	memset(mpq_archive->mpq_block, 0, sizeof(mpq_block_s)  * mpq_archive->mpq_header->block_table_count);
+	memset(mpq_archive->mpq_hash,  0, sizeof(mpq_hash_s)   * mpq_archive->mpq_header->hash_table_count);
 
 	/* try to read and decrypt the hash table. */
 	if ((result = libmpq__read_table_hash(mpq_archive)) != 0) {
+
+		/* free hash table if used. */
+		if (mpq_archive->mpq_hash != NULL) {
+
+			/* free hash table. */
+			free(mpq_archive->mpq_hash);
+		}
+
+		/* free block table if used. */
+		if (mpq_archive->mpq_block != NULL) {
+
+			/* free block table. */
+			free(mpq_archive->mpq_block);
+		}
+
+		/* free mpq header if used. */
+		if (mpq_archive->mpq_header != NULL) {
+
+			/* free the allocated memory for mpq header. */
+			free(mpq_archive->mpq_header);
+		}
+
+		/* check if file descriptor is valid. */
+		if ((close(mpq_archive->fd)) < 0) {
+
+			/* file was not opened. */
+			return LIBMPQ_ERROR_CLOSE;
+		}
 
 		/* the hash table seems corrupt. */
 		return result;
@@ -165,6 +246,34 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, char *mpq_filename) {
 
 	/* try to read and decrypt the block table. */
 	if ((result = libmpq__read_table_block(mpq_archive)) != 0) {
+
+		/* free hash table if used. */
+		if (mpq_archive->mpq_hash != NULL) {
+
+			/* free hash table. */
+			free(mpq_archive->mpq_hash);
+		}
+
+		/* free block table if used. */
+		if (mpq_archive->mpq_block != NULL) {
+
+			/* free block table. */
+			free(mpq_archive->mpq_block);
+		}
+
+		/* free mpq header if used. */
+		if (mpq_archive->mpq_header != NULL) {
+
+			/* free the allocated memory for mpq header. */
+			free(mpq_archive->mpq_header);
+		}
+
+		/* check if file descriptor is valid. */
+		if ((close(mpq_archive->fd)) < 0) {
+
+			/* file was not opened. */
+			return LIBMPQ_ERROR_CLOSE;
+		}
 
 		/* the block table seems corrupt. */
 		return result;
@@ -177,8 +286,168 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, char *mpq_filename) {
 		mpq_archive->mpq_block[i].offset += archive_offset;
 	}
 
+	/* allocate memory for the mpq header and file list. */
+	if ((mpq_archive->mpq_list = malloc(sizeof(mpq_list_s))) == NULL) {
+
+		/* free hash table if used. */
+		if (mpq_archive->mpq_hash != NULL) {
+
+			/* free hash table. */
+			free(mpq_archive->mpq_hash);
+		}
+
+		/* free block table if used. */
+		if (mpq_archive->mpq_block != NULL) {
+
+			/* free block table. */
+			free(mpq_archive->mpq_block);
+		}
+
+		/* free mpq header if used. */
+		if (mpq_archive->mpq_header != NULL) {
+
+			/* free the allocated memory for mpq header. */
+			free(mpq_archive->mpq_header);
+		}
+
+		/* check if file descriptor is valid. */
+		if ((close(mpq_archive->fd)) < 0) {
+
+			/* file was not opened. */
+			return LIBMPQ_ERROR_CLOSE;
+		}
+
+		/* memory allocation problem. */
+		return LIBMPQ_ERROR_MALLOC;
+	}
+
+	/* cleanup. */
+	memset(mpq_archive->mpq_list, 0, sizeof(mpq_list_s));
+
+	/* allocate memory, some mpq archives have block table greater than hash table, avoid buffer overruns. */
+	if ((mpq_archive->mpq_file                      = malloc(sizeof(mpq_file_s)   * mpq_archive->mpq_header->hash_table_count)) == NULL ||
+	    (mpq_archive->mpq_list->file_names          = malloc(sizeof(char *)       * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count))) == NULL ||
+	    (mpq_archive->mpq_list->block_table_indices = malloc(sizeof(unsigned int) * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count))) == NULL ||
+	    (mpq_archive->mpq_list->hash_table_indices  = malloc(sizeof(unsigned int) * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count))) == NULL) {
+
+		/* free mpq file list, if used. */
+		if (mpq_archive->mpq_list != NULL) {
+
+			/* free mpq file list. */
+			free(mpq_archive->mpq_list);
+		}
+
+		/* free hash table if used. */
+		if (mpq_archive->mpq_hash != NULL) {
+
+			/* free hash table. */
+			free(mpq_archive->mpq_hash);
+		}
+
+		/* free block table if used. */
+		if (mpq_archive->mpq_block != NULL) {
+
+			/* free block table. */
+			free(mpq_archive->mpq_block);
+		}
+
+		/* free mpq header if used. */
+		if (mpq_archive->mpq_header != NULL) {
+
+			/* free the allocated memory for mpq header. */
+			free(mpq_archive->mpq_header);
+		}
+
+		/* check if file descriptor is valid. */
+		if ((close(mpq_archive->fd)) < 0) {
+
+			/* file was not opened. */
+			return LIBMPQ_ERROR_CLOSE;
+		}
+
+		/* memory allocation problem. */
+		return LIBMPQ_ERROR_MALLOC;
+	}
+
+	/* cleanup. */
+	memset(mpq_archive->mpq_file,                      0, sizeof(mpq_file_s)   * mpq_archive->mpq_header->hash_table_count);
+	memset(mpq_archive->mpq_list->file_names,          0, sizeof(char *)       * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count));
+	memset(mpq_archive->mpq_list->block_table_indices, 0, sizeof(unsigned int) * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count));
+	memset(mpq_archive->mpq_list->hash_table_indices,  0, sizeof(unsigned int) * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count));
+
 	/* try to read list file. */
 	if ((result = libmpq__read_file_list(mpq_archive)) != 0) {
+
+		/* free hash table indices if used. */
+		if (mpq_archive->mpq_list->hash_table_indices != NULL) {
+
+			/* free hash table indices. */
+			free(mpq_archive->mpq_list->hash_table_indices);
+		}
+
+		/* free block table indices if used. */
+		if (mpq_archive->mpq_list->block_table_indices != NULL) {
+
+			/* free hash table indices. */
+			free(mpq_archive->mpq_list->block_table_indices);
+		}
+
+		/* check if there is some real data in the file list. */
+		if (mpq_archive->mpq_list->file_names != NULL) {
+
+			/* free the filelist. */
+			for (i = 0; i < max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count); i++) {
+
+				/* free file list element if used. */
+				if (mpq_archive->mpq_list->file_names[i] != NULL) {
+
+					/* free the filelist element. */
+					free(mpq_archive->mpq_list->file_names[i]);
+				}
+			}
+		}
+
+		/* free file pointer if used. */
+		if (mpq_archive->mpq_file != NULL) {
+
+			/* free file pointer. */
+			free(mpq_archive->mpq_file);
+		}
+
+		/* free mpq file list, if used. */
+		if (mpq_archive->mpq_list != NULL) {
+
+			/* free mpq file list. */
+			free(mpq_archive->mpq_list);
+		}
+
+		/* free hash table if used. */
+		if (mpq_archive->mpq_hash != NULL) {
+
+			/* free hash table. */
+			free(mpq_archive->mpq_hash);
+		}
+
+		/* free block table if used. */
+		if (mpq_archive->mpq_block != NULL) {
+
+			/* free block table. */
+			free(mpq_archive->mpq_block);
+		}
+
+		/* free mpq header if used. */
+		if (mpq_archive->mpq_header != NULL) {
+
+			/* free the allocated memory for mpq header. */
+			free(mpq_archive->mpq_header);
+		}
+
+		/* check if file descriptor is valid. */
+		if ((close(mpq_archive->fd)) < 0) {
+
+			/* file was not opened. */
+			return LIBMPQ_ERROR_CLOSE;
+		}
 
 		/* the list file seems corrupt. */
 		return result;
@@ -193,6 +462,20 @@ int libmpq__archive_close(mpq_archive_s *mpq_archive) {
 
 	/* some common variables. */
 	unsigned int i;
+
+	/* free hash table indices if used. */
+	if (mpq_archive->mpq_list->hash_table_indices != NULL) {
+
+		/* free hash table indices. */
+		free(mpq_archive->mpq_list->hash_table_indices);
+	}
+
+	/* free block table indices if used. */
+	if (mpq_archive->mpq_list->block_table_indices != NULL) {
+
+		/* free hash table indices. */
+		free(mpq_archive->mpq_list->block_table_indices);
+	}
 
 	/* check if there is some real data in the file list. */
 	if (mpq_archive->mpq_list->file_names != NULL) {
@@ -209,32 +492,18 @@ int libmpq__archive_close(mpq_archive_s *mpq_archive) {
 		}
 	}
 
-	/* free hash table indices if used. */
-	if (mpq_archive->mpq_list->hash_table_indices != NULL) {
-
-		/* free hash table indices. */
-		free(mpq_archive->mpq_list->hash_table_indices);
-	}
-
-	/* free block table indices if used. */
-	if (mpq_archive->mpq_list->block_table_indices != NULL) {
-
-		/* free hash table indices. */
-		free(mpq_archive->mpq_list->block_table_indices);
-	}
-
-	/* free file list if used. */
-	if (mpq_archive->mpq_list->file_names != NULL) {
-
-		/* free file list. */
-		free(mpq_archive->mpq_list->file_names);
-	}
-
 	/* free file pointer if used. */
 	if (mpq_archive->mpq_file != NULL) {
 
 		/* free file pointer. */
 		free(mpq_archive->mpq_file);
+	}
+
+	/* free mpq file list, if used. */
+	if (mpq_archive->mpq_list != NULL) {
+
+		/* free mpq file list. */
+		free(mpq_archive->mpq_list);
 	}
 
 	/* free hash table if used. */
@@ -249,13 +518,6 @@ int libmpq__archive_close(mpq_archive_s *mpq_archive) {
 
 		/* free block table. */
 		free(mpq_archive->mpq_block);
-	}
-
-	/* free mpq file list, if used. */
-	if (mpq_archive->mpq_list != NULL) {
-
-		/* free mpq file list. */
-		free(mpq_archive->mpq_list);
 	}
 
 	/* free mpq header if used. */
@@ -362,6 +624,13 @@ int libmpq__file_open(mpq_archive_s *mpq_archive, unsigned int file_number) {
 	/* allocate memory for the compressed block offset table. */
 	if ((mpq_archive->mpq_file[file_number - 1]->compressed_offset = malloc(compressed_size)) == NULL) {
 
+		/* free file pointer if used. */
+		if (mpq_archive->mpq_file[file_number - 1] != NULL) {
+
+			/* free file pointer. */
+			free(mpq_archive->mpq_file[file_number - 1]);
+		}
+
 		/* memory allocation problem. */
 		return LIBMPQ_ERROR_MALLOC;
 	}
@@ -376,12 +645,40 @@ int libmpq__file_open(mpq_archive_s *mpq_archive, unsigned int file_number) {
 		/* seek to block position. */
 		if (lseek(mpq_archive->fd, mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].offset, SEEK_SET) < 0) {
 
+			/* free compressed block offset table if used. */
+			if (mpq_archive->mpq_file[file_number - 1]->compressed_offset != NULL) {
+
+				/* free compressed block offset table. */
+				free(mpq_archive->mpq_file[file_number - 1]->compressed_offset);
+			}
+
+			/* free file pointer if used. */
+			if (mpq_archive->mpq_file[file_number - 1] != NULL) {
+
+				/* free file pointer. */
+				free(mpq_archive->mpq_file[file_number - 1]);
+			}
+
 			/* seek in file failed. */
 			return LIBMPQ_ERROR_LSEEK;
 		}
 
 		/* read block positions from begin of file. */
 		if ((rb = read(mpq_archive->fd, mpq_archive->mpq_file[file_number - 1]->compressed_offset, compressed_size)) < 0) {
+
+			/* free compressed block offset table if used. */
+			if (mpq_archive->mpq_file[file_number - 1]->compressed_offset != NULL) {
+
+				/* free compressed block offset table. */
+				free(mpq_archive->mpq_file[file_number - 1]->compressed_offset);
+			}
+
+			/* free file pointer if used. */
+			if (mpq_archive->mpq_file[file_number - 1] != NULL) {
+
+				/* free file pointer. */
+				free(mpq_archive->mpq_file[file_number - 1]);
+			}
 
 			/* something on read from archive failed. */
 			return LIBMPQ_ERROR_READ;
@@ -400,6 +697,20 @@ int libmpq__file_open(mpq_archive_s *mpq_archive, unsigned int file_number) {
 			/* allocate memory for the buffers. */
 			if ((mpq_buf = malloc(mpq_size)) == NULL) {
 
+				/* free compressed block offset table if used. */
+				if (mpq_archive->mpq_file[file_number - 1]->compressed_offset != NULL) {
+
+					/* free compressed block offset table. */
+					free(mpq_archive->mpq_file[file_number - 1]->compressed_offset);
+				}
+
+				/* free file pointer if used. */
+				if (mpq_archive->mpq_file[file_number - 1] != NULL) {
+
+					/* free file pointer. */
+					free(mpq_archive->mpq_file[file_number - 1]);
+				}
+
 				/* memory allocation problem. */
 				return LIBMPQ_ERROR_MALLOC;
 			}
@@ -417,6 +728,20 @@ int libmpq__file_open(mpq_archive_s *mpq_archive, unsigned int file_number) {
 					free(mpq_buf);
 				}
 
+				/* free compressed block offset table if used. */
+				if (mpq_archive->mpq_file[file_number - 1]->compressed_offset != NULL) {
+
+					/* free compressed block offset table. */
+					free(mpq_archive->mpq_file[file_number - 1]->compressed_offset);
+				}
+
+				/* free file pointer if used. */
+				if (mpq_archive->mpq_file[file_number - 1] != NULL) {
+
+					/* free file pointer. */
+					free(mpq_archive->mpq_file[file_number - 1]);
+				}
+
 				/* sorry without seed, we cannot extract file. */
 				return tb;
 			}
@@ -429,6 +754,20 @@ int libmpq__file_open(mpq_archive_s *mpq_archive, unsigned int file_number) {
 
 					/* free mpq buffer structure. */
 					free(mpq_buf);
+				}
+
+				/* free compressed block offset table if used. */
+				if (mpq_archive->mpq_file[file_number - 1]->compressed_offset != NULL) {
+
+					/* free compressed block offset table. */
+					free(mpq_archive->mpq_file[file_number - 1]->compressed_offset);
+				}
+
+				/* free file pointer if used. */
+				if (mpq_archive->mpq_file[file_number - 1] != NULL) {
+
+					/* free file pointer. */
+					free(mpq_archive->mpq_file[file_number - 1]);
 				}
 
 				/* sorry without seed, we cannot extract file. */
@@ -445,6 +784,20 @@ int libmpq__file_open(mpq_archive_s *mpq_archive, unsigned int file_number) {
 					free(mpq_buf);
 				}
 
+				/* free compressed block offset table if used. */
+				if (mpq_archive->mpq_file[file_number - 1]->compressed_offset != NULL) {
+
+					/* free compressed block offset table. */
+					free(mpq_archive->mpq_file[file_number - 1]->compressed_offset);
+				}
+
+				/* free file pointer if used. */
+				if (mpq_archive->mpq_file[file_number - 1] != NULL) {
+
+					/* free file pointer. */
+					free(mpq_archive->mpq_file[file_number - 1]);
+				}
+
 				/* something on decrypt failed. */
 				return tb;
 			}
@@ -457,6 +810,20 @@ int libmpq__file_open(mpq_archive_s *mpq_archive, unsigned int file_number) {
 
 					/* free mpq buffer structure. */
 					free(mpq_buf);
+				}
+
+				/* free compressed block offset table if used. */
+				if (mpq_archive->mpq_file[file_number - 1]->compressed_offset != NULL) {
+
+					/* free compressed block offset table. */
+					free(mpq_archive->mpq_file[file_number - 1]->compressed_offset);
+				}
+
+				/* free file pointer if used. */
+				if (mpq_archive->mpq_file[file_number - 1] != NULL) {
+
+					/* free file pointer. */
+					free(mpq_archive->mpq_file[file_number - 1]);
 				}
 
 				/* sorry without seed, we cannot extract file. */
