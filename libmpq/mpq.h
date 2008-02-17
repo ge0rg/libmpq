@@ -34,15 +34,16 @@
 /* define errors. */
 #define LIBMPQ_ERROR_OPEN			-1		/* open error on file. */
 #define LIBMPQ_ERROR_CLOSE			-2		/* close error on file. */
-#define LIBMPQ_ERROR_READ			-3		/* read error on file. */
-#define LIBMPQ_ERROR_WRITE			-4		/* write error on file. */
-#define LIBMPQ_ERROR_MALLOC			-5		/* memory allocation error. */
-#define LIBMPQ_ERROR_FORMAT			-6		/* format errror. */
-#define LIBMPQ_ERROR_HASHTABLE			-7		/* hash table in archive is broken. */
-#define LIBMPQ_ERROR_BLOCKTABLE			-8		/* block table in archive is broken. */
-#define LIBMPQ_ERROR_EXIST			-9		/* file or block does not exist in archive. */
-#define LIBMPQ_ERROR_DECRYPT			-10		/* we don't know the decryption seed. */
-#define LIBMPQ_ERROR_DECOMPRESS			-11		/* error on decompression. */
+#define LIBMPQ_ERROR_LSEEK			-3		/* lseek error on file. */
+#define LIBMPQ_ERROR_READ			-4		/* read error on file. */
+#define LIBMPQ_ERROR_WRITE			-5		/* write error on file. */
+#define LIBMPQ_ERROR_MALLOC			-6		/* memory allocation error. */
+#define LIBMPQ_ERROR_FORMAT			-7		/* format errror. */
+#define LIBMPQ_ERROR_HASHTABLE			-8		/* hash table in archive is broken. */
+#define LIBMPQ_ERROR_BLOCKTABLE			-9		/* block table in archive is broken. */
+#define LIBMPQ_ERROR_EXIST			-10		/* file or block does not exist in archive. */
+#define LIBMPQ_ERROR_DECRYPT			-11		/* we don't know the decryption seed. */
+#define LIBMPQ_ERROR_DECOMPRESS			-12		/* error on decompression. */
 
 /* define generic values for returning archive information. */
 #define LIBMPQ_ARCHIVE_SIZE			1		/* mpq archive size. */
@@ -62,10 +63,11 @@
 #define LIBMPQ_FILE_ENCRYPTED			5		/* return true if file is encrypted. */
 #define LIBMPQ_FILE_COMPRESSED			6		/* return true if file is compressed using multiple compression algorithm. */
 #define LIBMPQ_FILE_IMPLODED			7		/* return true if file is imploded using pkware implode algorithm. */
-#define LIBMPQ_FILE_SINGLE			8		/* return true if file is stored in single sector. */
-#define LIBMPQ_FILE_OFFSET			9		/* return absolute start position of file in archive. */
-#define LIBMPQ_FILE_BLOCKS			10		/* return the number of blocks for the file, if file is stored in single sector return one. */
-#define LIBMPQ_FILE_BLOCKSIZE			11		/* return the block size for the file, if file is stored in single sector return uncompressed size. */
+#define LIBMPQ_FILE_COPIED			8		/* return true if file is neither compressed nor imploded. */
+#define LIBMPQ_FILE_SINGLE			9		/* return true if file is stored in single sector. */
+#define LIBMPQ_FILE_OFFSET			10		/* return absolute start position of file in archive. */
+#define LIBMPQ_FILE_BLOCKS			11		/* return the number of blocks for the file, if file is stored in single sector return one. */
+#define LIBMPQ_FILE_BLOCKSIZE			12		/* return the block size for the file, if file is stored in single sector return uncompressed size. */
 
 /* define generic values for returning block information. */
 #define LIBMPQ_BLOCK_COMPRESSED_SIZE		1		/* compressed size of the given block in archive. */
