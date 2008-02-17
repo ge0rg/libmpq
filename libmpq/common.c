@@ -382,10 +382,7 @@ int libmpq__read_table_hash(mpq_archive_s *mpq_archive) {
 	}
 
 	/* read the hash table into the buffer. */
-	rb = read(mpq_archive->fd, mpq_archive->mpq_hash, mpq_archive->mpq_header->hash_table_count * sizeof(mpq_hash_s));
-
-	/* if different number of bytes read, break the loop. */
-	if (rb != (mpq_archive->mpq_header->hash_table_count * sizeof(mpq_hash_s))) {
+	if ((rb = read(mpq_archive->fd, mpq_archive->mpq_hash, mpq_archive->mpq_header->hash_table_count * sizeof(mpq_hash_s))) < 0) {;
 
 		/* something on read failed. */
 		return LIBMPQ_ERROR_HASHTABLE;
@@ -433,10 +430,7 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 	}
 
 	/* read the block table into the buffer. */
-	rb = read(mpq_archive->fd, mpq_archive->mpq_block, mpq_archive->mpq_header->block_table_count * sizeof(mpq_block_s));
-
-	/* if different number of bytes read, break the loop. */
-	if (rb != (mpq_archive->mpq_header->block_table_count * sizeof(mpq_block_s))) {
+	if ((rb = read(mpq_archive->fd, mpq_archive->mpq_block, mpq_archive->mpq_header->block_table_count * sizeof(mpq_block_s))) < 0) {
 
 		/* something on read failed. */
 		return LIBMPQ_ERROR_BLOCKTABLE;
