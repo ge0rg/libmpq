@@ -65,7 +65,7 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, char *mpq_filename) {
 	memset(mpq_archive->mpq_list,   0, sizeof(mpq_list_s));
 
 	/* check if file exists and is readable */
-	if ((mpq_archive->fd = open(mpq_filename, O_RDONLY)) == -1) {
+	if ((mpq_archive->fd = open(mpq_filename, O_RDONLY)) < 0) {
 
 		/* file could not be opened. */
 		return LIBMPQ_ERROR_OPEN;
@@ -85,7 +85,11 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, char *mpq_filename) {
 		mpq_archive->mpq_header->mpq_magic = 0;
 
 		/* seek in file. */
-		lseek(mpq_archive->fd, archive_offset, SEEK_SET);
+		if (lseek(mpq_archive->fd, archive_offset, SEEK_SET) < 0) {
+
+			/* seek in file failed. */
+			return LIBMPQ_ERROR_LSEEK;
+		}
 
 		/* read header from file. */
 		if ((rb = read(mpq_archive->fd, mpq_archive->mpq_header, sizeof(mpq_header_s))) != sizeof(mpq_header_s)) {
@@ -262,7 +266,7 @@ int libmpq__archive_close(mpq_archive_s *mpq_archive) {
 	}
 
 	/* check if file descriptor is valid. */
-	if ((close(mpq_archive->fd)) == -1) {
+	if ((close(mpq_archive->fd)) < 0) {
 
 		/* file was not opened. */
 		return LIBMPQ_ERROR_CLOSE;
@@ -370,7 +374,11 @@ int libmpq__file_open(mpq_archive_s *mpq_archive, unsigned int file_number) {
 	    (mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) == 0) {
 
 		/* seek to block position. */
-		lseek(mpq_archive->fd, mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].offset, SEEK_SET);
+		if (lseek(mpq_archive->fd, mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].offset, SEEK_SET) < 0) {
+
+			/* seek in file failed. */
+			return LIBMPQ_ERROR_LSEEK;
+		}
 
 		/* read block positions from begin of file. */
 		if ((rb = read(mpq_archive->fd, mpq_archive->mpq_file[file_number - 1]->compressed_offset, compressed_size)) < 0) {
@@ -576,6 +584,19 @@ int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int info_type, unsign
 
 			/* return true if file is imploded, false otherwise. */
 			return (mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_COMPRESS_PKWARE) != 0 ? TRUE : FALSE;
+		case LIBMPQ_FILE_COPIED:
+
+			/* return true if file is neither compressed nor imploded. */
+			if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_COMPRESS_MULTI) == 0 &&
+			    (mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_COMPRESS_PKWARE) == 0) {
+
+				/* return true, because file is neither compressed nor imploded. */
+				return TRUE;
+			} else {
+
+				/* return false, because file is compressed or imploded. */
+				return FALSE;
+			}
 		case LIBMPQ_FILE_SINGLE:
 
 			/* return true if file is stored in single sector, otherwise false. */
