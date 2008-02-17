@@ -33,12 +33,6 @@
 /* mpq-tools configuration includes. */
 #include "config.h"
 
-/* the command line option struct. */
-struct {
-	unsigned int	file;		/* number of archives to check. */
-	unsigned int	count;		/* number of last archive. */
-} mpq_info__options;
-
 /* define new print functions for error. */
 #define ERROR(...) fprintf(stderr, __VA_ARGS__);
 
@@ -67,7 +61,7 @@ int mpq_info__version(char *program_name) {
 
 	/* show the version. */
 	NOTICE("%s (mopaq) %s (zlib %s)\n", program_name, libmpq__version(), zlibVersion());
-	NOTICE("Written by %s\n", PACKAGE_BUGREPORT);
+	NOTICE("Written by %s\n", AUTHOR);
 	NOTICE("\n");
 	NOTICE("This is free software; see the source for copying conditions.  There is NO\n");
 	NOTICE("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n");
@@ -77,50 +71,48 @@ int mpq_info__version(char *program_name) {
 }
 
 /* this function shows some archive information. */
-int mpq_info__archive_info(char *mpq_filename) {
+int mpq_info__archive_info(char *program_name, char *mpq_filename, unsigned int number, unsigned int count) {
 
 	/* some common variables. */
-	unsigned int result = 0;
-	mpq_archive *mpq_a;
+	int result;
+	mpq_archive_s *mpq_archive;
 
 	/* allocate memory for the mpq-archive. */
-	mpq_a = malloc(sizeof(mpq_archive));
-	memset(mpq_a, 0, sizeof(mpq_archive));
+	mpq_archive = malloc(sizeof(mpq_archive_s));
+	memset(mpq_archive, 0, sizeof(mpq_archive_s));
 
 	/* open the mpq-archive. */
-	result = libmpq__archive_open(mpq_a, mpq_filename);
-
-	/* check if open was successful. */
-	if (!result) {
-
-		/* open archive was successful, show information. */
-		NOTICE("archive number:			%i/%i\n", mpq_info__options.count, mpq_info__options.file);
-		NOTICE("archive name:			%s\n", mpq_filename);
-		NOTICE("archive type:			%s\n", mpq_a->flags ? "protected" : "unprotected");
-		NOTICE("archive size:			%i\n", libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_SIZE));
-		NOTICE("archive hashtable size:		%i\n", libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_HASHTABLE_SIZE));
-		NOTICE("archive blocktable size:	%i\n", libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_BLOCKTABLE_SIZE));
-		NOTICE("archive blocksize:		%i\n", libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_BLOCKSIZE));
-		NOTICE("archive files:			%i\n", libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_NUMFILES));
-		NOTICE("archive compressed size:	%i\n", libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_COMPRESSED_SIZE));
-		NOTICE("archive uncompressed size:	%i\n", libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_UNCOMPRESSED_SIZE));
-		NOTICE("archive compression ratio:	%.2f\n", (100 - ((float)libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_COMPRESSED_SIZE) / (float)libmpq__archive_info(mpq_a, LIBMPQ_ARCHIVE_UNCOMPRESSED_SIZE) * 100)));
-	} else {
+	if ((result = libmpq__archive_open(mpq_archive, mpq_filename)) < 0) {
 
 		/* open archive failed. */
-		NOTICE("archive number:			%i/%i\n", mpq_info__options.count, mpq_info__options.file);
+		NOTICE("archive number:			%i/%i\n", number, count);
 		NOTICE("archive name:			%s\n", mpq_filename);
 		NOTICE("archive type:			no mpq archive\n");
+
+	} else {
+
+		/* open archive was successful, show information. */
+		NOTICE("archive number:			%i/%i\n", number, count);
+		NOTICE("archive name:			%s\n", mpq_filename);
+		NOTICE("archive version:		%i\n", libmpq__archive_info(mpq_archive, LIBMPQ_ARCHIVE_VERSION));
+		NOTICE("archive size:			%i\n", libmpq__archive_info(mpq_archive, LIBMPQ_ARCHIVE_SIZE));
+		NOTICE("archive hash table entries:	%i\n", libmpq__archive_info(mpq_archive, LIBMPQ_ARCHIVE_HASHTABLE_ENTRIES));
+		NOTICE("archive block table entries:	%i\n", libmpq__archive_info(mpq_archive, LIBMPQ_ARCHIVE_BLOCKTABLE_ENTRIES));
+		NOTICE("archive block size:		%i\n", libmpq__archive_info(mpq_archive, LIBMPQ_ARCHIVE_BLOCKSIZE));
+		NOTICE("archive files:			%i\n", libmpq__archive_info(mpq_archive, LIBMPQ_ARCHIVE_FILES));
+		NOTICE("archive compressed size:	%i\n", libmpq__archive_info(mpq_archive, LIBMPQ_ARCHIVE_COMPRESSED_SIZE));
+		NOTICE("archive uncompressed size:	%i\n", libmpq__archive_info(mpq_archive, LIBMPQ_ARCHIVE_UNCOMPRESSED_SIZE));
+		NOTICE("archive compression ratio:	%.2f\n", (100 - ((float)libmpq__archive_info(mpq_archive, LIBMPQ_ARCHIVE_COMPRESSED_SIZE) / (float)libmpq__archive_info(mpq_archive, LIBMPQ_ARCHIVE_UNCOMPRESSED_SIZE) * 100)));
 	}
 
 	/* always close file descriptor, file could be opened also if it is no valid mpq archive. */
-	libmpq__archive_close(mpq_a);
+	libmpq__archive_close(mpq_archive);
 
 	/* free the memory of the mpq-archive. */
-	free(mpq_a);
+	free(mpq_archive);
 
 	/* if multiple archives were given, continue with next one. */
-	if (mpq_info__options.count < mpq_info__options.file) {
+	if (number < count) {
 		NOTICE("\n-- next archive --\n\n");
 	}
 
@@ -146,6 +138,8 @@ int main(int argc, char **argv) {
 	/* some common variables. */
 	char *program_name;
 	char mpq_filename[PATH_MAX];
+	unsigned int count;
+	unsigned int number;
 
 	/* get program name. */
 	program_name = argv[0];
@@ -164,12 +158,10 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 
-	/* cleanup. */
-	memset(&mpq_info__options, 0, sizeof(mpq_info__options));
-
 	/* parse command line. */
 	while ((opt = getopt_long(argc, argv, short_options, long_options, &option_index)) != -1) {
 
+		/* check if all command line options are parsed. */
 		if (opt == -1) {
 			break;
 		}
@@ -194,14 +186,14 @@ int main(int argc, char **argv) {
 	}
 
 	/* fill option structure with long option arguments */
-	mpq_info__options.file = argc - optind;
-	mpq_info__options.count = 1;
+	count = argc - optind;
+	number = 1;
 
 	/* create the file count from the command line arguments. */
 	do {
 		strncpy(mpq_filename, argv[optind], PATH_MAX);
-		mpq_info__archive_info(mpq_filename);
-		mpq_info__options.count++;
+		mpq_info__archive_info(program_name, mpq_filename, number, count);
+		number++;
 	} while (++optind < argc);
 
 	/* execution was successful. */
