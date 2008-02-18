@@ -25,18 +25,12 @@ A: Not yet :(
 
 Q: Can i help?
 A: Yes, help is needed, not only with developing, also with testing.
-   A good point to start is using a recent CVS version of mpq-tools.
+   A good point to start is using a recent SVN version of mpq-tools.
    and trying to use it with every mpq archive you could get :)
 
-Q: Where can i found recent CVS version?
-A: Here: http://babelize.org/cgi-bin/cvsweb.cgi/
-
-Q: Where can i subscribe to the mailing lists?
-A: Here: http://www.babelize.org/ml.php
-   
 Q: Can you give a small example to demonstrate the usage?
 A: Of course :-) The example below takes first parameter
-   as mpq archive and extracts first file from it.
+   as mpq archive and open the first file from it.
 
    /*
     *  Compile with:
@@ -44,20 +38,18 @@ A: Of course :-) The example below takes first parameter
     *  gcc mpq-example.c -o mpq-example -lmpq -I/usr/local/include/libmpq
     */
 
-   #include <linux/limits.h>
+   #include <limits.h>
    #include "libmpq/mpq.h"
 
    int main(int argc, char **argv) {
-           char listfile[PATH_MAX] = "/usr/local/share/libmpq/db/diablo2/setup.mpq.conf"
-           mpq_archive *mpq_a;
+           mpq_archive_s *mpq_archive;
 
-           mpq_a = malloc(sizeof(mpq_archive));
-           memset(mpq_a, 0, sizeof(mpq_archive));
+           mpq_archive = malloc(sizeof(mpq_archive_s));
+           memset(mpq_archive, 0, sizeof(mpq_archive_s));
 
-           libmpq_archive_open(mpq_a, argv[1]);
-           libmpq_listfile_open(mpq_a, listfile);
-           libmpq_file_extract(mpq_a, 1);
-           libmpq_archive_close(mpq_a);
+           libmpq__archive_open(mpq_archive, argv[1]);
+           libmpq__file_open(mpq_archive, 1);
+           libmpq__archive_close(mpq_archive);
 
-           free(mpq_a);
+           free(mpq_archive);
    }

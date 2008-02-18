@@ -14,26 +14,22 @@ Diablo, and named narcissistically for its creator
 "Mike O'brien PaCK". The copyrights to it, however, are held by
 Havas Interactive, Blizzard's parent company. The archive format
 is used by many Blizzard titles like Diablo, Diablo 2, Starcraft,
-Warcraft 2: BNE or a newer version in Warcraft 3.
+Warcraft 2: BNE, a newer version in Warcraft 3 and World of
+Warcraft (WOW).
 
 Manual
 ======
 
-Not yet written, for an example on how to use libmpq look at the
-`FAQ' file.
+Since version 0.4.0 the 'mpq-tools' package comes with a manpage
+for every library function. If you use 'mpq-tools' first time it
+is a good idea to read the `FAQ' file.
 
 Reporting Bugs
 ==============
 
-Bug reports for libmpq should be send to the libmpq user mailing
-list.
+Bug reports for 'mpq-tools' can be send to me directly.
 
-	babelize-users@babelize.org
-
-The discussion list `babelize-users@babelize.org' often contains
-information about new ports of libmpq, or discussions of new
-features or behavior changes that people would like. For humon
-readability mark bug reports with [BUG] in the subject.
+    * Maik Broemme <mbroemme@plusserver.de>
 
 Enjoy!
 
