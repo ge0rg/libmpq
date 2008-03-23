@@ -28,6 +28,10 @@
 #ifndef _MPQ_H
 #define _MPQ_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* generic includes. */
 #include <limits.h>
 
@@ -182,5 +186,9 @@ extern int libmpq__memory_explode(unsigned char *in_buf, unsigned int in_size, u
 
 /* generic memory copy function. */
 extern int libmpq__memory_copy(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int block_size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif						/* _MPQ_H */
