@@ -241,7 +241,7 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, char *mpq_filename) {
 		}
 
 		/* the hash table seems corrupt. */
-		return LIBMPQ_ERROR_HASHTABLE;
+		return result;
 	}
 
 	/* try to read and decrypt the block table. */
@@ -276,7 +276,7 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, char *mpq_filename) {
 		}
 
 		/* the block table seems corrupt. */
-		return LIBMPQ_ERROR_BLOCKTABLE;
+		return result;
 	}
 
 	/* loop through all files in mpq archive and add archive offset to file offset. */
@@ -450,7 +450,7 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, char *mpq_filename) {
 		}
 
 		/* the list file seems corrupt. */
-		return LIBMPQ_ERROR_LIST;
+		return result;
 	}
 
 	/* if no error was found, return zero. */
@@ -742,7 +742,7 @@ int libmpq__file_open(mpq_archive_s *mpq_archive, unsigned int file_number) {
 					free(mpq_archive->mpq_file[file_number - 1]);
 				}
 
-				/* sorry without seed, we cannot extract file. */
+				/* something on initialize the decryption buffer failed. */
 				return LIBMPQ_ERROR_DECRYPT;
 			}
 
@@ -1180,7 +1180,7 @@ int libmpq__block_decrypt(unsigned char *in_buf, unsigned int in_size, unsigned 
 			free(mpq_buf);
 		}
 
-		/* sorry without seed, we cannot extract file. */
+		/* something on initialize the decryption buffer failed. */
 		return LIBMPQ_ERROR_DECRYPT;
 	}
 
@@ -1219,7 +1219,7 @@ int libmpq__block_decompress(unsigned char *in_buf, unsigned int in_size, unsign
 	if ((tb = libmpq__decompress_block(in_buf, in_size, out_buf, out_size, LIBMPQ_FLAG_COMPRESS_MULTI)) < 0) {
 
 		/* something on decompression failed. */
-		return LIBMPQ_ERROR_DECOMPRESS;
+		return tb;
 	}
 
 	/* if no error was found, return transferred bytes. */
@@ -1236,7 +1236,7 @@ int libmpq__block_explode(unsigned char *in_buf, unsigned int in_size, unsigned 
 	if ((tb = libmpq__decompress_block(in_buf, in_size, out_buf, out_size, LIBMPQ_FLAG_COMPRESS_PKWARE)) < 0) {
 
 		/* something on decompression failed. */
-		return LIBMPQ_ERROR_EXPLODE;
+		return tb;
 	}
 
 	/* if no error was found, return transferred bytes. */
@@ -1253,7 +1253,7 @@ int libmpq__block_copy(unsigned char *in_buf, unsigned int in_size, unsigned cha
 	if ((tb = libmpq__decompress_block(in_buf, in_size, out_buf, out_size, LIBMPQ_FLAG_COMPRESS_NONE)) < 0) {
 
 		/* something on decompression failed. */
-		return LIBMPQ_ERROR_COPY;
+		return tb;
 	}
 
 	/* if no error was found, return transferred bytes. */
@@ -1288,7 +1288,7 @@ int libmpq__memory_decrypt(unsigned char *in_buf, unsigned int in_size, unsigned
 			free(mpq_buf);
 		}
 
-		/* sorry without seed, we cannot extract file. */
+		/* something on initialize the decryption buffer failed. */
 		return LIBMPQ_ERROR_DECRYPT;
 	}
 
@@ -1327,7 +1327,7 @@ int libmpq__memory_decompress(unsigned char *in_buf, unsigned int in_size, unsig
 	if ((tb = libmpq__decompress_memory(in_buf, in_size, out_buf, out_size, block_size, LIBMPQ_FLAG_COMPRESS_MULTI)) < 0) {
 
 		/* something on decompression failed. */
-		return LIBMPQ_ERROR_DECOMPRESS;
+		return tb;
 	}
 
 	/* if no error was found, return transferred bytes. */
@@ -1344,7 +1344,7 @@ int libmpq__memory_explode(unsigned char *in_buf, unsigned int in_size, unsigned
 	if ((tb = libmpq__decompress_memory(in_buf, in_size, out_buf, out_size, block_size, LIBMPQ_FLAG_COMPRESS_PKWARE)) < 0) {
 
 		/* something on decompression failed. */
-		return LIBMPQ_ERROR_EXPLODE;
+		return tb;
 	}
 
 	/* if no error was found, return transferred bytes. */
@@ -1361,7 +1361,7 @@ int libmpq__memory_copy(unsigned char *in_buf, unsigned int in_size, unsigned ch
 	if ((tb = libmpq__decompress_memory(in_buf, in_size, out_buf, out_size, block_size, LIBMPQ_FLAG_COMPRESS_NONE)) < 0) {
 
 		/* something on decompression failed. */
-		return LIBMPQ_ERROR_COPY;
+		return tb;
 	}
 
 	/* if no error was found, return transferred bytes. */

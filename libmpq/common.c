@@ -267,41 +267,56 @@ int libmpq__decompress_block(unsigned char *in_buf, unsigned int in_size, unsign
 	/* some common variables. */
 	int tb = 0;
 
-	/* check if block is really compressed, some blocks have set the compression flag, but are not compressed. */
-	if (in_size < out_size) {
+	/* check if buffer is not compressed. */
+	if (compression_type == LIBMPQ_FLAG_COMPRESS_NONE) {
 
-		/* check if we are using pkware compression algorithm. */
-		if (compression_type == LIBMPQ_FLAG_COMPRESS_PKWARE) {
-
-			/* decompress using pkzip. */
-			if ((tb = libmpq__decompress_pkzip(in_buf, in_size, out_buf, out_size)) < 0) {
-
-				/* something on decompression failed. */
-				return tb;
-			}
-		}
-
-		/* check if we are using multiple compression algorithm. */
-		if (compression_type == LIBMPQ_FLAG_COMPRESS_MULTI) {
-
-			/*
-			 *  check if it is a file compressed by blizzard's multiple compression, note that storm.dll
-			 *  version 1.0.9 distributed with warcraft 3 passes the full path name of the opened archive
-			 *  as the new last parameter.
-			 */
-			if ((tb = libmpq__decompress_multi(in_buf, in_size, out_buf, out_size)) < 0) {
-
-				/* something on decompression failed. */
-				return tb;
-			}
-		}
-	} else {
-
-		/* block has set compression flag, but is not compressed, so copy data to output buffer. */
+		/* no compressed data, so copy input buffer to output buffer. */
 		memcpy(out_buf, in_buf, out_size);
 
-		/* save the number of transferred bytes. */
-		tb += in_size;
+		/* store number of bytes copied. */
+		tb = out_size;
+	}
+
+	/* check if one compression mode is used. */
+	if (compression_type == LIBMPQ_FLAG_COMPRESS_PKWARE ||
+	    compression_type == LIBMPQ_FLAG_COMPRESS_MULTI) {
+
+		/* check if block is really compressed, some blocks have set the compression flag, but are not compressed. */
+		if (in_size < out_size) {
+
+			/* check if we are using pkware compression algorithm. */
+			if (compression_type == LIBMPQ_FLAG_COMPRESS_PKWARE) {
+
+				/* decompress using pkzip. */
+				if ((tb = libmpq__decompress_pkzip(in_buf, in_size, out_buf, out_size)) < 0) {
+
+					/* something on decompression failed. */
+					return tb;
+				}
+			}
+
+			/* check if we are using multiple compression algorithm. */
+			if (compression_type == LIBMPQ_FLAG_COMPRESS_MULTI) {
+
+				/*
+				 *  check if it is a file compressed by blizzard's multiple compression, note that storm.dll
+				 *  version 1.0.9 distributed with warcraft 3 passes the full path name of the opened archive
+				 *  as the new last parameter.
+				 */
+				if ((tb = libmpq__decompress_multi(in_buf, in_size, out_buf, out_size)) < 0) {
+
+					/* something on decompression failed. */
+					return tb;
+				}
+			}
+		} else {
+
+			/* block has set compression flag, but is not compressed, so copy data to output buffer. */
+			memcpy(out_buf, in_buf, out_size);
+
+			/* save the number of transferred bytes. */
+			tb += in_size;
+		}
 	}
 
 	/* if no error was found, return transferred bytes. */
@@ -379,14 +394,14 @@ int libmpq__read_table_hash(mpq_archive_s *mpq_archive) {
 	if ((tb = lseek(mpq_archive->fd, mpq_archive->mpq_header->hash_table_offset, SEEK_SET)) < 0) {
 
 		/* seek in file failed. */
-		return tb;
+		return LIBMPQ_ERROR_LSEEK;
 	}
 
 	/* read the hash table into the buffer. */
 	if ((rb = read(mpq_archive->fd, mpq_archive->mpq_hash, mpq_archive->mpq_header->hash_table_count * sizeof(mpq_hash_s))) < 0) {;
 
 		/* something on read failed. */
-		return rb;
+		return LIBMPQ_ERROR_READ;
 	}
 
 	/* allocate memory for the buffers. */
@@ -400,7 +415,18 @@ int libmpq__read_table_hash(mpq_archive_s *mpq_archive) {
 	memset(mpq_buffer, 0, sizeof(unsigned int) * LIBMPQ_BUFFER_SIZE);
 
 	/* initialize the decryption buffer. */
-	libmpq__decrypt_buffer_init(mpq_buffer);
+	if ((tb = libmpq__decrypt_buffer_init(mpq_buffer)) < 0) {
+
+		/* free mpq buffer structure if used. */
+		if (mpq_buffer != NULL) {
+
+			/* free mpq buffer structure. */
+			free(mpq_buffer);
+		}
+
+		/* something on initialize the decryption buffer failed. */
+		return LIBMPQ_ERROR_DECRYPT;
+	}
 
 	/* decrypt the hashtable. */
 	libmpq__decrypt_table_hash(mpq_buffer, (unsigned int *)(mpq_archive->mpq_hash), (unsigned char *)"(hash table)", mpq_archive->mpq_header->hash_table_count * 4);
@@ -428,14 +454,14 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 	if ((tb = lseek(mpq_archive->fd, mpq_archive->mpq_header->block_table_offset, SEEK_SET)) < 0) {
 
 		/* seek in file failed. */
-		return tb;
+		return LIBMPQ_ERROR_LSEEK;
 	}
 
 	/* read the block table into the buffer. */
 	if ((rb = read(mpq_archive->fd, mpq_archive->mpq_block, mpq_archive->mpq_header->block_table_count * sizeof(mpq_block_s))) < 0) {
 
 		/* something on read failed. */
-		return rb;
+		return LIBMPQ_ERROR_READ;
 	}
 
 	/* decrypt block table only if it is encrypted. */
@@ -452,7 +478,18 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 		memset(mpq_buffer, 0, sizeof(unsigned int) * LIBMPQ_BUFFER_SIZE);
 
 		/* initialize the decryption buffer. */
-		libmpq__decrypt_buffer_init(mpq_buffer);
+		if ((tb = libmpq__decrypt_buffer_init(mpq_buffer)) < 0) {
+
+			/* free mpq buffer structure if used. */
+			if (mpq_buffer != NULL) {
+
+				/* free mpq buffer structure. */
+				free(mpq_buffer);
+			}
+
+			/* something on initialize the decryption buffer failed. */
+			return LIBMPQ_ERROR_DECRYPT;
+		}
 
 		/* decrypt block table. */
 		libmpq__decrypt_table_block(mpq_buffer, (unsigned int *)(mpq_archive->mpq_block), (unsigned char *)"(block table)", mpq_archive->mpq_header->block_table_count * 4);
