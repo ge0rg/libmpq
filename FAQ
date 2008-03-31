@@ -20,7 +20,8 @@ A: Yes, i think so. I have no idea why it should not, all informations
    about the fileformat are available.
 
 Q: Is there a description of the functions?
-A: Not yet :(
+A: Since version 0.4.0 mpq-tools comes with a API documentation for
+   developers. The documentation are written as manual pages.
 
 Q: Can i help?
 A: Yes, help is needed, not only with developing, also with testing.
