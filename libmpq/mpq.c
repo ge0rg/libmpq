@@ -44,7 +44,7 @@ const char *libmpq__version() {
 }
 
 /* this function read a file and verify if it is a valid mpq archive, then it read and decrypt the hash table. */
-int libmpq__archive_open(mpq_archive_s *mpq_archive, char *mpq_filename) {
+int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename) {
 
 	/* some common variables. */
 	unsigned int rb             = 0;

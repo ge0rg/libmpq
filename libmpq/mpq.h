@@ -148,7 +148,7 @@ typedef struct {
 extern const char *libmpq__version();
 
 /* generic mpq archive information. */
-extern int libmpq__archive_open(mpq_archive_s *mpq_archive, char *mpq_filename);
+extern int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename);
 extern int libmpq__archive_close(mpq_archive_s *mpq_archive);
 extern int libmpq__archive_info(mpq_archive_s *mpq_archive, unsigned int info_type);
 
