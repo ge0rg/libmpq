@@ -595,38 +595,12 @@ int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int info_type, unsign
 			return mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size;
 		case LIBMPQ_FILE_ENCRYPTED_SIZE:
 
-			/* check if file is compressed. */
-			if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_ENCRYPTED) != 0) {
-
-				/* loop through all blocks and count compressed block size. */
-				for (i = 0; i < (mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size; i++ ) {
-					encrypted_size += mpq_archive->mpq_file[file_number - 1]->compressed_offset[i + 1] - mpq_archive->mpq_file[file_number - 1]->compressed_offset[i];
-				}
-
-				/* return the decrypted size of file. */
-				return encrypted_size;
-			} else {
-
-				/* return the compressed size as decrypted size, because file is neither encrypted nor compressed. */
-				return mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].compressed_size;
-			}
+			/* return the compressed size of the file in the mpq archive. */
+			return mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].compressed_size;
 		case LIBMPQ_FILE_DECRYPTED_SIZE:
 
-			/* check if file is compressed. */
-			if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_ENCRYPTED) != 0) {
-
-				/* loop through all blocks and count compressed block size. */
-				for (i = 0; i < (mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size; i++ ) {
-					decrypted_size += mpq_archive->mpq_file[file_number - 1]->compressed_offset[i + 1] - mpq_archive->mpq_file[file_number - 1]->compressed_offset[i];
-				}
-
-				/* return the decrypted size of file. */
-				return decrypted_size;
-			} else {
-
-				/* return the compressed size as decrypted size, because file is neither encrypted nor compressed. */
-				return mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].compressed_size;
-			}
+			/* return the compressed size of the file in the mpq archive. */
+			return mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].compressed_size;
 		case LIBMPQ_FILE_ENCRYPTED:
 
 			/* return true if file is encrypted, false otherwise. */
