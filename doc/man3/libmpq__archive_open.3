@@ -55,14 +55,8 @@ Seeking in file failed.
 .B LIBMPQ_ERROR_FORMAT
 The given file is no valid mpq archive.
 .TP
-.B LIBMPQ_ERROR_HASHTABLE
-The hashtable is not valid inside mpq archive.
-.TP
-.B LIBMPQ_ERROR_BLOCKTABLE
-The blocktable is not valid inside mpq archive.
-.TP
-.B LIBMPQ_ERROR_LIST
-The listfile is not valid inside mpq archive.
+.B LIBMPQ_ERROR_DECRYPT
+Decrypting block table or hash table failed.
 .SH SEE ALSO
 .BR libmpq__archive_close (3),
 .BR libmpq__archive_info (3)

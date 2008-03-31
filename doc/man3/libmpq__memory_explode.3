@@ -43,7 +43,10 @@ The \fBlibmpq__memory_explode\fP() function takes as first argument the \fIin_bu
 .SH RETURN VALUE
 On success, the transferred bytes are returned and on error one of the following constants.
 .TP
-.B LIBMPQ_ERROR_EXPLODE
+.B LIBMPQ_ERROR_MALLOC
+Not enough memory for creating required structures.
+.TP
+.B LIBMPQ_ERROR_DECOMPRESS
 Exploding memory failed.
 .SH SEE ALSO
 .BR libmpq__memory_decrypt (3),
