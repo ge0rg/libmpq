@@ -42,6 +42,9 @@ The \fBlibmpq__block_decompress\fP() function takes as first argument the \fIin_
 .SH RETURN VALUE
 On success, the transferred bytes are returned and on error one of the following constants.
 .TP
+.B LIBMPQ_ERROR_MALLOC
+Not enough memory for creating required structures.
+.TP
 .B LIBMPQ_ERROR_DECOMPRESS
 Decompressing block failed.
 .SH SEE ALSO

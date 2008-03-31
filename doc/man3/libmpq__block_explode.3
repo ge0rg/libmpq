@@ -42,7 +42,10 @@ The \fBlibmpq__block_explode\fP() function takes as first argument the \fIin_buf
 .SH RETURN VALUE
 On success, the transferred bytes are returned and on error one of the following constants.
 .TP
-.B LIBMPQ_ERROR_EXPLODE
+.B LIBMPQ_ERROR_MALLOC
+Not enough memory for creating required structures.
+.TP
+.B LIBMPQ_ERROR_DECOMPRESS
 Exploding block failed.
 .SH SEE ALSO
 .BR libmpq__block_info (3),
