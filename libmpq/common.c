@@ -177,25 +177,27 @@ int libmpq__decrypt_key(unsigned char *in_buf, unsigned int in_size, unsigned ch
 }
 
 /* function to decrypt a block. */
-int libmpq__decrypt_block(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int seed, unsigned int *mpq_buf) {
+int libmpq__decrypt_block(unsigned char *in_buf_raw, unsigned int in_size, unsigned char *out_buf_raw, unsigned int out_size, unsigned int seed, unsigned int *mpq_buf) {
 
 	/* some common variables. */
 	unsigned int seed2 = 0xEEEEEEEE;
 	unsigned int ch;
 
-	/* leave input buffer untouched. */
-	memcpy(out_buf, in_buf, out_size);
+	/* we're processing the data 4 bytes at a time. */
+	unsigned int *in_buf = (unsigned int *) in_buf_raw;
+	unsigned int *out_buf = (unsigned int *) out_buf_raw;
 
-	/* round to unsigned int's. */
-	out_size >>= 2;
-	while (out_size-- > 0) {
-		seed2                    += mpq_buf[0x400 + (seed & 0xFF)];
-		ch                        = *(unsigned int *)out_buf ^ (seed + seed2);
-		seed                      = ((~seed << 0x15) + 0x11111111) | (seed >> 0x0B);
-		seed2                     = ch + seed2 + (seed2 << 5) + 3;
-		*(unsigned int *)out_buf  = ch;
-		out_buf                  += sizeof(unsigned int);
+	for (; out_size >= 4; out_size -= 4) {
+		seed2     += mpq_buf[0x400 + (seed & 0xFF)];
+		ch         = *in_buf++ ^ (seed + seed2);
+		seed       = ((~seed << 0x15) + 0x11111111) | (seed >> 0x0B);
+		seed2      = ch + seed2 + (seed2 << 5) + 3;
+		*out_buf++ = ch;
 	}
+
+	/* if there's any data left, just copy it over. */
+	if (out_size)
+		memcpy (out_buf, in_buf, out_size);
 
 	/* if no error was found, return decrypted bytes. */
 	return in_size;
