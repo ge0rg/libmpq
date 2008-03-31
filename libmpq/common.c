@@ -37,7 +37,7 @@
 static int libmpq__decrypt_table(
 	unsigned int	*buffer,
 	unsigned int	*hash,
-	unsigned char	*key,
+	const char	*key,
 	unsigned int	size
 );
 
@@ -74,7 +74,7 @@ int libmpq__decrypt_buffer_init(unsigned int *buffer) {
 	return LIBMPQ_SUCCESS;
 }
 
-unsigned int libmpq__hash_string (unsigned int *buffer, unsigned char *key, unsigned int offset) {
+unsigned int libmpq__hash_string (unsigned int *buffer, const char *key, unsigned int offset) {
 
 	/* some common variables. */
 	unsigned int seed1 = 0x7FED7FED;
@@ -94,7 +94,7 @@ unsigned int libmpq__hash_string (unsigned int *buffer, unsigned char *key, unsi
 }
 
 /* function to decrypt hash/block table of mpq archive. */
-static int libmpq__decrypt_table(unsigned int *buffer, unsigned int *hash, unsigned char *key, unsigned int size) {
+static int libmpq__decrypt_table(unsigned int *buffer, unsigned int *hash, const char *key, unsigned int size) {
 
 	/* some common variables. */
 	unsigned int seed1;
@@ -418,7 +418,7 @@ int libmpq__read_table_hash(mpq_archive_s *mpq_archive) {
 	}
 
 	/* decrypt the hashtable. */
-	libmpq__decrypt_table(mpq_buffer, (unsigned int *)(mpq_archive->mpq_hash), (unsigned char *)"(hash table)", mpq_archive->mpq_header->hash_table_count * 4);
+	libmpq__decrypt_table(mpq_buffer, (unsigned int *)(mpq_archive->mpq_hash), "(hash table)", mpq_archive->mpq_header->hash_table_count * 4);
 
 	/* free mpq buffer structure if used. */
 	if (mpq_buffer != NULL) {
@@ -481,7 +481,7 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 		}
 
 		/* decrypt block table. */
-		libmpq__decrypt_table(mpq_buffer, (unsigned int *)(mpq_archive->mpq_block), (unsigned char *)"(block table)", mpq_archive->mpq_header->block_table_count * 4);
+		libmpq__decrypt_table(mpq_buffer, (unsigned int *)(mpq_archive->mpq_block), "(block table)", mpq_archive->mpq_header->block_table_count * 4);
 
 		/* free mpq buffer structure if used. */
 		if (mpq_buffer != NULL) {
