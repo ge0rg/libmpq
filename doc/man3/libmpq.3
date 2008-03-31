@@ -1,0 +1,168 @@
+.\" Copyright (c) 2003-2008 Maik Broemme <mbroemme@plusserver.de>
+.\"
+.\" This is free documentation; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License as
+.\" published by the Free Software Foundation; either version 2 of
+.\" the License, or (at your option) any later version.
+.\"
+.\" The GNU General Public License's references to "object code"
+.\" and "executables" are to be interpreted as the output of any
+.\" document formatting or typesetting system, including
+.\" intermediate and printed output.
+.\"
+.\" This manual is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public
+.\" License along with this manual; if not, write to the Free
+.\" Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111,
+.\" USA.
+.TH libmpq 3 2008-03-31 "The MoPaQ archive library"
+.SH NAME
+libmpq \- cross-platform C library for manipulating mpq archives.
+.SH SYNOPSIS
+.nf
+.B
+#include <libmpq/mpq.h>
+.sp
+.BI "char *libmpq__version();"
+.sp
+.BI "int libmpq__archive_open("
+.BI "        mpq_archive_s *" "mpq_archive",
+.BI "        char          *" "mpq_filename"
+.BI ");"
+.sp
+.BI "int libmpq__archive_close("
+.BI "        mpq_archive_s *" "mpq_archive"
+.BI ");"
+.sp
+.BI "int libmpq__archive_info("
+.BI "        mpq_archive_s *" "mpq_archive",
+.BI "        unsigned int   " "info_type"
+.BI ");"
+.sp
+.BI "int libmpq__file_open("
+.BI "        mpq_archive_s *" "mpq_archive",
+.BI "        unsigned int   " "file_number"
+.BI ");"
+.sp
+.BI "int libmpq__file_close("
+.BI "        mpq_archive_s *" "mpq_archive",
+.BI "        unsigned int   " "file_number"
+.BI ");"
+.sp
+.BI "int libmpq__file_info("
+.BI "        mpq_archive_s *" "mpq_archive",
+.BI "        unsigned int   " "info_type",
+.BI "        unsigned int   " "file_number"
+.BI ");"
+.sp
+.BI "char *libmpq__file_name("
+.BI "        mpq_archive_s *" "mpq_archive",
+.BI "        unsigned int   " "file_number"
+.BI ");"
+.sp
+.BI "int libmpq__file_number("
+.BI "        mpq_archive_s *" "mpq_archive",
+.BI "        char          *" "filename"
+.BI ");"
+.sp
+.BI "int libmpq__block_info("
+.BI "        mpq_archive_s *" "mpq_archive",
+.BI "        unsigned int   " "info_type",
+.BI "        unsigned int   " "file_number",
+.BI "        unsigned int   " "block_number"
+.BI ");"
+.sp
+.BI "int libmpq__block_decrypt("
+.BI "        unsigned char *" "in_buf",
+.BI "        unsigned int   " "in_size",
+.BI "        unsigned char *" "out_buf",
+.BI "        unsigned int   " "out_size",
+.BI "        unsigned int   " "seed"
+.BI ");"
+.sp
+.BI "int libmpq__block_decompress("
+.BI "        unsigned char *" "in_buf",
+.BI "        unsigned int   " "in_size",
+.BI "        unsigned char *" "out_buf",
+.BI "        unsigned int   " "out_size"
+.BI ");"
+.sp
+.BI "int libmpq__block_explode("
+.BI "        unsigned char *" "in_buf",
+.BI "        unsigned int   " "in_size",
+.BI "        unsigned char *" "out_buf",
+.BI "        unsigned int   " "out_size"
+.BI ");"
+.sp
+.BI "int libmpq__block_copy("
+.BI "        unsigned char *" "in_buf",
+.BI "        unsigned int   " "in_size",
+.BI "        unsigned char *" "out_buf",
+.BI "        unsigned int   " "out_size"
+.BI ");"
+.sp
+.BI "int libmpq__memory_decrypt("
+.BI "        unsigned char *" "in_buf",
+.BI "        unsigned int   " "in_size",
+.BI "        unsigned char *" "out_buf",
+.BI "        unsigned int   " "out_size",
+.BI "        unsigned int   " "block_count"
+.BI ");"
+.sp
+.BI "int libmpq__memory_decompress("
+.BI "        unsigned char *" "in_buf",
+.BI "        unsigned int   " "in_size",
+.BI "        unsigned char *" "out_buf",
+.BI "        unsigned int   " "out_size",
+.BI "        unsigned int   " "block_size"
+.BI ");"
+.sp
+.BI "int libmpq__memory_explode("
+.BI "        unsigned char *" "in_buf",
+.BI "        unsigned int   " "in_size",
+.BI "        unsigned char *" "out_buf",
+.BI "        unsigned int   " "out_size",
+.BI "        unsigned int   " "block_size"
+.BI ");"
+.sp
+.BI "int libmpq__memory_copy("
+.BI "        unsigned char *" "in_buf",
+.BI "        unsigned int   " "in_size",
+.BI "        unsigned char *" "out_buf",
+.BI "        unsigned int   " "out_size",
+.BI "        unsigned int   " "block_size"
+.BI ");"
+.fi
+.SH DESCRIPTION
+.PP
+The \fIlibmpq\fP library supports decrypting, decompressing, exploding and various manipulations of the MoPaQ archive files. It uses \fIzlib(3)\fP compression library. At this moment \fIlibmpg\fP is not able to create MoPaQ archives, this limitation will be removed in a future version.
+.SH SEE ALSO
+.BR libmpq__version (3),
+.BR libmpq__archive_open (3),
+.BR libmpq__archive_close (3),
+.BR libmpq__archive_info (3),
+.BR libmpq__file_open (3),
+.BR libmpq__file_close (3),
+.BR libmpq__file_info (3),
+.BR libmpq__file_name (3),
+.BR libmpq__file_number (3),
+.BR libmpq__block_info (3),
+.BR libmpq__block_decrypt (3),
+.BR libmpq__block_decompress (3),
+.BR libmpq__block_explode (3),
+.BR libmpq__block_copy (3),
+.BR libmpq__memory_decrypt (3),
+.BR libmpq__memory_decompress (3),
+.BR libmpq__memory_explode (3),
+.BR libmpq__memory_copy (3)
+.SH AUTHOR
+Check documentation.
+.TP
+libmpq is (c) 2003-2008
+.B Maik Broemme <mbroemme@plusserver.de>
+.PP
+The above e-mail address can be used to send bug reports, feedbacks or library enhancements.

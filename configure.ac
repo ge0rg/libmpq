@@ -1,5 +1,5 @@
 # the autoconf initilization.
-AC_INIT(mpq-tools, 0.4.0, [Maik Broemme <mbroemme@plusserver.de>], [mpq-tools])
+AC_INIT(mpq-tools, 0.4.0, [mbroemme@plusserver.de], [mpq-tools])
 
 # detect the canonical host and target build environment.
 AC_CANONICAL_SYSTEM
@@ -7,6 +7,9 @@ AC_CANONICAL_SYSTEM
 # initialize autoconf and automake system.
 AM_INIT_AUTOMAKE([no-dependencies])
 AC_CONFIG_HEADERS([config.h:config.h.in])
+
+# create define for the package author.
+AC_DEFINE([AUTHOR], ["Maik Broemme <mbroemme@plusserver.de>"], [Define to the author of this package.])
 
 # notices.
 AC_PREREQ(2.53)
@@ -26,9 +29,16 @@ AC_SUBST(CCASFLAGS)
 AC_CHECK_HEADER([zlib.h], [], [AC_MSG_ERROR([*** zlib.h is required, install zlib header files])])
 AC_CHECK_LIB([z], [inflateEnd], [], [AC_MSG_ERROR([*** inflateEnd is required, install zlib library files])])
 
+# configuration files.
+AC_CONFIG_FILES([libmpq.pc])
+AC_CONFIG_FILES([libmpq-config],[chmod +x libmpq-config])
+
 # creating files.
 AC_OUTPUT([
 Makefile
 src/Makefile
 libmpq/Makefile
+doc/Makefile
+doc/man1/Makefile
+doc/man3/Makefile
 ])
