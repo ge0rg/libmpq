@@ -6,6 +6,4 @@ EXTRA_DIST			= $(man_MANS)
 
 # manual pages for the installed binaries.
 man_MANS =			\
-	libmpq-config.1		\
-	mpq-extract.1		\
-	mpq-info.1
+	libmpq-config.1
