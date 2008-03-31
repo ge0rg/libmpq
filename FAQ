@@ -13,8 +13,7 @@ A: With libmpq you can write applications which can extract and
 
 Q: Is it possible to extract files with their filenames?
 A: Yes, since version 0.3.0 of libmpq you can use namebased or
-   numberbased extraction. Notice: You need a corresponding listfile
-   for that archive.
+   numberbased extraction.
 
 Q: Is it legal?
 A: Yes, i think so. I have no idea why it should not, all informations
@@ -39,7 +38,7 @@ A: Of course :-) The example below takes first parameter
     */
 
    #include <limits.h>
-   #include "libmpq/mpq.h"
+   #include <libmpq/mpq.h>
 
    int main(int argc, char **argv) {
            mpq_archive_s *mpq_archive;
