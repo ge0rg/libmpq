@@ -89,26 +89,10 @@ int libmpq__decompress_huffman(unsigned char *in_buf, unsigned int in_size, unsi
 	/* save the number of copied bytes. */
 	tb = libmpq__do_decompress_huffman(ht, is, out_buf, out_size);
 
-	/* free input stream if used. */
-	if (is != NULL) {
-
-		/* free input stream. */
-		free(is);
-	}
-
-	/* free huffman item if used. */
-	if (hi != NULL) {
-
-		/* free huffman item stream. */
-		free(hi);
-	}
-
-	/* free huffman tree if used. */
-	if (ht != NULL) {
-
-		/* free huffman tree stream. */
-		free(ht);
-	}
+	/* free structures. */
+	free(is);
+	free(hi);
+	free(ht);
 
 	/* return transferred bytes. */
 	return tb;
@@ -189,12 +173,8 @@ int libmpq__decompress_pkzip(unsigned char *in_buf, unsigned int in_size, unsign
 	/* do the decompression. */
 	if ((tb = libmpq__do_decompress_pkzip(work_buf, &info)) < 0) {
 
-		/* free working buffer if used. */
-		if (work_buf != NULL) {
-
-			/* free working buffer. */
-			free(work_buf);
-		}
+		/* free working buffer. */
+		free(work_buf);
 
 		/* something failed on pkzip decompression. */
 		return tb;
@@ -203,12 +183,8 @@ int libmpq__decompress_pkzip(unsigned char *in_buf, unsigned int in_size, unsign
 	/* save transferred bytes. */
 	tb = info.out_pos;
 
-	/* free working buffer if used. */
-	if (work_buf != NULL) {
-
-		/* free working buffer. */
-		free(work_buf);
-	}
+	/* free working buffer. */
+	free(work_buf);
 
 	/* return transferred bytes. */
 	return tb;
@@ -326,12 +302,8 @@ int libmpq__decompress_multi(unsigned char *in_buf, unsigned int in_size, unsign
 			/* decompress buffer using corresponding function. */
 			if ((tb = dcmp_table[i].decompress(in_buf, in_size, work_buf, out_size)) < 0) {
 
-				/* free temporary buffer if used. */
-				if (temp_buf != NULL) {
-
-					/* free temporary buffer. */
-					free(temp_buf);
-				}
+				/* free temporary buffer. */
+				free(temp_buf);
 
 				/* something on decompression failed. */
 				return tb;
@@ -353,12 +325,8 @@ int libmpq__decompress_multi(unsigned char *in_buf, unsigned int in_size, unsign
 		memcpy(out_buf, in_buf, out_size);
 	}
 
-	/* free temporary buffer if used. */
-	if (temp_buf != NULL) {
-
-		/* free temporary buffer. */
-		free(temp_buf);
-	}
+	/* free temporary buffer. */
+	free(temp_buf);
 
 	/* return transferred bytes. */
 	return tb;
