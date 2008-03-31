@@ -2,7 +2,7 @@
 AUTOMAKE_OPTIONS		= 1.6
 
 # any directories which should be built and installed.
-SUBDIRS				= libmpq src doc
+SUBDIRS				= libmpq doc
 
 # the directories which are part of the distribution.
 DIST_SUBDIRS			= $(SUBDIRS)
@@ -19,6 +19,8 @@ EXTRA_DIST =			\
 	AUTHORS			\
 	COPYING			\
 	ChangeLog		\
+	FAQ			\
+	INSTALL			\
 	NEWS			\
 	README			\
 	THANKS			\
