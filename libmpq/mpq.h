@@ -48,6 +48,10 @@ extern "C" {
 #define LIBMPQ_ERROR_EXIST			-10		/* file or block does not exist in archive. */
 #define LIBMPQ_ERROR_DECRYPT			-11		/* we don't know the decryption seed. */
 #define LIBMPQ_ERROR_DECOMPRESS			-12		/* error on decompression. */
+#define LIBMPQ_ERROR_EXPLODE			-13		/* error on exploding. */
+#define LIBMPQ_ERROR_COPY			-14		/* error on copying. */
+#define LIBMPQ_ERROR_LIST			-15		/* listfile is corrupt. */
+#define LIBMPQ_ERROR_INFO			-16		/* requested info type was not found. */
 
 /* define generic values for returning archive information. */
 #define LIBMPQ_ARCHIVE_SIZE			1		/* mpq archive size. */

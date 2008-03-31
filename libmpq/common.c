@@ -226,7 +226,7 @@ int libmpq__decrypt_memory(unsigned char *in_buf, unsigned int in_size, unsigned
 	if ((seed = libmpq__decrypt_key(in_buf, out_offset, out_buf, out_offset, mpq_buf)) < 0) {
 
 		/* sorry without seed, we cannot extract file. */
-		return LIBMPQ_ERROR_DECRYPT;
+		return seed;
 	}
 
 	/* decrypt the compressed offset block. */
@@ -373,19 +373,20 @@ int libmpq__read_table_hash(mpq_archive_s *mpq_archive) {
 	/* some common variables. */
 	unsigned int *mpq_buffer;
 	int rb = 0;
+	int tb = 0;
 
 	/* seek in file. */
-	if (lseek(mpq_archive->fd, mpq_archive->mpq_header->hash_table_offset, SEEK_SET) < 0) {
+	if ((tb = lseek(mpq_archive->fd, mpq_archive->mpq_header->hash_table_offset, SEEK_SET)) < 0) {
 
 		/* seek in file failed. */
-		return LIBMPQ_ERROR_LSEEK;
+		return tb;
 	}
 
 	/* read the hash table into the buffer. */
 	if ((rb = read(mpq_archive->fd, mpq_archive->mpq_hash, mpq_archive->mpq_header->hash_table_count * sizeof(mpq_hash_s))) < 0) {;
 
 		/* something on read failed. */
-		return LIBMPQ_ERROR_HASHTABLE;
+		return rb;
 	}
 
 	/* allocate memory for the buffers. */
@@ -421,19 +422,20 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 	/* some common variables. */
 	unsigned int *mpq_buffer;
 	int rb = 0;
+	int tb = 0;
 
 	/* seek in file. */
-	if (lseek(mpq_archive->fd, mpq_archive->mpq_header->block_table_offset, SEEK_SET) < 0) {
+	if ((tb = lseek(mpq_archive->fd, mpq_archive->mpq_header->block_table_offset, SEEK_SET)) < 0) {
 
 		/* seek in file failed. */
-		return LIBMPQ_ERROR_LSEEK;
+		return tb;
 	}
 
 	/* read the block table into the buffer. */
 	if ((rb = read(mpq_archive->fd, mpq_archive->mpq_block, mpq_archive->mpq_header->block_table_count * sizeof(mpq_block_s))) < 0) {
 
 		/* something on read failed. */
-		return LIBMPQ_ERROR_BLOCKTABLE;
+		return rb;
 	}
 
 	/* decrypt block table only if it is encrypted. */
