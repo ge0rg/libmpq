@@ -34,6 +34,13 @@
 /* libmpq generic includes. */
 #include "extract.h"
 
+static int libmpq__decrypt_table(
+	unsigned int	*buffer,
+	unsigned int	*hash,
+	unsigned char	*key,
+	unsigned int	size
+);
+
 /* function to initialize decryption buffer. */
 int libmpq__decrypt_buffer_init(unsigned int *buffer) {
 
@@ -67,8 +74,7 @@ int libmpq__decrypt_buffer_init(unsigned int *buffer) {
 	return LIBMPQ_SUCCESS;
 }
 
-/* function to decrypt hash table of mpq archive. */
-int libmpq__decrypt_table_hash(unsigned int *buffer, unsigned int *hash, unsigned char *key, unsigned int size) {
+unsigned int libmpq__hash_string (unsigned int *buffer, unsigned char *key, unsigned int offset) {
 
 	/* some common variables. */
 	unsigned int seed1 = 0x7FED7FED;
@@ -80,49 +86,32 @@ int libmpq__decrypt_table_hash(unsigned int *buffer, unsigned int *hash, unsigne
 	/* prepare seeds. */
 	while (*key != 0) {
 		ch    = toupper(*key++);
-		seed1 = buffer[0x300 + ch] ^ (seed1 + seed2);
+		seed1 = buffer[offset + ch] ^ (seed1 + seed2);
 		seed2 = ch + seed1 + seed2 + (seed2 << 5) + 3;
 	}
 
+	return seed1;
+}
+
+/* function to decrypt hash/block table of mpq archive. */
+static int libmpq__decrypt_table(unsigned int *buffer, unsigned int *hash, unsigned char *key, unsigned int size) {
+
+	/* some common variables. */
+	unsigned int seed1;
+	unsigned int seed2 = 0xEEEEEEEE;
+
+	/* one key character. */
+	unsigned int ch;
+
+	seed1 = libmpq__hash_string (buffer, key, 0x300);
+
 	/* decrypt it. */
-	seed2 = 0xEEEEEEEE;
 	while (size-- > 0) {
 		seed2   += buffer[0x400 + (seed1 & 0xFF)];
 		ch       = *hash ^ (seed1 + seed2);
 		seed1    = ((~seed1 << 0x15) + 0x11111111) | (seed1 >> 0x0B);
 		seed2    = ch + seed2 + (seed2 << 5) + 3;
 		*hash++  = ch;
-	}
-
-	/* if no error was found, return zero. */
-	return LIBMPQ_SUCCESS;
-}
-
-/* function to decrypt blocktable of mpq archive. */
-int libmpq__decrypt_table_block(unsigned int *buffer, unsigned int *block, unsigned char *key, unsigned int size) {
-
-	/* some common variables. */
-	unsigned int seed1 = 0x7FED7FED;
-	unsigned int seed2 = 0xEEEEEEEE;
-
-	/* one key character. */
-	unsigned int ch;
-
-	/* prepare seeds. */
-	while(*key != 0) {
-		ch    = toupper(*key++);
-		seed1 = buffer[0x300 + ch] ^ (seed1 + seed2);
-		seed2 = ch + seed1 + seed2 + (seed2 << 5) + 3;
-	}         
-
-	/* decrypt it. */
-	seed2 = 0xEEEEEEEE;
-	while(size-- > 0) {
-		seed2    += buffer[0x400 + (seed1 & 0xFF)];
-		ch        = *block ^ (seed1 + seed2);
-		seed1     = ((~seed1 << 0x15) + 0x11111111) | (seed1 >> 0x0B);
-		seed2     = ch + seed2 + (seed2 << 5) + 3;
-		*block++  = ch;
 	}
 
 	/* if no error was found, return zero. */
@@ -429,7 +418,7 @@ int libmpq__read_table_hash(mpq_archive_s *mpq_archive) {
 	}
 
 	/* decrypt the hashtable. */
-	libmpq__decrypt_table_hash(mpq_buffer, (unsigned int *)(mpq_archive->mpq_hash), (unsigned char *)"(hash table)", mpq_archive->mpq_header->hash_table_count * 4);
+	libmpq__decrypt_table(mpq_buffer, (unsigned int *)(mpq_archive->mpq_hash), (unsigned char *)"(hash table)", mpq_archive->mpq_header->hash_table_count * 4);
 
 	/* free mpq buffer structure if used. */
 	if (mpq_buffer != NULL) {
@@ -492,7 +481,7 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 		}
 
 		/* decrypt block table. */
-		libmpq__decrypt_table_block(mpq_buffer, (unsigned int *)(mpq_archive->mpq_block), (unsigned char *)"(block table)", mpq_archive->mpq_header->block_table_count * 4);
+		libmpq__decrypt_table(mpq_buffer, (unsigned int *)(mpq_archive->mpq_block), (unsigned char *)"(block table)", mpq_archive->mpq_header->block_table_count * 4);
 
 		/* free mpq buffer structure if used. */
 		if (mpq_buffer != NULL) {

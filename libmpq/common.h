@@ -26,22 +26,6 @@ int libmpq__decrypt_buffer_init(
 	unsigned int	*buffer
 );
 
-/* function to decrypt hash table of mpq archive. */
-int libmpq__decrypt_table_hash(
-	unsigned int	*buffer,
-	unsigned int	*hash,
-	unsigned char	*key,
-	unsigned int	size
-);
-
-/* function to decrypt hash table of mpq archive. */
-int libmpq__decrypt_table_block(
-	unsigned int	*buffer,
-	unsigned int	*block,
-	unsigned char	*key,
-	unsigned int	size
-);
-
 /* function to detect decryption key. */
 int libmpq__decrypt_key(
 	unsigned char	*in_buf,
@@ -103,6 +87,12 @@ int libmpq__read_table_block(
 /* function to read listfile from mpq archive. */
 int libmpq__read_file_list(
 	mpq_archive_s	*mpq_archive
+);
+
+unsigned int libmpq__hash_string (
+	unsigned int	*buffer,
+	unsigned char	*key,
+	unsigned int offset
 );
 
 #endif						/* _COMMON_H */
