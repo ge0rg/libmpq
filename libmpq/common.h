@@ -91,7 +91,7 @@ int libmpq__read_file_list(
 
 unsigned int libmpq__hash_string (
 	unsigned int	*buffer,
-	unsigned char	*key,
+	const char	*key,
 	unsigned int offset
 );
 
