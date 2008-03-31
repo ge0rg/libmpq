@@ -37,7 +37,7 @@
 #include "config.h"
 
 /* this function returns the library version information. */
-char *libmpq__version() {
+const char *libmpq__version() {
 
 	/* return version information. */
 	return VERSION;
