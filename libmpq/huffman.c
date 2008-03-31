@@ -42,7 +42,7 @@
 #include "huffman.h"
 
 /* tables for huffman tree. */
-static unsigned char table_1502A630[] = {
+static const unsigned char table_1502A630[] = {
 
 	/* data for compression type 0x00. */
 	0x0A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -659,7 +659,7 @@ void libmpq__huffman_tree_build(struct huffman_tree_s *ht, unsigned int cmp_type
 	unsigned int max_byte;
 
 	/* [ESP+1C] - pointer to unsigned char in table_1502A630. */
-	unsigned char *byte_array;
+	const unsigned char *byte_array;
 
 	/* thats needed to replace the goto stuff from original source. :) */
 	unsigned int found;

@@ -32,7 +32,7 @@
 #include "wave.h"
 
 /* table necessary dor decompression. */
-static unsigned int wave_table_1503f120[] = {
+static const unsigned int wave_table_1503f120[] = {
 	0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000004, 0xFFFFFFFF, 0x00000002, 0xFFFFFFFF, 0x00000006,
 	0xFFFFFFFF, 0x00000001, 0xFFFFFFFF, 0x00000005, 0xFFFFFFFF, 0x00000003, 0xFFFFFFFF, 0x00000007,
 	0xFFFFFFFF, 0x00000001, 0xFFFFFFFF, 0x00000005, 0xFFFFFFFF, 0x00000003, 0xFFFFFFFF, 0x00000007,  
@@ -40,7 +40,7 @@ static unsigned int wave_table_1503f120[] = {
 };
 
 /* table necessary dor decompression. */
-static unsigned int wave_table_1503f1a0[] = {
+static const unsigned int wave_table_1503f1a0[] = {
 	0x00000007, 0x00000008, 0x00000009, 0x0000000A, 0x0000000B, 0x0000000C, 0x0000000D, 0x0000000E,
 	0x00000010, 0x00000011, 0x00000013, 0x00000015, 0x00000017, 0x00000019, 0x0000001C, 0x0000001F,
 	0x00000022, 0x00000025, 0x00000029, 0x0000002D, 0x00000032, 0x00000037, 0x0000003C, 0x00000042,

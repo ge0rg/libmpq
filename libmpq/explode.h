@@ -89,7 +89,7 @@ int libmpq__pkzip_skip_bit(
 void libmpq__pkzip_generate_tables_decode(
 	int		count,
 	unsigned char	*bits,
-	unsigned char	*code,
+	const unsigned char	*code,
 	unsigned char	*buf2
 );
 
