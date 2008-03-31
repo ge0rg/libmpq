@@ -1,27 +1,21 @@
 FAQ - Frequently Asked Questions
 ================================
 
-Q: What is libmpq/mpq-tools?
+Q: What is libmpq?
 A: libmpq is a library for manipulating MoPaQ mpq archives mostly used
-   used by Blizzard in their games. mpq-tools are utilities using
-   libmpq.
+   used by Blizzard in their games.
 
-Q: What can i do with libmpq/mpq-tools?
-A: With libmpq you can write applications which can extract and
-   create mpq archives or delete files within those. mpq-tools
-   is a package which demonstrates this functionality.
-
-Q: Is it possible to extract files with their filenames?
-A: Yes, since version 0.3.0 of libmpq you can use namebased or
-   numberbased extraction.
+Q: What can i do with libmpq?
+A: With libmpq you can write applications which can extract, create
+   and manipulate mpq archives.
 
 Q: Is it legal?
 A: Yes, i think so. I have no idea why it should not, all informations
    about the fileformat are available.
 
 Q: Is there a description of the functions?
-A: Since version 0.4.0 mpq-tools comes with a API documentation for
-   developers. The documentation are written as manual pages.
+A: Since version 0.4.0 libmpq comes with a API documentation for
+   developers. The documentation is written as manual pages.
 
 Q: Can i help?
 A: Yes, help is needed, not only with developing, also with testing.
@@ -35,7 +29,7 @@ A: Of course :-) The example below takes first parameter
    /*
     *  Compile with:
     *
-    *  gcc mpq-example.c -o mpq-example -lmpq -I/usr/local/include/libmpq
+    *  gcc mpq-example.c -o mpq-example -lmpq -lz -I/usr/local/include/libmpq
     */
 
    #include <limits.h>
