@@ -186,7 +186,7 @@ void libmpq__pkzip_generate_tables_decode(int count, unsigned char *bits, const 
 void libmpq__pkzip_generate_tables_ascii(pkzip_cmp_s *mpq_pkzip) {
 
 	/* some common variables. */
-	unsigned short *code_asc = &pkzip_code_asc[0xFF];
+	const unsigned short *code_asc = &pkzip_code_asc[0xFF];
 	unsigned int acc;
 	unsigned int add;
 	unsigned short count;
