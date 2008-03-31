@@ -60,7 +60,7 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename) {
 	}
 
 	/* allocate memory for the mpq header and file list. */
-	if ((mpq_archive->mpq_header = malloc(sizeof(mpq_header_s))) == NULL) {
+	if ((mpq_archive->mpq_header = calloc(1, sizeof(mpq_header_s))) == NULL) {
 
 		/* check if file descriptor is valid. */
 		if ((close(mpq_archive->fd)) < 0) {
@@ -72,9 +72,6 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename) {
 		/* memory allocation problem. */
 		return LIBMPQ_ERROR_MALLOC;
 	}
-
-	/* cleanup. */
-	memset(mpq_archive->mpq_header, 0, sizeof(mpq_header_s));
 
 	/* fill the structures with informations. */
 	strncpy(mpq_archive->filename, mpq_filename, strlen(mpq_filename));
@@ -184,8 +181,8 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename) {
 	mpq_archive->mpq_header->block_table_offset += archive_offset;
 
 	/* allocate memory for the block table and hash table. */
-	if ((mpq_archive->mpq_block = malloc(sizeof(mpq_block_s)  * mpq_archive->mpq_header->block_table_count)) == NULL ||
-	    (mpq_archive->mpq_hash  = malloc(sizeof(mpq_hash_s)   * mpq_archive->mpq_header->hash_table_count)) == NULL) {
+	if ((mpq_archive->mpq_block = calloc(mpq_archive->mpq_header->block_table_count, sizeof(mpq_block_s))) == NULL ||
+	    (mpq_archive->mpq_hash  = calloc(mpq_archive->mpq_header->hash_table_count,  sizeof(mpq_hash_s))) == NULL) {
 
 		/* free mpq header if used. */
 		if (mpq_archive->mpq_header != NULL) {
@@ -204,10 +201,6 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename) {
 		/* memory allocation problem. */
 		return LIBMPQ_ERROR_MALLOC;
 	}
-
-	/* cleanup. */
-	memset(mpq_archive->mpq_block, 0, sizeof(mpq_block_s)  * mpq_archive->mpq_header->block_table_count);
-	memset(mpq_archive->mpq_hash,  0, sizeof(mpq_hash_s)   * mpq_archive->mpq_header->hash_table_count);
 
 	/* try to read and decrypt the hash table. */
 	if ((result = libmpq__read_table_hash(mpq_archive)) != 0) {
@@ -287,7 +280,7 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename) {
 	}
 
 	/* allocate memory for the mpq header and file list. */
-	if ((mpq_archive->mpq_list = malloc(sizeof(mpq_list_s))) == NULL) {
+	if ((mpq_archive->mpq_list = calloc(1, sizeof(mpq_list_s))) == NULL) {
 
 		/* free hash table if used. */
 		if (mpq_archive->mpq_hash != NULL) {
@@ -321,14 +314,11 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename) {
 		return LIBMPQ_ERROR_MALLOC;
 	}
 
-	/* cleanup. */
-	memset(mpq_archive->mpq_list, 0, sizeof(mpq_list_s));
-
 	/* allocate memory, some mpq archives have block table greater than hash table, avoid buffer overruns. */
-	if ((mpq_archive->mpq_file                      = malloc(sizeof(mpq_file_s)   * mpq_archive->mpq_header->hash_table_count)) == NULL ||
-	    (mpq_archive->mpq_list->file_names          = malloc(sizeof(char *)       * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count))) == NULL ||
-	    (mpq_archive->mpq_list->block_table_indices = malloc(sizeof(unsigned int) * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count))) == NULL ||
-	    (mpq_archive->mpq_list->hash_table_indices  = malloc(sizeof(unsigned int) * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count))) == NULL) {
+	if ((mpq_archive->mpq_file                      = calloc(mpq_archive->mpq_header->hash_table_count,                                                  sizeof(mpq_file_s))) == NULL ||
+	    (mpq_archive->mpq_list->file_names          = calloc(max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count), sizeof(char *))) == NULL ||
+	    (mpq_archive->mpq_list->block_table_indices = calloc(max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count), sizeof(unsigned int))) == NULL ||
+	    (mpq_archive->mpq_list->hash_table_indices  = calloc(max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count), sizeof(unsigned int))) == NULL) {
 
 		/* free mpq file list, if used. */
 		if (mpq_archive->mpq_list != NULL) {
@@ -368,12 +358,6 @@ int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename) {
 		/* memory allocation problem. */
 		return LIBMPQ_ERROR_MALLOC;
 	}
-
-	/* cleanup. */
-	memset(mpq_archive->mpq_file,                      0, sizeof(mpq_file_s)   * mpq_archive->mpq_header->hash_table_count);
-	memset(mpq_archive->mpq_list->file_names,          0, sizeof(char *)       * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count));
-	memset(mpq_archive->mpq_list->block_table_indices, 0, sizeof(unsigned int) * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count));
-	memset(mpq_archive->mpq_list->hash_table_indices,  0, sizeof(unsigned int) * max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count));
 
 	/* try to read list file. */
 	if ((result = libmpq__read_file_list(mpq_archive)) != 0) {
@@ -606,23 +590,19 @@ int libmpq__file_open(mpq_archive_s *mpq_archive, unsigned int file_number) {
 	/* some common variables. */
 	unsigned int i;
 	unsigned int *mpq_buf;
-	unsigned int mpq_size = sizeof(unsigned int) * LIBMPQ_BUFFER_SIZE;
 	unsigned int compressed_size = sizeof(unsigned int) * (((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size) + 1);
 	int rb = 0;
 	int tb = 0;
 
 	/* allocate memory for the file. */
-	if ((mpq_archive->mpq_file[file_number - 1] = malloc(sizeof(mpq_file_s))) == NULL) {
+	if ((mpq_archive->mpq_file[file_number - 1] = calloc(1, sizeof(mpq_file_s))) == NULL) {
 
 		/* memory allocation problem. */
 		return LIBMPQ_ERROR_MALLOC;
 	}
 
-	/* cleanup. */
-	memset(mpq_archive->mpq_file[file_number - 1], 0, sizeof(mpq_file_s));
-
 	/* allocate memory for the compressed block offset table. */
-	if ((mpq_archive->mpq_file[file_number - 1]->compressed_offset = malloc(compressed_size)) == NULL) {
+	if ((mpq_archive->mpq_file[file_number - 1]->compressed_offset = calloc(1, compressed_size)) == NULL) {
 
 		/* free file pointer if used. */
 		if (mpq_archive->mpq_file[file_number - 1] != NULL) {
@@ -634,9 +614,6 @@ int libmpq__file_open(mpq_archive_s *mpq_archive, unsigned int file_number) {
 		/* memory allocation problem. */
 		return LIBMPQ_ERROR_MALLOC;
 	}
-
-	/* cleanup. */
-	memset(mpq_archive->mpq_file[file_number - 1]->compressed_offset, 0, compressed_size);
 
 	/* check if we need to load the compressed block offset table, we will maintain this table for uncompressed files too. */
 	if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_COMPRESSED) != 0 &&
@@ -695,7 +672,7 @@ int libmpq__file_open(mpq_archive_s *mpq_archive, unsigned int file_number) {
 		if (mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_ENCRYPTED) {
 
 			/* allocate memory for the buffers. */
-			if ((mpq_buf = malloc(mpq_size)) == NULL) {
+			if ((mpq_buf = malloc(sizeof(unsigned int) * LIBMPQ_BUFFER_SIZE)) == NULL) {
 
 				/* free compressed block offset table if used. */
 				if (mpq_archive->mpq_file[file_number - 1]->compressed_offset != NULL) {
@@ -714,9 +691,6 @@ int libmpq__file_open(mpq_archive_s *mpq_archive, unsigned int file_number) {
 				/* memory allocation problem. */
 				return LIBMPQ_ERROR_MALLOC;
 			}
-
-			/* cleanup. */
-			memset(mpq_buf, 0, mpq_size);
 
 			/* initialize the decryption buffer. */
 			if ((tb = libmpq__decrypt_buffer_init(mpq_buf)) < 0) {
@@ -1157,18 +1131,14 @@ int libmpq__block_decrypt(unsigned char *in_buf, unsigned int in_size, unsigned 
 
 	/* some common variables. */
 	unsigned int *mpq_buf;
-	unsigned int mpq_size = sizeof(unsigned int) * LIBMPQ_BUFFER_SIZE;
 	int tb = 0;
 
 	/* allocate memory for the buffers. */
-	if ((mpq_buf = malloc(mpq_size)) == NULL) {
+	if ((mpq_buf = malloc(sizeof(unsigned int) * LIBMPQ_BUFFER_SIZE)) == NULL) {
 
 		/* memory allocation problem. */
 		return LIBMPQ_ERROR_MALLOC;
 	}
-
-	/* cleanup. */
-	memset(mpq_buf, 0, mpq_size);
 
 	/* initialize the decryption buffer. */
 	if ((tb = libmpq__decrypt_buffer_init(mpq_buf)) < 0) {
@@ -1265,18 +1235,14 @@ int libmpq__memory_decrypt(unsigned char *in_buf, unsigned int in_size, unsigned
 
 	/* some common variables. */
 	unsigned int *mpq_buf;
-	unsigned int mpq_size = sizeof(unsigned int) * LIBMPQ_BUFFER_SIZE;
 	int tb = 0;
 
 	/* allocate memory for the buffers. */
-	if ((mpq_buf = malloc(mpq_size)) == NULL) {
+	if ((mpq_buf = malloc(sizeof(unsigned int) * LIBMPQ_BUFFER_SIZE)) == NULL) {
 
 		/* memory allocation problem. */
 		return LIBMPQ_ERROR_MALLOC;
 	}
-
-	/* cleanup. */
-	memset(mpq_buf, 0, mpq_size);
 
 	/* initialize the decryption buffer. */
 	if ((tb = libmpq__decrypt_buffer_init(mpq_buf)) < 0) {
