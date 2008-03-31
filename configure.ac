@@ -42,3 +42,16 @@ doc/Makefile
 doc/man1/Makefile
 doc/man3/Makefile
 ])
+
+# show user the warning about the merged release.
+echo ""
+echo "*** NOTICE ***"
+echo "'$PACKAGE-$PACKAGE_VERSION' will be the last version which includes the library"
+echo "and the utility package. The next version will be shipped as two packages."
+echo ""
+echo "libmpq-0.4.1"
+echo "mpq-tools-0.4.1"
+echo ""
+echo "Due to the fact that more changes are done in the library than in the"
+echo "extraction utility, it is the next development step."
+echo ""
