@@ -44,7 +44,7 @@ while test $# -gt 0; do
       ;;
     --libs)
       libdirs=-L@libdir@
-      echo $libdirs -lmpq
+      echo $libdirs -lmpq -lz
       ;;
     *)
       echo "${usage}" 1>&2
