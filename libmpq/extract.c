@@ -110,7 +110,7 @@ int libmpq__decompress_huffman(unsigned char *in_buf, unsigned int in_size, unsi
 		free(ht);
 	}
 
-	/* if no error was found, return zero. */
+	/* return transferred bytes. */
 	return tb;
 }
 
@@ -136,14 +136,14 @@ int libmpq__decompress_zlib(unsigned char *in_buf, unsigned int in_size, unsigne
 	if ((result = inflateInit(&z)) != Z_OK) {
 
 		/* something on zlib initialization failed. */
-		return LIBMPQ_ERROR_DECOMPRESS;
+		return result;
 	}
 
 	/* call zlib to decompress the data. */
 	if ((result = inflate(&z, Z_FINISH)) != Z_STREAM_END) {
 
 		/* something on zlib decompression failed. */
-		return LIBMPQ_ERROR_DECOMPRESS;
+		return result;
 	}
 
 	/* save transferred bytes. */
@@ -153,7 +153,7 @@ int libmpq__decompress_zlib(unsigned char *in_buf, unsigned int in_size, unsigne
 	if ((result = inflateEnd(&z)) != Z_OK) {
 
 		/* something on zlib finalization failed. */
-		return LIBMPQ_ERROR_DECOMPRESS;
+		return result;
 	}
 
 	/* return transferred bytes. */
@@ -210,7 +210,7 @@ int libmpq__decompress_pkzip(unsigned char *in_buf, unsigned int in_size, unsign
 		free(work_buf);
 	}
 
-	/* if no error was found, return zero. */
+	/* return transferred bytes. */
 	return tb;
 }
 
@@ -338,8 +338,8 @@ int libmpq__decompress_multi(unsigned char *in_buf, unsigned int in_size, unsign
 			}
 
 			/* move output size to source size for next compression. */
-			in_size  = out_size;
-			in_buf     = work_buf;
+			in_size = out_size;
+			in_buf  = work_buf;
 
 			/* increase counter. */
 			count++;
@@ -360,6 +360,6 @@ int libmpq__decompress_multi(unsigned char *in_buf, unsigned int in_size, unsign
 		free(temp_buf);
 	}
 
-	/* return transferred bytes.. */
+	/* return transferred bytes. */
 	return tb;
 }
