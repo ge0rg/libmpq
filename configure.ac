@@ -1,5 +1,5 @@
 # the autoconf initilization.
-AC_INIT(mpq-tools, 0.4.1, [mbroemme@plusserver.de], [mpq-tools])
+AC_INIT(libmpq, 0.4.1, [mbroemme@plusserver.de], [libmpq])
 
 # detect the canonical host and target build environment.
 AC_CANONICAL_SYSTEM
@@ -13,7 +13,6 @@ AC_PREREQ(2.53)
 AC_REVISION($Revision: 1.6 $)
 
 # checking for programs.
-AC_DISABLE_SHARED
 AC_PROG_LIBTOOL
 AC_PROG_MAKE_SET
 AC_PROG_CC
