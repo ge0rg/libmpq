@@ -25,12 +25,12 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 .SH SYNOPSIS
 .nf
 .B
-#include <libmpq/mpq.h>
+#include <mpq.h>
 .sp
-.BI "int libmpq__file_info("
+.BI "int32_t libmpq__file_info("
 .BI "        mpq_archive_s *" "mpq_archive",
-.BI "        unsigned int   " "info_type",
-.BI "        unsigned int   " "file_number"
+.BI "        uint32_t       " "info_type",
+.BI "        uint32_t       " "file_number"
 .BI ");"
 .fi
 .SH DESCRIPTION

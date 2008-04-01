@@ -36,9 +36,9 @@
  *  LIBMPQ_ERROR_MALLOC
  *  LIBMPQ_ERROR_DECOMPRESS
  */
-typedef int		(*DECOMPRESS)(unsigned char *, unsigned int, unsigned char *, unsigned int);
+typedef int32_t		(*DECOMPRESS)(uint8_t *, uint32_t, uint8_t *, uint32_t);
 typedef struct {
-	unsigned int	mask;			/* decompression bit. */
+	uint32_t	mask;			/* decompression bit. */
 	DECOMPRESS	decompress;		/* decompression function. */
 } decompress_table_s;
 
@@ -48,59 +48,59 @@ typedef struct {
  *
  *  1500F5F0
  */
-extern int libmpq__decompress_huffman(
-	unsigned char	*in_buf,
-	unsigned int	in_size,
-	unsigned char	*out_buf,
-	unsigned int	out_size
+extern int32_t libmpq__decompress_huffman(
+	uint8_t		*in_buf,
+	uint32_t	in_size,
+	uint8_t		*out_buf,
+	uint32_t	out_size
 );
 
 /* decompression using zlib. */
-extern int libmpq__decompress_zlib(
-	unsigned char	*in_buf,
-	unsigned int	in_size,
-	unsigned char	*out_buf,
-	unsigned int	out_size
+extern int32_t libmpq__decompress_zlib(
+	uint8_t		*in_buf,
+	uint32_t	in_size,
+	uint8_t		*out_buf,
+	uint32_t	out_size
 );
 
 /* decompression using pkzip. */
-extern int libmpq__decompress_pkzip(
-	unsigned char	*in_buf,
-	unsigned int	in_size,
-	unsigned char	*out_buf,
-	unsigned int	out_size
+extern int32_t libmpq__decompress_pkzip(
+	uint8_t		*in_buf,
+	uint32_t	in_size,
+	uint8_t		*out_buf,
+	uint32_t	out_size
 );
 
 /* decompression using bzip2. */
-extern int libmpq__decompress_bzip2(
-	unsigned char	*in_buf,
-	unsigned int	in_size,
-	unsigned char	*out_buf,
-	unsigned int	out_size
+extern int32_t libmpq__decompress_bzip2(
+	uint8_t		*in_buf,
+	uint32_t	in_size,
+	uint8_t		*out_buf,
+	uint32_t	out_size
 );
 
 /* decompression using wave. (1 channel) */
-extern int libmpq__decompress_wave_mono(
-	unsigned char	*in_buf,
-	unsigned int	in_size,
-	unsigned char	*out_buf,
-	unsigned int	out_size
+extern int32_t libmpq__decompress_wave_mono(
+	uint8_t		*in_buf,
+	uint32_t	in_size,
+	uint8_t		*out_buf,
+	uint32_t	out_size
 );
 
 /* decompression using wave. (2 channels) */
-extern int libmpq__decompress_wave_stereo(
-	unsigned char	*in_buf,
-	unsigned int	in_size,
-	unsigned char	*out_buf,
-	unsigned int	out_size
+extern int32_t libmpq__decompress_wave_stereo(
+	uint8_t		*in_buf,
+	uint32_t	in_size,
+	uint8_t		*out_buf,
+	uint32_t	out_size
 );
 
 /* decompression using multiple of the above algorithm. */
-extern int libmpq__decompress_multi(
-	unsigned char	*in_buf,
-	unsigned int	in_size,
-	unsigned char	*out_buf,
-	unsigned int	out_size
+extern int32_t libmpq__decompress_multi(
+	uint8_t		*in_buf,
+	uint32_t	in_size,
+	uint8_t		*out_buf,
+	uint32_t	out_size
 );
 
 #endif						/* _EXTRACT_H */

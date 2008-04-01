@@ -32,7 +32,7 @@
 #include "wave.h"
 
 /* table necessary dor decompression. */
-static const unsigned int wave_table_1503f120[] = {
+static const uint32_t wave_table_1503f120[] = {
 	0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000004, 0xFFFFFFFF, 0x00000002, 0xFFFFFFFF, 0x00000006,
 	0xFFFFFFFF, 0x00000001, 0xFFFFFFFF, 0x00000005, 0xFFFFFFFF, 0x00000003, 0xFFFFFFFF, 0x00000007,
 	0xFFFFFFFF, 0x00000001, 0xFFFFFFFF, 0x00000005, 0xFFFFFFFF, 0x00000003, 0xFFFFFFFF, 0x00000007,  
@@ -40,7 +40,7 @@ static const unsigned int wave_table_1503f120[] = {
 };
 
 /* table necessary dor decompression. */
-static const unsigned int wave_table_1503f1a0[] = {
+static const uint32_t wave_table_1503f1a0[] = {
 	0x00000007, 0x00000008, 0x00000009, 0x0000000A, 0x0000000B, 0x0000000C, 0x0000000D, 0x0000000E,
 	0x00000010, 0x00000011, 0x00000013, 0x00000015, 0x00000017, 0x00000019, 0x0000001C, 0x0000001F,
 	0x00000022, 0x00000025, 0x00000029, 0x0000002D, 0x00000032, 0x00000037, 0x0000003C, 0x00000042,
@@ -56,18 +56,18 @@ static const unsigned int wave_table_1503f1a0[] = {
 };
 
 /* this function decompress a wave file, mono or stereo, 1500F230 offset. */
-int libmpq__do_decompress_wave(unsigned char *out_buf, int out_length, unsigned char *in_buf, int in_length, int channels) {
+int32_t libmpq__do_decompress_wave(uint8_t *out_buf, int32_t out_length, uint8_t *in_buf, int32_t in_length, int32_t channels) {
 
 	/* some common variables. */
-	byte_and_short out;
-	byte_and_short in;
-	unsigned int index;
-	int nr_array1[2];
-	int nr_array2[2];
-	unsigned int count = 0;
+	byte_and_int16_t out;
+	byte_and_int16_t in;
+	uint32_t index;
+	int32_t nr_array1[2];
+	int32_t nr_array2[2];
+	uint32_t count = 0;
 
 	/* end on input buffer. */
-	unsigned char *in_end = in_buf + in_length;
+	uint8_t *in_end = in_buf + in_length;
 
 	/* assign default values. */
 	out.pb       = out_buf;
@@ -82,10 +82,10 @@ int libmpq__do_decompress_wave(unsigned char *out_buf, int out_length, unsigned 
 	for (count = 0; count < channels; count++) {
 
 		/* some common variables. */
-		int temp;
+		int32_t temp;
 
 		/* save pointer. */
-		temp = *(short *)in.pw++;
+		temp = *(int16_t *)in.pw++;
 		nr_array2[count] = temp;
 
 		/* check if should break. */
@@ -94,7 +94,7 @@ int libmpq__do_decompress_wave(unsigned char *out_buf, int out_length, unsigned 
 		}
 
 		/* return values. */
-		*out.pw++   = (unsigned short)temp;
+		*out.pw++   = (uint16_t)temp;
 		out_length -= 2;
 	}
 
@@ -105,7 +105,7 @@ int libmpq__do_decompress_wave(unsigned char *out_buf, int out_length, unsigned 
 	while (in.pb < in_end) {
 
 		/* save the byte. */
-		unsigned char one_byte = *in.pb++;
+		uint8_t one_byte = *in.pb++;
 
 		/* check how many channels and set index. */
 		if (channels == 2) {
@@ -130,7 +130,7 @@ int libmpq__do_decompress_wave(unsigned char *out_buf, int out_length, unsigned 
 					}
 
 					/* return values. */
-					*out.pw++ = (unsigned short)nr_array2[index];
+					*out.pw++ = (uint16_t)nr_array2[index];
 					out_length -= 2;
 
 					/* continue loop. */
@@ -177,13 +177,13 @@ int libmpq__do_decompress_wave(unsigned char *out_buf, int out_length, unsigned 
 		} else {
 
 			/* EDI */
-			unsigned int temp1 = wave_table_1503f1a0[nr_array1[index]];
+			uint32_t temp1 = wave_table_1503f1a0[nr_array1[index]];
 
 			/* ESI */
-			unsigned int temp2 = temp1 >> in_buf[1];
+			uint32_t temp2 = temp1 >> in_buf[1];
 
 			/* ECX */
-			int temp3 = nr_array2[index];
+			int32_t temp3 = nr_array2[index];
 
 			/* EBX = one byte. */
 			if (one_byte & 0x01) {
@@ -206,8 +206,8 @@ int libmpq__do_decompress_wave(unsigned char *out_buf, int out_length, unsigned 
 			}
 			if (one_byte & 0x40) {
 				temp3 -= temp2;
-				if (temp3 <= (int)0xFFFF8000) {
-					temp3 = (int)0xFFFF8000;
+				if (temp3 <= (int32_t)0xFFFF8000) {
+					temp3 = (int32_t)0xFFFF8000;
 				}
 			} else {
 				temp3 += temp2;
@@ -227,7 +227,7 @@ int libmpq__do_decompress_wave(unsigned char *out_buf, int out_length, unsigned 
 			/* assign values. */
 			temp2             = nr_array1[index];
 			one_byte         &= 0x1F;
-			*out.pw++         = (unsigned short)temp3;
+			*out.pw++         = (uint16_t)temp3;
 			out_length       -= 2;
 			temp2            += wave_table_1503f120[one_byte];
 			nr_array1[index]  = temp2;

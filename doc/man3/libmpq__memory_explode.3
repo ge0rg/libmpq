@@ -25,14 +25,14 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 .SH SYNOPSIS
 .nf
 .B
-#include <libmpq/mpq.h>
+#include <mpq.h>
 .sp
-.BI "int libmpq__memory_explode("
-.BI "        unsigned char *" "in_buf",
-.BI "        unsigned int   " "in_size",
-.BI "        unsigned char *" "out_buf",
-.BI "        unsigned int   " "out_size",
-.BI "        unsigned int   " "block_size"
+.BI "int32_t libmpq__memory_explode("
+.BI "        uint8_t       *" "in_buf",
+.BI "        uint32_t       " "in_size",
+.BI "        uint8_t       *" "out_buf",
+.BI "        uint32_t       " "out_size",
+.BI "        uint32_t       " "block_size"
 .BI ");"
 .fi
 .SH DESCRIPTION

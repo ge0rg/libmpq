@@ -33,7 +33,7 @@ A: Of course :-) The example below takes first parameter
     */
 
    #include <limits.h>
-   #include <libmpq/mpq.h>
+   #include <mpq.h>
 
    int main(int argc, char **argv) {
            mpq_archive_s *mpq_archive;
