@@ -38,7 +38,10 @@ Call \fBlibmpq__file_close\fP() to close a file inside mpq archive which was ope
 .LP
 The \fBlibmpq__file_close\fP() function takes as first argument the archive structure \fImpq_archive\fP which have to be allocated first and will close the file \fIfile_number\fP from the structure \fImpq_archive\fP.
 .SH RETURN VALUE
-The function returns zero.
+On success, \fBlibmpq__file_close\fP() returns LIBMPQ_SUCCESS. Otherwise one of the following constants is returned.
+.TP
+.B LIBMPQ_ERROR_NOT_INITIALIZED
+libmpq wasn't initialized by calling \fBlibmpq__initialize\fP(), or it was shut down by an \fBlibmpq__shutdown\fP() call.
 .SH SEE ALSO
 .BR libmpq__file_open (3),
 .BR libmpq__file_info (3)

@@ -27,6 +27,10 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 .B
 #include <libmpq/mpq.h>
 .sp
+.BI "int libmpq__init();"
+.sp
+.BI "void libmpq__shutdown();"
+.sp
 .BI "const char *libmpq__version();"
 .sp
 .BI "int libmpq__archive_open("
@@ -141,6 +145,8 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 .PP
 The \fIlibmpq\fP library supports decrypting, decompressing, exploding and various manipulations of the MoPaQ archive files. It uses \fIzlib(3)\fP compression library. At this moment \fIlibmpg\fP is not able to create MoPaQ archives, this limitation will be removed in a future version.
 .SH SEE ALSO
+.BR libmpq__init (3),
+.BR libmpq__shutdown (3),
 .BR libmpq__version (3),
 .BR libmpq__archive_open (3),
 .BR libmpq__archive_close (3),

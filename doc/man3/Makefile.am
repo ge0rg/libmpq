@@ -7,6 +7,8 @@ EXTRA_DIST			= $(man_MANS)
 # manual pages for the installed binaries.
 man_MANS =				\
 	libmpq.3			\
+	libmpq__init.3		\
+	libmpq__shutdown.3		\
 	libmpq__archive_close.3		\
 	libmpq__archive_info.3		\
 	libmpq__archive_open.3		\

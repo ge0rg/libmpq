@@ -41,7 +41,10 @@ Call \fBlibmpq__memory_copy\fP() to copy a given amount of memory. If the memory
 .LP
 The \fBlibmpq__memory_copy\fP() function takes as first argument the \fIin_buf\fP which is the input data buffer. The second argument \fIin_size\fP is the size of \fIin_buf\fP. The third argument \fIout_buf\fP is the output data buffer which contains the copied data. The fourth argument \fIout_size\fP is the size of \fIout_buf\fP and the fifth argument \fIblock_size\fP is used to copy the blocks in the memory.
 .SH RETURN VALUE
-The function returns the transferred bytes.
+On success, the transferred bytes are returned and on error one of the following constants.
+.TP
+.B LIBMPQ_ERROR_NOT_INITIALIZED
+libmpq wasn't initialized by calling \fBlibmpq__initialize\fP(), or it was shut down by an \fBlibmpq__shutdown\fP() call.
 .SH SEE ALSO
 .BR libmpq__memory_decrypt (3),
 .BR libmpq__memory_decompress (3),

@@ -60,6 +60,9 @@ Return the decryption seed for the block.
 .SH RETURN VALUE
 On success, the value to the requested argument \fIinfo_type\fP is returned and on error one of the following constants.
 .TP
+.B LIBMPQ_ERROR_NOT_INITIALIZED
+libmpq wasn't initialized by calling \fBlibmpq__initialize\fP(), or it was shut down by an \fBlibmpq__shutdown\fP() call.
+.TP
 .B LIBMPQ_ERROR_EXIST
 The given file or block does not exist.
 .TP

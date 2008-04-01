@@ -43,6 +43,7 @@ extern "C" {
 #define LIBMPQ_ERROR_WRITE			-5		/* write error on file. */
 #define LIBMPQ_ERROR_MALLOC			-6		/* memory allocation error. */
 #define LIBMPQ_ERROR_FORMAT			-7		/* format errror. */
+#define LIBMPQ_ERROR_NOT_INITIALIZED	-8		/* libmpq__init() wasn't called. */
 #define LIBMPQ_ERROR_EXIST			-10		/* file or block does not exist in archive. */
 #define LIBMPQ_ERROR_DECRYPT			-11		/* we don't know the decryption seed. */
 #define LIBMPQ_ERROR_DECOMPRESS			-12		/* error on decompression. */
@@ -143,6 +144,10 @@ typedef struct {
 	mpq_list_s	*mpq_list;		/* handle to file list (in most cases this is the last file in the archive). */
 	unsigned int	files;			/* number of files in archive, which could be extracted. */
 } mpq_archive_s;
+
+/* initialization and shut down */
+extern int libmpq__init();
+extern int libmpq__shutdown();
 
 /* generic information about library. */
 extern const char *libmpq__version();
