@@ -22,79 +22,79 @@
 #define _COMMON_H
 
 /* function to initialize decryption buffer. */
-int libmpq__decrypt_buffer_init(
-	unsigned int	*buffer
+int32_t libmpq__decrypt_buffer_init(
+	uint32_t	*buffer
 );
 
 /* function to detect decryption key. */
-int libmpq__decrypt_key(
-	unsigned char	*in_buf,
-	unsigned int	in_size,
-	unsigned char	*out_buf,
-	unsigned int	out_size,
-	unsigned int	*crypt_buf
+int32_t libmpq__decrypt_key(
+	uint8_t		*in_buf,
+	uint32_t	in_size,
+	uint8_t		*out_buf,
+	uint32_t	out_size,
+	uint32_t	*crypt_buf
 );
 
 /* function to decrypt a block. */
-int libmpq__decrypt_block(
-	unsigned char	*in_buf,
-	unsigned int	in_size,
-	unsigned char	*out_buf,
-	unsigned int	out_size,
-	unsigned int	seed,
-	unsigned int	*crypt_buf
+int32_t libmpq__decrypt_block(
+	uint8_t		*in_buf,
+	uint32_t	in_size,
+	uint8_t		*out_buf,
+	uint32_t	out_size,
+	uint32_t	seed,
+	uint32_t	*crypt_buf
 );
 
 /* function to decrypt whole read buffer. */
-int libmpq__decrypt_memory(
-	unsigned char	*in_buf,
-	unsigned int	in_size,
-	unsigned char	*out_buf,
-	unsigned int	out_size,
-	unsigned int	block_count,
-	unsigned int	*crypt_buf
+int32_t libmpq__decrypt_memory(
+	uint8_t		*in_buf,
+	uint32_t	in_size,
+	uint8_t		*out_buf,
+	uint32_t	out_size,
+	uint32_t	block_count,
+	uint32_t	*crypt_buf
 );
 
 /* function to decompress or explode block from archive. */
-int libmpq__decompress_block(
-	unsigned char	*in_buf,
-	unsigned int	in_size,
-	unsigned char	*out_buf,
-	unsigned int	out_size,
-	unsigned int	compression_type
+int32_t libmpq__decompress_block(
+	uint8_t		*in_buf,
+	uint32_t	in_size,
+	uint8_t		*out_buf,
+	uint32_t	out_size,
+	uint32_t	compression_type
 );
 
 /* function to decompress or explode whole read buffer. */
-int libmpq__decompress_memory(
-	unsigned char	*in_buf,
-	unsigned int	in_size,
-	unsigned char	*out_buf,
-	unsigned int	out_size,
-	unsigned int	block_size,
-	unsigned int	compression_type
+int32_t libmpq__decompress_memory(
+	uint8_t		*in_buf,
+	uint32_t	in_size,
+	uint8_t		*out_buf,
+	uint32_t	out_size,
+	uint32_t	block_size,
+	uint32_t	compression_type
 );
 
 /* function to read and decrypt hash table. */
-int libmpq__read_table_hash(
+int32_t libmpq__read_table_hash(
 	mpq_archive_s	*mpq_archive,
-	unsigned int	*crypt_buf
+	uint32_t	*crypt_buf
 );
 
 /* function to read and decrypt hash table. */
-int libmpq__read_table_block(
+int32_t libmpq__read_table_block(
 	mpq_archive_s	*mpq_archive,
-	unsigned int	*crypt_buf
+	uint32_t	*crypt_buf
 );
 
 /* function to read listfile from mpq archive. */
-int libmpq__read_file_list(
+int32_t libmpq__read_file_list(
 	mpq_archive_s	*mpq_archive
 );
 
-unsigned int libmpq__hash_string (
-	unsigned int	*buffer,
+uint32_t libmpq__hash_string (
+	uint32_t	*buffer,
 	const char	*key,
-	unsigned int offset
+	uint32_t	offset
 );
 
 #endif						/* _COMMON_H */

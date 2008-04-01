@@ -46,12 +46,12 @@ static decompress_table_s dcmp_table[] = {
 };
 
 /* this function decompress a stream using huffman algorithm. */
-int libmpq__decompress_huffman(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size) {
+int32_t libmpq__decompress_huffman(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size) {
 
 	/* TODO: make typdefs of this structs? */
 	/* some common variables. */
-	int result = 0;
-	int tb     = 0;
+	int32_t result = 0;
+	int32_t tb     = 0;
 	struct huffman_tree_s *ht;
 	struct huffman_tree_item_s *hi;
 	struct huffman_input_stream_s *is;
@@ -71,9 +71,9 @@ int libmpq__decompress_huffman(unsigned char *in_buf, unsigned int in_size, unsi
 	memset(is, 0, sizeof(struct huffman_input_stream_s));
 
 	/* initialize input stream. */
-	is->bit_buf  = *(unsigned int *)in_buf;
-	in_buf      += sizeof(int);
-	is->in_buf   = (unsigned char *)in_buf;
+	is->bit_buf  = *(uint32_t *)in_buf;
+	in_buf      += sizeof(int32_t);
+	is->in_buf   = (uint8_t *)in_buf;
 	is->bits     = 32;
 
 // TODO: add all the mallocs to init function and add function libmpq__huffman_tree_free() */
@@ -99,11 +99,11 @@ int libmpq__decompress_huffman(unsigned char *in_buf, unsigned int in_size, unsi
 }
 
 /* this function decompress a stream using zlib algorithm. */
-int libmpq__decompress_zlib(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size) {
+int32_t libmpq__decompress_zlib(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size) {
 
 	/* some common variables. */
-	int result = 0;
-	int tb     = 0;
+	int32_t result = 0;
+	int32_t tb     = 0;
 	z_stream z;
 
 	/* fill the stream structure for zlib. */
@@ -145,11 +145,11 @@ int libmpq__decompress_zlib(unsigned char *in_buf, unsigned int in_size, unsigne
 }
 
 /* this function decompress a stream using pkzip algorithm. */
-int libmpq__decompress_pkzip(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size) {
+int32_t libmpq__decompress_pkzip(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size) {
 
 	/* some common variables. */
-	int tb = 0;
-	unsigned char *work_buf;
+	int32_t tb = 0;
+	uint8_t *work_buf;
 	pkzip_data_s info;
 
 	/* allocate memory for pkzip data structure. */
@@ -191,7 +191,7 @@ int libmpq__decompress_pkzip(unsigned char *in_buf, unsigned int in_size, unsign
 }
 
 /* this function decompress a stream using bzip2 library. */
-int libmpq__decompress_bzip2(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size) {
+int32_t libmpq__decompress_bzip2(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size) {
 
 	/* TODO: add bzip2 decompression here. */
 	/* if no error was found, return zero. */
@@ -199,10 +199,10 @@ int libmpq__decompress_bzip2(unsigned char *in_buf, unsigned int in_size, unsign
 }
 
 /* this function decompress a stream using wave algorithm. (1 channel) */
-int libmpq__decompress_wave_mono(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size) {
+int32_t libmpq__decompress_wave_mono(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size) {
 
 	/* some common variables. */
-	int tb = 0;
+	int32_t tb = 0;
 
 	/* save the number of copied bytes. */
 	if ((tb = libmpq__do_decompress_wave(out_buf, out_size, in_buf, in_size, 1)) < 0) {
@@ -216,10 +216,10 @@ int libmpq__decompress_wave_mono(unsigned char *in_buf, unsigned int in_size, un
 }
 
 /* this function decompress a stream using wave algorithm. (2 channels) */
-int libmpq__decompress_wave_stereo(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size) {
+int32_t libmpq__decompress_wave_stereo(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size) {
 
 	/* some common variables. */
-	int tb = 0;
+	int32_t tb = 0;
 
 	/* save the number of copied bytes. */
 	if ((tb = libmpq__do_decompress_wave(out_buf, out_size, in_buf, in_size, 2)) < 0) {
@@ -233,16 +233,16 @@ int libmpq__decompress_wave_stereo(unsigned char *in_buf, unsigned int in_size, 
 }
 
 /* this function decompress a stream using a combination of the other compression algorithm. */
-int libmpq__decompress_multi(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size) {
+int32_t libmpq__decompress_multi(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size) {
 
 	/* some common variables. */
-	int tb                  = 0;
-	unsigned int count      = 0;
-	unsigned int entries    = (sizeof(dcmp_table) / sizeof(decompress_table_s));
-	unsigned char *temp_buf = NULL;
-	unsigned char *work_buf;
-	unsigned char decompress_flag;
-	unsigned int i;
+	int32_t tb        = 0;
+	uint32_t count    = 0;
+	uint32_t entries  = (sizeof(dcmp_table) / sizeof(decompress_table_s));
+	uint8_t *temp_buf = NULL;
+	uint8_t *work_buf;
+	uint8_t decompress_flag;
+	uint32_t i;
 
 	/* get applied compression types. */
 	decompress_flag = *in_buf++;

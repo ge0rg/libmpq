@@ -42,7 +42,7 @@
 #include "huffman.h"
 
 /* tables for huffman tree. */
-static const unsigned char table_1502A630[] = {
+static const uint8_t table_1502A630[] = {
 
 	/* data for compression type 0x00. */
 	0x0A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -217,7 +217,7 @@ static const unsigned char table_1502A630[] = {
 };
 
 /* this function insert an item to a huffman tree. */
-void libmpq__huffman_insert_item(struct huffman_tree_item_s **p_item, struct huffman_tree_item_s *item, unsigned int where, struct huffman_tree_item_s *item2) {
+void libmpq__huffman_insert_item(struct huffman_tree_item_s **p_item, struct huffman_tree_item_s *item, uint32_t where, struct huffman_tree_item_s *item2) {
 
 	/* EDI - next to the first item. */
 	struct huffman_tree_item_s *next = item->next;
@@ -374,18 +374,18 @@ struct huffman_tree_item_s *libmpq__huffman_previous_item(struct huffman_tree_it
 }
 
 /* get one bit from input stream. */
-unsigned int libmpq__huffman_get_1bit(struct huffman_input_stream_s *is) {
+uint32_t libmpq__huffman_get_1bit(struct huffman_input_stream_s *is) {
 
 	/* some common variables. */
-	unsigned int bit = (is->bit_buf & 1);
+	uint32_t bit = (is->bit_buf & 1);
 
 	/* shift bit right by one. */
 	is->bit_buf >>= 1;
 
 	/* check if we should extract bits. */
 	if (--is->bits == 0) {
-		is->bit_buf  = *(unsigned int *)is->in_buf;
-		is->in_buf  += sizeof(int);
+		is->bit_buf  = *(uint32_t *)is->in_buf;
+		is->in_buf  += sizeof(int32_t);
 		is->bits     = 32;
 	}
 
@@ -394,12 +394,12 @@ unsigned int libmpq__huffman_get_1bit(struct huffman_input_stream_s *is) {
 }
 
 /* get 7 bits from the input stream. */
-unsigned int libmpq__huffman_get_7bit(struct huffman_input_stream_s *is) {
+uint32_t libmpq__huffman_get_7bit(struct huffman_input_stream_s *is) {
 
 	/* check if we should extract bits. */
 	if (is->bits <= 7) {
-		is->bit_buf |= *(unsigned short *)is->in_buf << is->bits;
-		is->in_buf  += sizeof(short);
+		is->bit_buf |= *(uint16_t *)is->in_buf << is->bits;
+		is->in_buf  += sizeof(int16_t);
 		is->bits    += 16;
 	}
 
@@ -408,15 +408,15 @@ unsigned int libmpq__huffman_get_7bit(struct huffman_input_stream_s *is) {
 }
 
 /* get the whole byte from the input stream. */
-unsigned int libmpq__huffman_get_8bit(struct huffman_input_stream_s *is) {
+uint32_t libmpq__huffman_get_8bit(struct huffman_input_stream_s *is) {
 
 	/* some common variables. */
-	unsigned int one_byte;
+	uint32_t one_byte;
 
 	/* check if we should extract bits. */
 	if (is->bits <= 8) {
-		is->bit_buf |= *(unsigned short *)is->in_buf << is->bits;
-		is->in_buf  += sizeof(short);
+		is->bit_buf |= *(uint16_t *)is->in_buf << is->bits;
+		is->in_buf  += sizeof(int16_t);
 		is->bits    += 16;
 	}
 
@@ -624,10 +624,10 @@ void libmpq__huffman_call_1500E820(struct huffman_tree_s *ht, struct huffman_tre
 }
 
 /* this function initialize a huffman tree. */
-void libmpq__huffman_tree_init(struct huffman_tree_s *ht, struct huffman_tree_item_s *hi, unsigned int cmp) {
+void libmpq__huffman_tree_init(struct huffman_tree_s *ht, struct huffman_tree_item_s *hi, uint32_t cmp) {
 
 	/* some common variables. */
-	unsigned int count;
+	uint32_t count;
 
 	/* clear links for all the items in the tree. */
 	for (hi = ht->items0008, count = 0x203; count != 0; hi++, count--) {
@@ -653,23 +653,23 @@ void libmpq__huffman_tree_init(struct huffman_tree_s *ht, struct huffman_tree_it
 }
 
 /* this function build a huffman tree, called with the first 8 bits loaded from input stream. */
-void libmpq__huffman_tree_build(struct huffman_tree_s *ht, unsigned int cmp_type) {
+void libmpq__huffman_tree_build(struct huffman_tree_s *ht, uint32_t cmp_type) {
 
 	/* [ESP+10] - the greatest character found in table. */
-	unsigned int max_byte;
+	uint32_t max_byte;
 
-	/* [ESP+1C] - pointer to unsigned char in table_1502A630. */
-	const unsigned char *byte_array;
+	/* [ESP+1C] - pointer to uint8_t in table_1502A630. */
+	const uint8_t *byte_array;
 
 	/* thats needed to replace the goto stuff from original source. :) */
-	unsigned int found;
+	uint32_t found;
 
 	/* [ESP+14] - Pointer to Huffman tree item pointer array. */
 	struct huffman_tree_item_s **p_item;
 	struct huffman_tree_item_s *child1;
 
 	/* some common variables. */
-	unsigned int i;
+	uint32_t i;
 
 	/* ESI - loop while pointer has a negative value (last entry). */
 	while (PTR_INT(ht->last) > 0) {
@@ -713,7 +713,7 @@ void libmpq__huffman_tree_build(struct huffman_tree_s *ht, unsigned int cmp_type
 		/* item to be created. */
 		struct huffman_tree_item_s *item    = ht->item3058;
 		struct huffman_tree_item_s *p_item3 = ht->item3058;
-		unsigned char one_byte                  = byte_array[i];
+		uint8_t one_byte                  = byte_array[i];
 
 		/* skip all the bytes which are zero. */
 		if (byte_array[i] == 0) {
@@ -931,27 +931,27 @@ void libmpq__huffman_tree_build(struct huffman_tree_s *ht, unsigned int cmp_type
 }
 
 /* this function did the real decompression. */
-int libmpq__do_decompress_huffman(struct huffman_tree_s *ht, struct huffman_input_stream_s *is, unsigned char *out_buf, unsigned int out_length) {
+int32_t libmpq__do_decompress_huffman(struct huffman_tree_s *ht, struct huffman_input_stream_s *is, uint8_t *out_buf, uint32_t out_length) {
 
 	/* some common variables. */
-	unsigned int dcmp_byte = 0;
-	unsigned char *out_pos = out_buf;
-	unsigned int bit_count;
+	uint32_t dcmp_byte = 0;
+	uint8_t *out_pos = out_buf;
+	uint32_t bit_count;
 	struct huffman_decompress_s *qd;
 	struct huffman_tree_item_s *p_item1;
 	struct huffman_tree_item_s *p_item2;
 
 	/* 8 bits loaded from input stream. */
-	unsigned int n8bits;
+	uint32_t n8bits;
 
 	/* 7 bits loaded from input stream. */
-	unsigned int n7bits;
+	uint32_t n7bits;
 
 	/* thats needed to replace the goto stuff from original source. :) */
-	unsigned int found;
+	uint32_t found;
 
 	/* can we use quick decompressionß */
-	unsigned int has_qd;
+	uint32_t has_qd;
 
 	/* test the output length, must not be non zero. */
 	if (out_length == 0) {
@@ -1032,8 +1032,8 @@ int libmpq__do_decompress_huffman(struct huffman_tree_s *ht, struct huffman_inpu
 					qd->bits   = bit_count;
 					qd->p_item = p_item2;
 				} else {
-					unsigned int index = n7bits & (0xFFFFFFFF >> (32 - bit_count));
-					unsigned int add   = (1 << bit_count);
+					uint32_t index = n7bits & (0xFFFFFFFF >> (32 - bit_count));
+					uint32_t add   = (1 << bit_count);
 
 					/* loop through compression. */
 					for (qd = &ht->qd3474[index]; index <= 0x7F; index += add, qd += add) {
@@ -1084,7 +1084,7 @@ int libmpq__do_decompress_huffman(struct huffman_tree_s *ht, struct huffman_inpu
 		}
 
 		/* increase position by compression byte. */
-		*out_pos++ = (unsigned char)dcmp_byte;
+		*out_pos++ = (uint8_t)dcmp_byte;
 		if (--out_length == 0) {
 			break;
 		}

@@ -25,120 +25,120 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 .SH SYNOPSIS
 .nf
 .B
-#include <libmpq/mpq.h>
+#include <mpq.h>
 .sp
-.BI "int libmpq__init();"
+.BI "int32_t libmpq__init();"
 .sp
 .BI "void libmpq__shutdown();"
 .sp
 .BI "const char *libmpq__version();"
 .sp
-.BI "int libmpq__archive_open("
+.BI "int32_t libmpq__archive_open("
 .BI "        mpq_archive_s *" "mpq_archive",
 .BI "        const char    *" "mpq_filename"
 .BI ");"
 .sp
-.BI "int libmpq__archive_close("
+.BI "int32_t libmpq__archive_close("
 .BI "        mpq_archive_s *" "mpq_archive"
 .BI ");"
 .sp
 .BI "int libmpq__archive_info("
 .BI "        mpq_archive_s *" "mpq_archive",
-.BI "        unsigned int   " "info_type"
+.BI "        uint32_t       " "info_type"
 .BI ");"
 .sp
-.BI "int libmpq__file_open("
+.BI "int32_t libmpq__file_open("
 .BI "        mpq_archive_s *" "mpq_archive",
-.BI "        unsigned int   " "file_number"
+.BI "        uint32_t       " "file_number"
 .BI ");"
 .sp
-.BI "int libmpq__file_close("
+.BI "int32_t libmpq__file_close("
 .BI "        mpq_archive_s *" "mpq_archive",
-.BI "        unsigned int   " "file_number"
+.BI "        uint32_t       " "file_number"
 .BI ");"
 .sp
-.BI "int libmpq__file_info("
+.BI "int32_t libmpq__file_info("
 .BI "        mpq_archive_s *" "mpq_archive",
-.BI "        unsigned int   " "info_type",
-.BI "        unsigned int   " "file_number"
+.BI "        uint32_t       " "info_type",
+.BI "        uint32_t       " "file_number"
 .BI ");"
 .sp
 .BI "const char *libmpq__file_name("
 .BI "        mpq_archive_s *" "mpq_archive",
-.BI "        unsigned int   " "file_number"
+.BI "        uint32_t       " "file_number"
 .BI ");"
 .sp
-.BI "int libmpq__file_number("
+.BI "int32_t libmpq__file_number("
 .BI "        mpq_archive_s *" "mpq_archive",
 .BI "        const char    *" "filename"
 .BI ");"
 .sp
-.BI "int libmpq__block_info("
+.BI "int32_t libmpq__block_info("
 .BI "        mpq_archive_s *" "mpq_archive",
-.BI "        unsigned int   " "info_type",
-.BI "        unsigned int   " "file_number",
-.BI "        unsigned int   " "block_number"
+.BI "        uint32_t       " "info_type",
+.BI "        uint32_t       " "file_number",
+.BI "        uint32_t       " "block_number"
 .BI ");"
 .sp
-.BI "int libmpq__block_decrypt("
-.BI "        unsigned char *" "in_buf",
-.BI "        unsigned int   " "in_size",
-.BI "        unsigned char *" "out_buf",
-.BI "        unsigned int   " "out_size",
-.BI "        unsigned int   " "seed"
+.BI "int32_t libmpq__block_decrypt("
+.BI "        uint8_t       *" "in_buf",
+.BI "        uint32_t       " "in_size",
+.BI "        uint8_t       *" "out_buf",
+.BI "        uint32_t       " "out_size",
+.BI "        uint32_t       " "seed"
 .BI ");"
 .sp
-.BI "int libmpq__block_decompress("
-.BI "        unsigned char *" "in_buf",
-.BI "        unsigned int   " "in_size",
-.BI "        unsigned char *" "out_buf",
-.BI "        unsigned int   " "out_size"
+.BI "int32_t libmpq__block_decompress("
+.BI "        uint8_t       *" "in_buf",
+.BI "        uint32_t       " "in_size",
+.BI "        uint8_t       *" "out_buf",
+.BI "        uint32_t       " "out_size"
 .BI ");"
 .sp
-.BI "int libmpq__block_explode("
-.BI "        unsigned char *" "in_buf",
-.BI "        unsigned int   " "in_size",
-.BI "        unsigned char *" "out_buf",
-.BI "        unsigned int   " "out_size"
+.BI "int32_t libmpq__block_explode("
+.BI "        uint8_t       *" "in_buf",
+.BI "        uint32_t       " "in_size",
+.BI "        uint8_t       *" "out_buf",
+.BI "        uint32_t       " "out_size"
 .BI ");"
 .sp
-.BI "int libmpq__block_copy("
-.BI "        unsigned char *" "in_buf",
-.BI "        unsigned int   " "in_size",
-.BI "        unsigned char *" "out_buf",
-.BI "        unsigned int   " "out_size"
+.BI "int32_t libmpq__block_copy("
+.BI "        uint8_t       *" "in_buf",
+.BI "        uint32_t       " "in_size",
+.BI "        uint8_t       *" "out_buf",
+.BI "        uint32_t       " "out_size"
 .BI ");"
 .sp
-.BI "int libmpq__memory_decrypt("
-.BI "        unsigned char *" "in_buf",
-.BI "        unsigned int   " "in_size",
-.BI "        unsigned char *" "out_buf",
-.BI "        unsigned int   " "out_size",
-.BI "        unsigned int   " "block_count"
+.BI "int32_t libmpq__memory_decrypt("
+.BI "        uint8_t       *" "in_buf",
+.BI "        uint32_t       " "in_size",
+.BI "        uint8_t       *" "out_buf",
+.BI "        uint32_t       " "out_size",
+.BI "        uint32_t       " "block_count"
 .BI ");"
 .sp
-.BI "int libmpq__memory_decompress("
-.BI "        unsigned char *" "in_buf",
-.BI "        unsigned int   " "in_size",
-.BI "        unsigned char *" "out_buf",
-.BI "        unsigned int   " "out_size",
-.BI "        unsigned int   " "block_size"
+.BI "int32_t libmpq__memory_decompress("
+.BI "        uint8_t       *" "in_buf",
+.BI "        uint32_t       " "in_size",
+.BI "        uint8_t       *" "out_buf",
+.BI "        uint32_t       " "out_size",
+.BI "        uint32_t       " "block_size"
 .BI ");"
 .sp
-.BI "int libmpq__memory_explode("
-.BI "        unsigned char *" "in_buf",
-.BI "        unsigned int   " "in_size",
-.BI "        unsigned char *" "out_buf",
-.BI "        unsigned int   " "out_size",
-.BI "        unsigned int   " "block_size"
+.BI "int32_t libmpq__memory_explode("
+.BI "        uint8_t       *" "in_buf",
+.BI "        uint32_t       " "in_size",
+.BI "        uint8_t       *" "out_buf",
+.BI "        uint32_t       " "out_size",
+.BI "        uint32_t       " "block_size"
 .BI ");"
 .sp
-.BI "int libmpq__memory_copy("
-.BI "        unsigned char *" "in_buf",
-.BI "        unsigned int   " "in_size",
-.BI "        unsigned char *" "out_buf",
-.BI "        unsigned int   " "out_size",
-.BI "        unsigned int   " "block_size"
+.BI "int32_t libmpq__memory_copy("
+.BI "        uint8_t       *" "in_buf",
+.BI "        uint32_t       " "in_size",
+.BI "        uint8_t       *" "out_buf",
+.BI "        uint32_t       " "out_size",
+.BI "        uint32_t       " "block_size"
 .BI ");"
 .fi
 .SH DESCRIPTION

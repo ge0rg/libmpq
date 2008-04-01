@@ -34,6 +34,7 @@ extern "C" {
 
 /* generic includes. */
 #include <limits.h>
+#include <stdint.h>
 
 /* define errors. */
 #define LIBMPQ_ERROR_OPEN			-1		/* open error on file. */
@@ -43,7 +44,7 @@ extern "C" {
 #define LIBMPQ_ERROR_WRITE			-5		/* write error on file. */
 #define LIBMPQ_ERROR_MALLOC			-6		/* memory allocation error. */
 #define LIBMPQ_ERROR_FORMAT			-7		/* format errror. */
-#define LIBMPQ_ERROR_NOT_INITIALIZED	-8		/* libmpq__init() wasn't called. */
+#define LIBMPQ_ERROR_NOT_INITIALIZED		-8		/* libmpq__init() wasn't called. */
 #define LIBMPQ_ERROR_EXIST			-10		/* file or block does not exist in archive. */
 #define LIBMPQ_ERROR_DECRYPT			-11		/* we don't know the decryption seed. */
 #define LIBMPQ_ERROR_DECOMPRESS			-12		/* error on decompression. */
@@ -83,45 +84,45 @@ extern "C" {
 
 /* mpq archive header. */
 typedef struct {
-	unsigned int	mpq_magic;		/* the 0x1A51504D ('MPQ\x1A') signature. */
-	unsigned int	header_size;		/* mpq archive header size. */
-	unsigned int	archive_size;		/* size of mpq archive. */
-	unsigned short	version;		/* 0000 for starcraft and broodwar. */
-	unsigned short	block_size;		/* size of file block is (512 * 2 ^ block size). */
-	unsigned int	hash_table_offset;	/* file position of mpq_hash. */
-	unsigned int	block_table_offset;	/* file position of mpq_block, each entry has 16 bytes. */
-	unsigned int	hash_table_count;	/* number of entries in hash table. */
-	unsigned int	block_table_count;	/* number of entries in the block table. */
+	uint32_t	mpq_magic;		/* the 0x1A51504D ('MPQ\x1A') signature. */
+	uint32_t	header_size;		/* mpq archive header size. */
+	uint32_t	archive_size;		/* size of mpq archive. */
+	uint16_t	version;		/* 0000 for starcraft and broodwar. */
+	uint16_t	block_size;		/* size of file block is (512 * 2 ^ block size). */
+	uint32_t	hash_table_offset;	/* file position of mpq_hash. */
+	uint32_t	block_table_offset;	/* file position of mpq_block, each entry has 16 bytes. */
+	uint32_t	hash_table_count;	/* number of entries in hash table. */
+	uint32_t	block_table_count;	/* number of entries in the block table. */
 } __attribute__ ((packed)) mpq_header_s;
 
 /* hash entry, all files in the archive are searched by their hashes. */
 typedef struct {
-	unsigned int	hash_a;			/* the first two unsigned ints are the encrypted file. */
-	unsigned int	hash_b;			/* the first two unsigned ints are the encrypted file. */
-	unsigned short	locale;			/* locale information. */
-	unsigned short	platform;		/* platform information and zero is default. */
-	unsigned int	block_table_index;	/* index to file description block. */
+	uint32_t	hash_a;			/* the first two uint32_ts are the encrypted file. */
+	uint32_t	hash_b;			/* the first two uint32_ts are the encrypted file. */
+	uint16_t	locale;			/* locale information. */
+	uint16_t	platform;		/* platform information and zero is default. */
+	uint32_t	block_table_index;	/* index to file description block. */
 } __attribute__ ((packed)) mpq_hash_s;
 
 /* file description block contains informations about the file. */
 typedef struct {
-	unsigned int	offset;			/* block file starting position in the archive. */
-	unsigned int	compressed_size;	/* compressed file size. */
-	unsigned int	uncompressed_size;	/* uncompressed file size. */
-	unsigned int	flags;			/* flags. */
+	uint32_t	offset;			/* block file starting position in the archive. */
+	uint32_t	compressed_size;	/* compressed file size. */
+	uint32_t	uncompressed_size;	/* uncompressed file size. */
+	uint32_t	flags;			/* flags. */
 } __attribute__ ((packed)) mpq_block_s;
 
 /* file structure used since diablo 1.00 (0x38 bytes). */
 typedef struct {
-	unsigned int	seed;			/* seed used for file decrypt. */
-	unsigned int	*compressed_offset;	/* position of each file block (only for compressed files). */
+	uint32_t	seed;			/* seed used for file decrypt. */
+	uint32_t	*compressed_offset;	/* position of each file block (only for compressed files). */
 } mpq_file_s;
 
 /* file list structure. */
 typedef struct {
 	char		**file_names;		/* file name for archive members. */
-	unsigned int	*block_table_indices;	/* pointer which stores the mapping for file number to block entry. */
-	unsigned int	*hash_table_indices;	/* pointer which stores the mapping for file number to hash entry. */
+	uint32_t	*block_table_indices;	/* pointer which stores the mapping for file number to block entry. */
+	uint32_t	*hash_table_indices;	/* pointer which stores the mapping for file number to hash entry. */
 } mpq_list_s;
 
 /* archive structure used since diablo 1.00 by blizzard. */
@@ -129,10 +130,10 @@ typedef struct {
 
 	/* generic file information. */
 	char		filename[PATH_MAX];	/* archive file name. */
-	int		fd;			/* file handle. */
+	int32_t		fd;			/* file handle. */
 
 	/* generic size information. */
-	unsigned int	block_size;		/* size of the mpq block. */
+	uint32_t	block_size;		/* size of the mpq block. */
 
 	/* archive related buffers and tables. */
 	mpq_header_s	*mpq_header;		/* mpq file header. */
@@ -142,54 +143,54 @@ typedef struct {
 
 	/* non archive structure related members. */
 	mpq_list_s	*mpq_list;		/* handle to file list (in most cases this is the last file in the archive). */
-	unsigned int	files;			/* number of files in archive, which could be extracted. */
+	uint32_t	files;			/* number of files in archive, which could be extracted. */
 } mpq_archive_s;
 
 /* initialization and shut down */
-extern int libmpq__init();
-extern int libmpq__shutdown();
+extern int32_t libmpq__init();
+extern int32_t libmpq__shutdown();
 
 /* generic information about library. */
 extern const char *libmpq__version();
 
 /* generic mpq archive information. */
-extern int libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename);
-extern int libmpq__archive_close(mpq_archive_s *mpq_archive);
-extern int libmpq__archive_info(mpq_archive_s *mpq_archive, unsigned int info_type);
+extern int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename);
+extern int32_t libmpq__archive_close(mpq_archive_s *mpq_archive);
+extern int32_t libmpq__archive_info(mpq_archive_s *mpq_archive, uint32_t info_type);
 
 /* generic file information. */
-extern int libmpq__file_open(mpq_archive_s *mpq_archive, unsigned int file_number);
-extern int libmpq__file_close(mpq_archive_s *mpq_archive, unsigned int file_number);
-extern int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int info_type, unsigned int file_number);
-extern const char *libmpq__file_name(mpq_archive_s *mpq_archive, unsigned int file_number);
-extern int libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename);
+extern int32_t libmpq__file_open(mpq_archive_s *mpq_archive, uint32_t file_number);
+extern int32_t libmpq__file_close(mpq_archive_s *mpq_archive, uint32_t file_number);
+extern int32_t libmpq__file_info(mpq_archive_s *mpq_archive, uint32_t info_type, uint32_t file_number);
+extern const char *libmpq__file_name(mpq_archive_s *mpq_archive, uint32_t file_number);
+extern int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename);
 
 /* generic block information. */
-extern int libmpq__block_info(mpq_archive_s *mpq_archive, unsigned int info_type, unsigned int file_number, unsigned int block_number);
+extern int32_t libmpq__block_info(mpq_archive_s *mpq_archive, uint32_t info_type, uint32_t file_number, uint32_t block_number);
 
 /* generic block decrypt function. */
-extern int libmpq__block_decrypt(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int seed);
+extern int32_t libmpq__block_decrypt(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t seed);
 
 /* generic block decompress function. */
-extern int libmpq__block_decompress(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size);
+extern int32_t libmpq__block_decompress(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size);
 
 /* generic block explode function. */
-extern int libmpq__block_explode(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size);
+extern int32_t libmpq__block_explode(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size);
 
 /* generic block copy function. */
-extern int libmpq__block_copy(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size);
+extern int32_t libmpq__block_copy(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size);
 
 /* generic memory decrypt function. */
-extern int libmpq__memory_decrypt(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int block_count);
+extern int32_t libmpq__memory_decrypt(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t block_count);
 
 /* generic memory decompress function. */
-extern int libmpq__memory_decompress(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int block_size);
+extern int32_t libmpq__memory_decompress(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t block_size);
 
 /* generic memory explode function. */
-extern int libmpq__memory_explode(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int block_size);
+extern int32_t libmpq__memory_explode(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t block_size);
 
 /* generic memory copy function. */
-extern int libmpq__memory_copy(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int block_size);
+extern int32_t libmpq__memory_copy(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t block_size);
 
 #ifdef __cplusplus
 }
