@@ -686,7 +686,7 @@ int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int info_type, unsign
 }
 
 /* this function return filename by the given number. */
-char *libmpq__file_name(mpq_archive_s *mpq_archive, unsigned int file_number) {
+const char *libmpq__file_name(mpq_archive_s *mpq_archive, unsigned int file_number) {
 
 	if (init_count <= 0)
 		return NULL;
