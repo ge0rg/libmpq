@@ -703,7 +703,7 @@ char *libmpq__file_name(mpq_archive_s *mpq_archive, unsigned int file_number) {
 }
 
 /* this function return filenumber by the given name. */
-int libmpq__file_number(mpq_archive_s *mpq_archive, char *filename) {
+int libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename) {
 
 	/* some common variables. */
 	unsigned int i, hash1, hash2, hash3, match, ht_count;
