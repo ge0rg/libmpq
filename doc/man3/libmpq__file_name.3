@@ -27,7 +27,7 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 .B
 #include <libmpq/mpq.h>
 .sp
-.BI "char *libmpq__file_name("
+.BI "const char *libmpq__file_name("
 .BI "        mpq_archive_s *" "mpq_archive",
 .BI "        unsigned int   " "file_number"
 .BI ");"
@@ -38,7 +38,7 @@ Call \fBlibmpq__file_name\fP() to get the name of a file inside mpq archive. The
 .LP
 The \fBlibmpq__file_name\fP() function takes as first argument the archive structure \fImpq_archive\fP which have to be allocated first and opened by \fBlibmpq__archive_open\fP(). The second argument \fIfile_number\fP is the number of the file.
 .SH RETURN VALUE
-On success, the name of the file is returned and on error NULL.
+On success, the name of the file is returned and on error NULL. The returned file name may not be freed or modified otherwise.
 .SH SEE ALSO
 .BR libmpq__file_number (3),
 .BR libmpq__file_info (3)
