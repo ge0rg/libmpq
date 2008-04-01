@@ -706,7 +706,7 @@ char *libmpq__file_name(mpq_archive_s *mpq_archive, unsigned int file_number) {
 int libmpq__file_number(mpq_archive_s *mpq_archive, char *filename) {
 
 	/* some common variables. */
-	unsigned int i;
+	unsigned int i, hash1, hash2, hash3, match, ht_count;
 
 	CHECK_IS_INITIALIZED();
 
@@ -719,6 +719,34 @@ int libmpq__file_number(mpq_archive_s *mpq_archive, char *filename) {
 			/* if file found return the number */
 			return i + 1;
 		}
+	}
+
+	/* if the list of file names doesn't include this one, we'll have
+	 * to figure out the file number the "hard" way.
+	 */
+	hash1 = libmpq__hash_string (crypt_buf, filename, 0x0);
+	hash2 = libmpq__hash_string (crypt_buf, filename, 0x100);
+	hash3 = libmpq__hash_string (crypt_buf, filename, 0x200);
+
+	ht_count = mpq_archive->mpq_header->hash_table_count;
+
+	/* loop through all files in mpq archive.
+	 * hash1 gives us a clue about the starting position of this
+	 * search.
+	 */
+	for (i = hash1 & (ht_count - 1); i < ht_count; i++) {
+
+		/* check if hashtable is valid for this file. */
+		if (mpq_archive->mpq_hash[i].block_table_index == LIBMPQ_HASH_FREE) {
+
+			/* continue because this is an empty hash entry. */
+			continue;
+		}
+
+		/* if the other two hashes match, we found our file number. */
+		if (mpq_archive->mpq_hash[i].hash_a == hash2 &&
+		    mpq_archive->mpq_hash[i].hash_b == hash3)
+			return mpq_archive->mpq_hash[i].block_table_index + 1;
 	}
 
 	/* if no matching entry found, so return error. */
