@@ -32,7 +32,7 @@ int libmpq__decrypt_key(
 	unsigned int	in_size,
 	unsigned char	*out_buf,
 	unsigned int	out_size,
-	unsigned int	*mpq_buf
+	unsigned int	*crypt_buf
 );
 
 /* function to decrypt a block. */
@@ -42,7 +42,7 @@ int libmpq__decrypt_block(
 	unsigned char	*out_buf,
 	unsigned int	out_size,
 	unsigned int	seed,
-	unsigned int	*mpq_buf
+	unsigned int	*crypt_buf
 );
 
 /* function to decrypt whole read buffer. */
@@ -52,7 +52,7 @@ int libmpq__decrypt_memory(
 	unsigned char	*out_buf,
 	unsigned int	out_size,
 	unsigned int	block_count,
-	unsigned int	*mpq_buf
+	unsigned int	*crypt_buf
 );
 
 /* function to decompress or explode block from archive. */
@@ -76,12 +76,14 @@ int libmpq__decompress_memory(
 
 /* function to read and decrypt hash table. */
 int libmpq__read_table_hash(
-	mpq_archive_s	*mpq_archive
+	mpq_archive_s	*mpq_archive,
+	unsigned int	*crypt_buf
 );
 
 /* function to read and decrypt hash table. */
 int libmpq__read_table_block(
-	mpq_archive_s	*mpq_archive
+	mpq_archive_s	*mpq_archive,
+	unsigned int	*crypt_buf
 );
 
 /* function to read listfile from mpq archive. */

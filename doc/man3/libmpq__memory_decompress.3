@@ -43,6 +43,9 @@ The \fBlibmpq__memory_decompress\fP() function takes as first argument the \fIin
 .SH RETURN VALUE
 On success, the transferred bytes are returned and on error one of the following constants.
 .TP
+.B LIBMPQ_ERROR_NOT_INITIALIZED
+libmpq wasn't initialized by calling \fBlibmpq__initialize\fP(), or it was shut down by an \fBlibmpq__shutdown\fP() call.
+.TP
 .B LIBMPQ_ERROR_MALLOC
 Not enough memory for creating required structures.
 .TP

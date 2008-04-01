@@ -19,7 +19,7 @@
 .\" License along with this manual; if not, write to the Free
 .\" Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111,
 .\" USA.
-.TH libmpq 3 2008-03-31 "The MoPaQ archive library"
+.TH libmpq 3 2008-03-30 "The MoPaQ archive library"
 .SH NAME
 libmpq \- cross-platform C library for manipulating mpq archives.
 .SH SYNOPSIS
@@ -27,35 +27,20 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 .B
 #include <libmpq/mpq.h>
 .sp
-.BI "int libmpq__block_decompress("
-.BI "        unsigned char *" "in_buf",
-.BI "        unsigned int   " "in_size",
-.BI "        unsigned char *" "out_buf",
-.BI "        unsigned int   " "out_size"
-.BI ");"
+.BI "int libmpq__shutdown();"
 .fi
 .SH DESCRIPTION
 .PP
-Call \fBlibmpq__block_decompress\fP() to decompress a given block. If the block is encrypted it should be first decrypted using \fPlibmpq__block_decrypt\fP().
+Call \fBlibmpq__shutdown\fP() to shut down libmpq. \fBlibmpq__shutdown\fP() has to be called exactly as many times as you called \fBlibmpq__init()\fP() before.
 .LP
-The \fBlibmpq__block_decompress\fP() function takes as first argument the \fIin_buf\fP which is the input data buffer. The second argument \fIin_size\fP is the size of \fIin_buf\fP. The third argument \fIout_buf\fP is the output data buffer which contains the decompressed data and the fourth argument \fIout_size\fP is the size of \fIout_buf\fP.
+The \fBlibmpq__shutdown\fP() function takes no arguments.
 .SH RETURN VALUE
-On success, the transferred bytes are returned and on error one of the following constants.
+On success, \fBlibmpq__shutdown\fP() returns LIBMPQ_SUCCESS. Otherwise one of the following constants is returned.
 .TP
 .B LIBMPQ_ERROR_NOT_INITIALIZED
 libmpq wasn't initialized by calling \fBlibmpq__initialize\fP(), or it was shut down by an \fBlibmpq__shutdown\fP() call.
-.TP
-.B LIBMPQ_ERROR_MALLOC
-Not enough memory for creating required structures.
-.TP
-.B LIBMPQ_ERROR_DECOMPRESS
-Decompressing block failed.
 .SH SEE ALSO
-.BR libmpq__block_info (3),
-.BR libmpq__block_decrypt (3),
-.BR libmpq__block_explode (3),
-.BR libmpq__block_copy (3),
-.BR libmpq__memory_decompress (3)
+.BR libmpq__init (3)
 .SH AUTHOR
 Check documentation.
 .TP

@@ -119,7 +119,7 @@ static int libmpq__decrypt_table(unsigned int *buffer, unsigned int *hash, const
 }
 
 /* function to detect decryption key. */
-int libmpq__decrypt_key(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int *mpq_buf) {
+int libmpq__decrypt_key(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int *crypt_buf) {
 
 	/* some common variables. */
 	unsigned int saveseed1;
@@ -143,8 +143,8 @@ int libmpq__decrypt_key(unsigned char *in_buf, unsigned int in_size, unsigned ch
 		unsigned int ch;
 
 		/* try the first unsigned int's (we exactly know the value). */
-		seed1  = temp - mpq_buf[0x400 + i];
-		seed2 += mpq_buf[0x400 + (seed1 & 0xFF)];
+		seed1  = temp - crypt_buf[0x400 + i];
+		seed2 += crypt_buf[0x400 + (seed1 & 0xFF)];
 		ch     = ((unsigned int *)out_buf)[0] ^ (seed1 + seed2);
 
 		if (ch != out_size) {
@@ -161,7 +161,7 @@ int libmpq__decrypt_key(unsigned char *in_buf, unsigned int in_size, unsigned ch
 		 */
 		seed1  = ((~seed1 << 0x15) + 0x11111111) | (seed1 >> 0x0B);
 		seed2  = ch + seed2 + (seed2 << 5) + 3;
-		seed2 += mpq_buf[0x400 + (seed1 & 0xFF)];
+		seed2 += crypt_buf[0x400 + (seed1 & 0xFF)];
 		ch     = ((unsigned int *)out_buf)[1] ^ (seed1 + seed2);
 
 		/* check if we found the file seed. */
@@ -177,7 +177,7 @@ int libmpq__decrypt_key(unsigned char *in_buf, unsigned int in_size, unsigned ch
 }
 
 /* function to decrypt a block. */
-int libmpq__decrypt_block(unsigned char *in_buf_raw, unsigned int in_size, unsigned char *out_buf_raw, unsigned int out_size, unsigned int seed, unsigned int *mpq_buf) {
+int libmpq__decrypt_block(unsigned char *in_buf_raw, unsigned int in_size, unsigned char *out_buf_raw, unsigned int out_size, unsigned int seed, unsigned int *crypt_buf) {
 
 	/* some common variables. */
 	unsigned int seed2 = 0xEEEEEEEE;
@@ -188,7 +188,7 @@ int libmpq__decrypt_block(unsigned char *in_buf_raw, unsigned int in_size, unsig
 	unsigned int *out_buf = (unsigned int *) out_buf_raw;
 
 	for (; out_size >= 4; out_size -= 4) {
-		seed2     += mpq_buf[0x400 + (seed & 0xFF)];
+		seed2     += crypt_buf[0x400 + (seed & 0xFF)];
 		ch         = *in_buf++ ^ (seed + seed2);
 		seed       = ((~seed << 0x15) + 0x11111111) | (seed >> 0x0B);
 		seed2      = ch + seed2 + (seed2 << 5) + 3;
@@ -204,7 +204,7 @@ int libmpq__decrypt_block(unsigned char *in_buf_raw, unsigned int in_size, unsig
 }
 
 /* function to decrypt whole read buffer. */
-int libmpq__decrypt_memory(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int block_count, unsigned int *mpq_buf) {
+int libmpq__decrypt_memory(unsigned char *in_buf, unsigned int in_size, unsigned char *out_buf, unsigned int out_size, unsigned int block_count, unsigned int *crypt_buf) {
 
 	/* some common variables. */
 	unsigned int i;
@@ -214,14 +214,14 @@ int libmpq__decrypt_memory(unsigned char *in_buf, unsigned int in_size, unsigned
 	int tb = 0;
 
 	/* check if we don't know the file seed, try to find it. */
-	if ((seed = libmpq__decrypt_key(in_buf, out_offset, out_buf, out_offset, mpq_buf)) < 0) {
+	if ((seed = libmpq__decrypt_key(in_buf, out_offset, out_buf, out_offset, crypt_buf)) < 0) {
 
 		/* sorry without seed, we cannot extract file. */
 		return seed;
 	}
 
 	/* decrypt the compressed offset block. */
-	if ((tb = libmpq__decrypt_block(out_buf, out_offset, out_buf, out_offset, seed - 1, mpq_buf)) < 0) {
+	if ((tb = libmpq__decrypt_block(out_buf, out_offset, out_buf, out_offset, seed - 1, crypt_buf)) < 0) {
 
 		/* something on decrypt failed. */
 		return tb;
@@ -238,7 +238,7 @@ int libmpq__decrypt_memory(unsigned char *in_buf, unsigned int in_size, unsigned
 	for (i = 0; i < block_count; i++) {
 
 		/* decrypt block. */
-		if ((rb = libmpq__decrypt_block(in_buf + ((unsigned int *)out_buf)[i], ((unsigned int *)out_buf)[i + 1] - ((unsigned int *)out_buf)[i], out_buf + tb, ((unsigned int *)out_buf)[i + 1] - ((unsigned int *)out_buf)[i], seed + i, mpq_buf)) < 0) {
+		if ((rb = libmpq__decrypt_block(in_buf + ((unsigned int *)out_buf)[i], ((unsigned int *)out_buf)[i + 1] - ((unsigned int *)out_buf)[i], out_buf + tb, ((unsigned int *)out_buf)[i + 1] - ((unsigned int *)out_buf)[i], seed + i, crypt_buf)) < 0) {
 
 			/* something on decrypt failed. */
 			return rb;
@@ -374,10 +374,9 @@ int libmpq__decompress_memory(unsigned char *in_buf, unsigned int in_size, unsig
 }
 
 /* function to read decrypted hash table. */
-int libmpq__read_table_hash(mpq_archive_s *mpq_archive) {
+int libmpq__read_table_hash(mpq_archive_s *mpq_archive, unsigned int *crypt_buf) {
 
 	/* some common variables. */
-	unsigned int *mpq_buffer;
 	int rb = 0;
 	int tb = 0;
 
@@ -395,38 +394,17 @@ int libmpq__read_table_hash(mpq_archive_s *mpq_archive) {
 		return LIBMPQ_ERROR_READ;
 	}
 
-	/* allocate memory for the buffers. */
-	if ((mpq_buffer = malloc(sizeof(unsigned int) * LIBMPQ_BUFFER_SIZE)) == NULL) {
-
-		/* memory allocation problem. */
-		return LIBMPQ_ERROR_MALLOC;
-	}
-
-	/* initialize the decryption buffer. */
-	if ((tb = libmpq__decrypt_buffer_init(mpq_buffer)) < 0) {
-
-		/* free mpq buffer structure. */
-		free(mpq_buffer);
-
-		/* something on initialize the decryption buffer failed. */
-		return LIBMPQ_ERROR_DECRYPT;
-	}
-
 	/* decrypt the hashtable. */
-	libmpq__decrypt_table(mpq_buffer, (unsigned int *)(mpq_archive->mpq_hash), "(hash table)", mpq_archive->mpq_header->hash_table_count * 4);
-
-	/* free mpq buffer structure. */
-	free(mpq_buffer);
+	libmpq__decrypt_table(crypt_buf, (unsigned int *)(mpq_archive->mpq_hash), "(hash table)", mpq_archive->mpq_header->hash_table_count * 4);
 
 	/* if no error was found, return zero. */
 	return LIBMPQ_SUCCESS;
 }
 
 /* function to read decrypted hash table. */
-int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
+int libmpq__read_table_block(mpq_archive_s *mpq_archive, unsigned int *crypt_buf) {
 
 	/* some common variables. */
-	unsigned int *mpq_buffer;
 	int rb = 0;
 	int tb = 0;
 
@@ -447,28 +425,8 @@ int libmpq__read_table_block(mpq_archive_s *mpq_archive) {
 	/* decrypt block table only if it is encrypted. */
 	if (mpq_archive->mpq_header->header_size != mpq_archive->mpq_block->offset) {
 
-		/* allocate memory for the buffers. */
-		if ((mpq_buffer = malloc(sizeof(unsigned int) * LIBMPQ_BUFFER_SIZE)) == NULL) {
-
-			/* memory allocation problem. */
-			return LIBMPQ_ERROR_MALLOC;
-		}
-
-		/* initialize the decryption buffer. */
-		if ((tb = libmpq__decrypt_buffer_init(mpq_buffer)) < 0) {
-
-			/* free mpq buffer structure. */
-			free(mpq_buffer);
-
-			/* something on initialize the decryption buffer failed. */
-			return LIBMPQ_ERROR_DECRYPT;
-		}
-
 		/* decrypt block table. */
-		libmpq__decrypt_table(mpq_buffer, (unsigned int *)(mpq_archive->mpq_block), "(block table)", mpq_archive->mpq_header->block_table_count * 4);
-
-		/* free mpq buffer structure. */
-		free(mpq_buffer);
+		libmpq__decrypt_table(crypt_buf, (unsigned int *)(mpq_archive->mpq_block), "(block table)", mpq_archive->mpq_header->block_table_count * 4);
 	}
 
 	/* if no error was found, return zero. */

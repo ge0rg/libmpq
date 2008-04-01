@@ -39,6 +39,9 @@ The \fBlibmpq__archive_close\fP() function takes only one argument the archive s
 .SH RETURN VALUE
 On success, a zero is returned and on error one of the following constants.
 .TP
+.B LIBMPQ_ERROR_NOT_INITIALIZED
+libmpq wasn't initialized by calling \fBlibmpq__initialize\fP(), or it was shut down by an \fBlibmpq__shutdown\fP() call.
+.TP
 .B LIBMPQ_ERROR_CLOSE
 The given file could not be closed.
 .SH SEE ALSO
