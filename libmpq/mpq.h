@@ -162,7 +162,7 @@ extern int libmpq__file_open(mpq_archive_s *mpq_archive, unsigned int file_numbe
 extern int libmpq__file_close(mpq_archive_s *mpq_archive, unsigned int file_number);
 extern int libmpq__file_info(mpq_archive_s *mpq_archive, unsigned int info_type, unsigned int file_number);
 extern char *libmpq__file_name(mpq_archive_s *mpq_archive, unsigned int file_number);
-extern int libmpq__file_number(mpq_archive_s *mpq_archive, char *filename);
+extern int libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename);
 
 /* generic block information. */
 extern int libmpq__block_info(mpq_archive_s *mpq_archive, unsigned int info_type, unsigned int file_number, unsigned int block_number);
