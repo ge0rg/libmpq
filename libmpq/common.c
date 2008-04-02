@@ -437,7 +437,6 @@ int32_t libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 	/* some common variables. */
 	uint32_t count = 0;
 	uint32_t i;
-	int32_t tempsize;
 
 	/* loop through all files in mpq archive. */
 	for (i = 0; i < mpq_archive->mpq_header->hash_table_count; i++) {
