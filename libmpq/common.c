@@ -119,7 +119,7 @@ static int32_t libmpq__decrypt_table(uint32_t *buffer, uint32_t *hash, const cha
 }
 
 /* function to detect decryption key. */
-int32_t libmpq__decrypt_key(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t *crypt_buf) {
+int32_t libmpq__decrypt_key(uint8_t *in_buf, uint32_t in_size, uint32_t *crypt_buf) {
 
 	/* some common variables. */
 	uint32_t saveseed1;
@@ -128,11 +128,8 @@ int32_t libmpq__decrypt_key(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf,
 	uint32_t temp;
 	uint32_t i = 0;
 
-	/* leave input buffer untouched. */
-	memcpy(out_buf, in_buf, out_size);
-
 	/* temp = seed1 + buffer[0x400 + (seed1 & 0xFF)] */
-	temp = (*(uint32_t *)out_buf ^ out_size) - 0xEEEEEEEE;
+	temp = (*(uint32_t *)in_buf ^ in_size) - 0xEEEEEEEE;
 
 	/* try all 255 possibilities. */
 	for (i = 0; i < 0x100; i++) {
@@ -145,9 +142,9 @@ int32_t libmpq__decrypt_key(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf,
 		/* try the first uint32_t's (we exactly know the value). */
 		seed1  = temp - crypt_buf[0x400 + i];
 		seed2 += crypt_buf[0x400 + (seed1 & 0xFF)];
-		ch     = ((uint32_t *)out_buf)[0] ^ (seed1 + seed2);
+		ch     = ((uint32_t *)in_buf)[0] ^ (seed1 + seed2);
 
-		if (ch != out_size) {
+		if (ch != in_size) {
 			continue;
 		}
 
@@ -162,7 +159,7 @@ int32_t libmpq__decrypt_key(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf,
 		seed1  = ((~seed1 << 0x15) + 0x11111111) | (seed1 >> 0x0B);
 		seed2  = ch + seed2 + (seed2 << 5) + 3;
 		seed2 += crypt_buf[0x400 + (seed1 & 0xFF)];
-		ch     = ((uint32_t *)out_buf)[1] ^ (seed1 + seed2);
+		ch     = ((uint32_t *)in_buf)[1] ^ (seed1 + seed2);
 
 		/* check if we found the file seed. */
 		if ((ch & 0xFFFF0000) == 0) {
@@ -214,7 +211,7 @@ int32_t libmpq__decrypt_memory(uint8_t *in_buf, uint32_t in_size, uint8_t *out_b
 	int32_t tb = 0;
 
 	/* check if we don't know the file seed, try to find it. */
-	if ((seed = libmpq__decrypt_key(in_buf, out_offset, out_buf, out_offset, crypt_buf)) < 0) {
+	if ((seed = libmpq__decrypt_key(in_buf, out_offset, crypt_buf)) < 0) {
 
 		/* sorry without seed, we cannot extract file. */
 		return seed;
