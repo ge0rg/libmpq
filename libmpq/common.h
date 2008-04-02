@@ -30,8 +30,6 @@ int32_t libmpq__decrypt_buffer_init(
 int32_t libmpq__decrypt_key(
 	uint8_t		*in_buf,
 	uint32_t	in_size,
-	uint8_t		*out_buf,
-	uint32_t	out_size,
 	uint32_t	*crypt_buf
 );
 
