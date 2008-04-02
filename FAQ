@@ -41,9 +41,13 @@ A: Of course :-) The example below takes first parameter
            mpq_archive = malloc(sizeof(mpq_archive_s));
            memset(mpq_archive, 0, sizeof(mpq_archive_s));
 
+           libmpq__init();
+
            libmpq__archive_open(mpq_archive, argv[1]);
            libmpq__file_open(mpq_archive, 1);
            libmpq__archive_close(mpq_archive);
+
+           libmpq__shutdown();
 
            free(mpq_archive);
    }
