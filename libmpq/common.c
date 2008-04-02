@@ -218,7 +218,7 @@ int32_t libmpq__decrypt_memory(uint8_t *in_buf, uint32_t in_size, uint8_t *out_b
 	}
 
 	/* decrypt the compressed offset block. */
-	if ((tb = libmpq__decrypt_block(out_buf, out_offset, out_buf, out_offset, seed - 1, crypt_buf)) < 0) {
+	if ((tb = libmpq__decrypt_block(in_buf, out_offset, out_buf, out_offset, seed - 1, crypt_buf)) < 0) {
 
 		/* something on decrypt failed. */
 		return tb;
