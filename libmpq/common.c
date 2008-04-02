@@ -438,7 +438,6 @@ int32_t libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 	uint32_t count = 0;
 	uint32_t i;
 	int32_t tempsize;
-	char tempfile[PATH_MAX];
 
 	/* loop through all files in mpq archive. */
 	for (i = 0; i < mpq_archive->mpq_header->hash_table_count; i++) {
@@ -460,18 +459,6 @@ int32_t libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 			continue;
 		}
 
-		/* create proper formatted filename. */
-		tempsize = snprintf(tempfile, PATH_MAX, "file%06i.xxx", mpq_archive->mpq_hash[i].block_table_index + 1);
-
-		/* allocate memory for the file list element. */
-		if ((mpq_archive->mpq_list->file_names[count] = calloc(1, tempsize + 1)) == NULL) {
-
-			/* memory allocation problem. */
-			return LIBMPQ_ERROR_MALLOC;
-		}
-
-		/* create the filename. */
-		mpq_archive->mpq_list->file_names[count]          = memcpy(mpq_archive->mpq_list->file_names[count], tempfile, tempsize + 1);
 		mpq_archive->mpq_list->block_table_indices[count] = mpq_archive->mpq_hash[i].block_table_index;
 		mpq_archive->mpq_list->hash_table_indices[count]  = i;
 
