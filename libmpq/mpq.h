@@ -147,11 +147,11 @@ typedef struct {
 } mpq_archive_s;
 
 /* initialization and shut down */
-extern int32_t libmpq__init();
-extern int32_t libmpq__shutdown();
+extern int32_t libmpq__init(void);
+extern int32_t libmpq__shutdown(void);
 
 /* generic information about library. */
-extern const char *libmpq__version();
+extern const char *libmpq__version(void);
 
 /* generic mpq archive information. */
 extern int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename);

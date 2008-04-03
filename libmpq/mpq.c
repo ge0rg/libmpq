@@ -50,7 +50,7 @@ static int32_t init_count;
 static uint32_t *crypt_buf;
 
 /* initializes libmpq. returns < 0 on failure, 0 on success. */
-int32_t libmpq__init() {
+int32_t libmpq__init(void) {
 
 	if (init_count == 0) {
 		crypt_buf = malloc(sizeof(uint32_t) * LIBMPQ_BUFFER_SIZE);
@@ -72,7 +72,7 @@ int32_t libmpq__init() {
 }
 
 /* shuts down libmpq. */
-int32_t libmpq__shutdown() {
+int32_t libmpq__shutdown(void) {
 	CHECK_IS_INITIALIZED();
 
 	init_count--;
@@ -86,7 +86,7 @@ int32_t libmpq__shutdown() {
 }
 
 /* this function returns the library version information. */
-const char *libmpq__version() {
+const char *libmpq__version(void) {
 
 	/* return version information. */
 	return VERSION;
