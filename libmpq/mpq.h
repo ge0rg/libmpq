@@ -35,6 +35,7 @@ extern "C" {
 /* generic includes. */
 #include <limits.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #if defined(__GNUC__) && (__GNUC__ >= 4)
 # define LIBMPQ_API __attribute__((visibility("default")))
@@ -136,7 +137,7 @@ typedef struct {
 
 	/* generic file information. */
 	char		filename[PATH_MAX];	/* archive file name. */
-	int32_t		fd;			/* file handle. */
+	FILE		*fp;			/* file handle. */
 
 	/* generic size information. */
 	uint32_t	block_size;		/* size of the mpq block. */
