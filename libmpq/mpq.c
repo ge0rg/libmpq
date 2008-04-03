@@ -475,7 +475,16 @@ int32_t libmpq__file_open(mpq_archive_s *mpq_archive, uint32_t file_number) {
 
 	CHECK_IS_INITIALIZED();
 
-	compressed_size = sizeof(uint32_t) * (((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size) + 1);
+	/* check if file is not stored in a single sector. */
+	if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) == 0) {
+
+		/* get compressed size based on block size and block count. */
+		compressed_size = sizeof(uint32_t) * (((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size) + 1);
+	} else {
+
+		/* file is stored in single sector and we need only two entries for the compressed block offset table. */
+		compressed_size = sizeof(uint32_t) * 2;
+	}
 
 	/* allocate memory for the file. */
 	if ((mpq_archive->mpq_file[file_number - 1] = calloc(1, sizeof(mpq_file_s))) == NULL) {
@@ -565,19 +574,28 @@ int32_t libmpq__file_open(mpq_archive_s *mpq_archive, uint32_t file_number) {
 		}
 	} else {
 
-		/* loop through all blocks and create compressed block offset table based on block size. */
-		for (i = 0; i < ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size + 1); i++) {
+		/* check if file is not stored in a single sector. */
+		if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) == 0) {
 
-			/* check if we process the last block. */
-			if (i == ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size)) {
+			/* loop through all blocks and create compressed block offset table based on block size. */
+			for (i = 0; i < ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size + 1); i++) {
 
-				/* store size of last block. */
-				mpq_archive->mpq_file[file_number - 1]->compressed_offset[i] = mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size;
-			} else {
+				/* check if we process the last block. */
+				if (i == ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size)) {
 
-				/* store default block size. */
-				mpq_archive->mpq_file[file_number - 1]->compressed_offset[i] = i * mpq_archive->block_size;
+					/* store size of last block. */
+					mpq_archive->mpq_file[file_number - 1]->compressed_offset[i] = mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].uncompressed_size;
+				} else {
+
+					/* store default block size. */
+					mpq_archive->mpq_file[file_number - 1]->compressed_offset[i] = i * mpq_archive->block_size;
+				}
 			}
+		} else {
+
+			/* store offsets. */
+			mpq_archive->mpq_file[file_number - 1]->compressed_offset[0] = 0;
+			mpq_archive->mpq_file[file_number - 1]->compressed_offset[1] = mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].compressed_size;
 		}
 	}
 
@@ -770,19 +788,8 @@ int32_t libmpq__block_info(mpq_archive_s *mpq_archive, uint32_t info_type, uint3
 	switch (info_type) {
 		case LIBMPQ_BLOCK_COMPRESSED_SIZE:
 
-			/* check if block is stored as single sector. */
-			if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) != 0) {
-
-				/* return the compressed size of the block in the mpq archive. */
-				return mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].compressed_size;
-			}
-
-			/* check if block is not stored as single sector. */
-			if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) == 0) {
-
-				/* return the compressed size of the block in the mpq archive. */
-				return mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number] - mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number - 1];
-			}
+			/* return the compressed size of the block in the mpq archive. */
+			return mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number] - mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number - 1];
 		case LIBMPQ_BLOCK_UNCOMPRESSED_SIZE:
 
 			/* check if block is stored as single sector. */
@@ -808,64 +815,20 @@ int32_t libmpq__block_info(mpq_archive_s *mpq_archive, uint32_t info_type, uint3
 			}
 		case LIBMPQ_BLOCK_ENCRYPTED_SIZE:
 
-			/* check if block is stored as single sector. */
-			if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) != 0) {
-
-				/* return the compressed size of the block in the mpq archive. */
-				return mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].compressed_size;
-			}
-
-			/* check if block is not stored as single sector. */
-			if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) == 0) {
-
-				/* return the compressed size of the block in the mpq archive. */
-				return mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number] - mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number - 1];
-			}
+			/* return the compressed size of the block in the mpq archive. */
+			return mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number] - mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number - 1];
 		case LIBMPQ_BLOCK_DECRYPTED_SIZE:
 
-			/* check if block is stored as single sector. */
-			if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) != 0) {
-
-				/* return the compressed size of the block in the mpq archive. */
-				return mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].compressed_size;
-			}
-
-			/* check if block is not stored as single sector. */
-			if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) == 0) {
-
-				/* return the compressed size of the block in the mpq archive. */
-				return mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number] - mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number - 1];
-			}
+			/* return the compressed size of the block in the mpq archive. */
+			return mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number] - mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number - 1];
 		case LIBMPQ_BLOCK_OFFSET:
 
-			/* check if block is stored as single sector. */
-			if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) != 0) {
-
-				/* return the uncompressed size of the block in the mpq archive. */
-				return mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].offset;
-			}
-
-			/* check if block is not stored as single sector. */
-			if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) == 0) {
-
-				/* return the absolute block start position in archive. */
-				return mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].offset + mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number - 1];
-			}
+			/* return the absolute block start position in archive. */
+			return mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].offset + mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number - 1];
 		case LIBMPQ_BLOCK_SEED:
 
-			/* check if block is stored as single sector. */
-			if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) != 0) {
-
-				/* return zero as seed. */
-				return 0;
-			}
-
-			/* check if block is not stored as single sector. */
-			if ((mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) == 0) {
-
-				/* return the seed of the block for decryption. */
-				return mpq_archive->mpq_file[file_number - 1]->seed + block_number - 1;
-			}
+			/* return the seed of the block for decryption. */
+			return mpq_archive->mpq_file[file_number - 1]->seed + block_number - 1;
 		default:
 
 			/* if info type was not found, return error. */
