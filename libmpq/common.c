@@ -34,6 +34,8 @@
 /* libmpq generic includes. */
 #include "extract.h"
 
+#include "common.h"
+
 static int32_t libmpq__decrypt_table(
 	uint32_t	*buffer,
 	uint32_t	*hash,
