@@ -25,6 +25,13 @@ AC_SUBST(CCASFLAGS)
 AC_CHECK_HEADER([zlib.h], [], [AC_MSG_ERROR([*** zlib.h is required, install zlib header files])])
 AC_CHECK_LIB([z], [inflateEnd], [], [AC_MSG_ERROR([*** inflateEnd is required, install zlib library files])])
 
+# When we're running gcc 4 or greater, compile with -fvisibility=hidden.
+AC_TRY_COMPILE([
+#if !defined(__GNUC__) || (__GNUC__ < 4)
+#error not gcc4
+#endif
+], [], [CFLAGS="$CFLAGS -fvisibility=hidden"])
+
 # configuration files.
 AC_CONFIG_FILES([libmpq.pc])
 AC_CONFIG_FILES([libmpq-config],[chmod +x libmpq-config])

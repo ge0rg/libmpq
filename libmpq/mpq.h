@@ -36,6 +36,12 @@ extern "C" {
 #include <limits.h>
 #include <stdint.h>
 
+#if defined(__GNUC__) && (__GNUC__ >= 4)
+# define LIBMPQ_API __attribute__((visibility("default")))
+#else
+# define LIBMPQ_API
+#endif
+
 /* define errors. */
 #define LIBMPQ_ERROR_OPEN			-1		/* open error on file. */
 #define LIBMPQ_ERROR_CLOSE			-2		/* close error on file. */
@@ -147,50 +153,50 @@ typedef struct {
 } mpq_archive_s;
 
 /* initialization and shut down */
-extern int32_t libmpq__init(void);
-extern int32_t libmpq__shutdown(void);
+extern LIBMPQ_API int32_t libmpq__init(void);
+extern LIBMPQ_API int32_t libmpq__shutdown(void);
 
 /* generic information about library. */
-extern const char *libmpq__version(void);
+extern LIBMPQ_API const char *libmpq__version(void);
 
 /* generic mpq archive information. */
-extern int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename);
-extern int32_t libmpq__archive_close(mpq_archive_s *mpq_archive);
-extern int32_t libmpq__archive_info(mpq_archive_s *mpq_archive, uint32_t info_type);
+extern LIBMPQ_API int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename);
+extern LIBMPQ_API int32_t libmpq__archive_close(mpq_archive_s *mpq_archive);
+extern LIBMPQ_API int32_t libmpq__archive_info(mpq_archive_s *mpq_archive, uint32_t info_type);
 
 /* generic file information. */
-extern int32_t libmpq__file_open(mpq_archive_s *mpq_archive, uint32_t file_number);
-extern int32_t libmpq__file_close(mpq_archive_s *mpq_archive, uint32_t file_number);
-extern int32_t libmpq__file_info(mpq_archive_s *mpq_archive, uint32_t info_type, uint32_t file_number);
-extern const char *libmpq__file_name(mpq_archive_s *mpq_archive, uint32_t file_number);
-extern int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename);
+extern LIBMPQ_API int32_t libmpq__file_open(mpq_archive_s *mpq_archive, uint32_t file_number);
+extern LIBMPQ_API int32_t libmpq__file_close(mpq_archive_s *mpq_archive, uint32_t file_number);
+extern LIBMPQ_API int32_t libmpq__file_info(mpq_archive_s *mpq_archive, uint32_t info_type, uint32_t file_number);
+extern LIBMPQ_API const char *libmpq__file_name(mpq_archive_s *mpq_archive, uint32_t file_number);
+extern LIBMPQ_API int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename);
 
 /* generic block information. */
-extern int32_t libmpq__block_info(mpq_archive_s *mpq_archive, uint32_t info_type, uint32_t file_number, uint32_t block_number);
+extern LIBMPQ_API int32_t libmpq__block_info(mpq_archive_s *mpq_archive, uint32_t info_type, uint32_t file_number, uint32_t block_number);
 
 /* generic block decrypt function. */
-extern int32_t libmpq__block_decrypt(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t seed);
+extern LIBMPQ_API int32_t libmpq__block_decrypt(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t seed);
 
 /* generic block decompress function. */
-extern int32_t libmpq__block_decompress(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size);
+extern LIBMPQ_API int32_t libmpq__block_decompress(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size);
 
 /* generic block explode function. */
-extern int32_t libmpq__block_explode(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size);
+extern LIBMPQ_API int32_t libmpq__block_explode(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size);
 
 /* generic block copy function. */
-extern int32_t libmpq__block_copy(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size);
+extern LIBMPQ_API int32_t libmpq__block_copy(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size);
 
 /* generic memory decrypt function. */
-extern int32_t libmpq__memory_decrypt(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t block_count);
+extern LIBMPQ_API int32_t libmpq__memory_decrypt(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t block_count);
 
 /* generic memory decompress function. */
-extern int32_t libmpq__memory_decompress(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t block_size);
+extern LIBMPQ_API int32_t libmpq__memory_decompress(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t block_size);
 
 /* generic memory explode function. */
-extern int32_t libmpq__memory_explode(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t block_size);
+extern LIBMPQ_API int32_t libmpq__memory_explode(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t block_size);
 
 /* generic memory copy function. */
-extern int32_t libmpq__memory_copy(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t block_size);
+extern LIBMPQ_API int32_t libmpq__memory_copy(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t block_size);
 
 #ifdef __cplusplus
 }
