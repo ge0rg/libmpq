@@ -21,7 +21,6 @@
 /* generic includes. */
 #include <ctype.h>
 #include <dirent.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -380,14 +379,14 @@ int32_t libmpq__read_table_hash(mpq_archive_s *mpq_archive, uint32_t *crypt_buf)
 	int32_t tb = 0;
 
 	/* seek in file. */
-	if ((tb = lseek(mpq_archive->fd, mpq_archive->mpq_header->hash_table_offset, SEEK_SET)) < 0) {
+	if ((tb = fseek(mpq_archive->fp, mpq_archive->mpq_header->hash_table_offset, SEEK_SET)) < 0) {
 
 		/* seek in file failed. */
 		return LIBMPQ_ERROR_LSEEK;
 	}
 
 	/* read the hash table into the buffer. */
-	if ((rb = read(mpq_archive->fd, mpq_archive->mpq_hash, mpq_archive->mpq_header->hash_table_count * sizeof(mpq_hash_s))) < 0) {;
+	if ((rb = fread(mpq_archive->mpq_hash, 1, mpq_archive->mpq_header->hash_table_count * sizeof(mpq_hash_s), mpq_archive->fp)) < 0) {;
 
 		/* something on read failed. */
 		return LIBMPQ_ERROR_READ;
@@ -408,14 +407,14 @@ int32_t libmpq__read_table_block(mpq_archive_s *mpq_archive, uint32_t *crypt_buf
 	int32_t tb = 0;
 
 	/* seek in file. */
-	if ((tb = lseek(mpq_archive->fd, mpq_archive->mpq_header->block_table_offset, SEEK_SET)) < 0) {
+	if ((tb = fseek(mpq_archive->fp, mpq_archive->mpq_header->block_table_offset, SEEK_SET)) < 0) {
 
 		/* seek in file failed. */
 		return LIBMPQ_ERROR_LSEEK;
 	}
 
 	/* read the block table into the buffer. */
-	if ((rb = read(mpq_archive->fd, mpq_archive->mpq_block, mpq_archive->mpq_header->block_table_count * sizeof(mpq_block_s))) < 0) {
+	if ((rb = fread(mpq_archive->mpq_block, 1, mpq_archive->mpq_header->block_table_count * sizeof(mpq_block_s), mpq_archive->fp)) < 0) {
 
 		/* something on read failed. */
 		return LIBMPQ_ERROR_READ;

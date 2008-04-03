@@ -20,7 +20,6 @@
 
 /* generic includes. */
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -104,7 +103,7 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 	CHECK_IS_INITIALIZED();
 
 	/* check if file exists and is readable */
-	if ((mpq_archive->fd = open(mpq_filename, O_RDONLY)) < 0) {
+	if ((mpq_archive->fp = fopen(mpq_filename, "rb")) < 0) {
 
 		/* file could not be opened. */
 		return LIBMPQ_ERROR_OPEN;
@@ -114,7 +113,7 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 	if ((mpq_archive->mpq_header = calloc(1, sizeof(mpq_header_s))) == NULL) {
 
 		/* check if file descriptor is valid. */
-		if ((close(mpq_archive->fd)) < 0) {
+		if ((fclose(mpq_archive->fp)) < 0) {
 
 			/* file was not opened. */
 			return LIBMPQ_ERROR_CLOSE;
@@ -138,13 +137,13 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 		mpq_archive->mpq_header->mpq_magic = 0;
 
 		/* seek in file. */
-		if (lseek(mpq_archive->fd, archive_offset, SEEK_SET) < 0) {
+		if (fseek(mpq_archive->fp, archive_offset, SEEK_SET) < 0) {
 
 			/* free the allocated memory for mpq header. */
 			free(mpq_archive->mpq_header);
 
 			/* check if file descriptor is valid. */
-			if ((close(mpq_archive->fd)) < 0) {
+			if ((fclose(mpq_archive->fp)) < 0) {
 
 				/* file was not opened. */
 				return LIBMPQ_ERROR_CLOSE;
@@ -155,13 +154,13 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 		}
 
 		/* read header from file. */
-		if ((rb = read(mpq_archive->fd, mpq_archive->mpq_header, sizeof(mpq_header_s))) != sizeof(mpq_header_s)) {
+		if ((rb = fread(mpq_archive->mpq_header, 1, sizeof(mpq_header_s), mpq_archive->fp)) != sizeof(mpq_header_s)) {
 
 			/* free the allocated memory for mpq header. */
 			free(mpq_archive->mpq_header);
 
 			/* check if file descriptor is valid. */
-			if ((close(mpq_archive->fd)) < 0) {
+			if ((fclose(mpq_archive->fp)) < 0) {
 
 				/* file was not opened. */
 				return LIBMPQ_ERROR_CLOSE;
@@ -195,7 +194,7 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 				free(mpq_archive->mpq_header);
 
 				/* check if file descriptor is valid. */
-				if ((close(mpq_archive->fd)) < 0) {
+				if ((fclose(mpq_archive->fp)) < 0) {
 
 					/* file was not opened. */
 					return LIBMPQ_ERROR_CLOSE;
@@ -227,7 +226,7 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 		free(mpq_archive->mpq_header);
 
 		/* check if file descriptor is valid. */
-		if ((close(mpq_archive->fd)) < 0) {
+		if ((fclose(mpq_archive->fp)) < 0) {
 
 			/* file was not opened. */
 			return LIBMPQ_ERROR_CLOSE;
@@ -246,7 +245,7 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 		free(mpq_archive->mpq_header);
 
 		/* check if file descriptor is valid. */
-		if ((close(mpq_archive->fd)) < 0) {
+		if ((fclose(mpq_archive->fp)) < 0) {
 
 			/* file was not opened. */
 			return LIBMPQ_ERROR_CLOSE;
@@ -265,7 +264,7 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 		free(mpq_archive->mpq_header);
 
 		/* check if file descriptor is valid. */
-		if ((close(mpq_archive->fd)) < 0) {
+		if ((fclose(mpq_archive->fp)) < 0) {
 
 			/* file was not opened. */
 			return LIBMPQ_ERROR_CLOSE;
@@ -291,7 +290,7 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 		free(mpq_archive->mpq_header);
 
 		/* check if file descriptor is valid. */
-		if ((close(mpq_archive->fd)) < 0) {
+		if ((fclose(mpq_archive->fp)) < 0) {
 
 			/* file was not opened. */
 			return LIBMPQ_ERROR_CLOSE;
@@ -314,7 +313,7 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 		free(mpq_archive->mpq_header);
 
 		/* check if file descriptor is valid. */
-		if ((close(mpq_archive->fd)) < 0) {
+		if ((fclose(mpq_archive->fp)) < 0) {
 
 			/* file was not opened. */
 			return LIBMPQ_ERROR_CLOSE;
@@ -348,7 +347,7 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 		free(mpq_archive->mpq_header);
 
 		/* check if file descriptor is valid. */
-		if ((close(mpq_archive->fd)) < 0) {
+		if ((fclose(mpq_archive->fp)) < 0) {
 
 			/* file was not opened. */
 			return LIBMPQ_ERROR_CLOSE;
@@ -391,7 +390,7 @@ int32_t libmpq__archive_close(mpq_archive_s *mpq_archive) {
 	free(mpq_archive->mpq_header);
 
 	/* check if file descriptor is valid. */
-	if ((close(mpq_archive->fd)) < 0) {
+	if ((fclose(mpq_archive->fp)) < 0) {
 
 		/* file was not opened. */
 		return LIBMPQ_ERROR_CLOSE;
@@ -500,7 +499,7 @@ int32_t libmpq__file_open(mpq_archive_s *mpq_archive, uint32_t file_number) {
 	    (mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) == 0) {
 
 		/* seek to block position. */
-		if (lseek(mpq_archive->fd, mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].offset, SEEK_SET) < 0) {
+		if (fseek(mpq_archive->fp, mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].offset, SEEK_SET) < 0) {
 
 			/* free compressed block offset table and file pointer. */
 			free(mpq_archive->mpq_file[file_number - 1]->compressed_offset);
@@ -511,7 +510,7 @@ int32_t libmpq__file_open(mpq_archive_s *mpq_archive, uint32_t file_number) {
 		}
 
 		/* read block positions from begin of file. */
-		if ((rb = read(mpq_archive->fd, mpq_archive->mpq_file[file_number - 1]->compressed_offset, compressed_size)) < 0) {
+		if ((rb = fread(mpq_archive->mpq_file[file_number - 1]->compressed_offset, 1, compressed_size, mpq_archive->fp)) < 0) {
 
 			/* free compressed block offset table and file pointer. */
 			free(mpq_archive->mpq_file[file_number - 1]->compressed_offset);
