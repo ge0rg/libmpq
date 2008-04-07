@@ -175,79 +175,24 @@ int32_t libmpq__decrypt_key(uint8_t *in_buf, uint32_t in_size, uint32_t *crypt_b
 }
 
 /* function to decrypt a block. */
-int32_t libmpq__decrypt_block(uint8_t *in_buf_raw, uint32_t in_size, uint8_t *out_buf_raw, uint32_t out_size, uint32_t seed, uint32_t *crypt_buf) {
+int32_t libmpq__decrypt_block(uint32_t *in_buf, uint32_t in_size, uint32_t seed, uint32_t *crypt_buf) {
 
 	/* some common variables. */
 	uint32_t seed2 = 0xEEEEEEEE;
 	uint32_t ch;
+	uint32_t out_size = in_size;
 
 	/* we're processing the data 4 bytes at a time. */
-	uint32_t *in_buf = (uint32_t *) in_buf_raw;
-	uint32_t *out_buf = (uint32_t *) out_buf_raw;
-
-	for (; out_size >= 4; out_size -= 4) {
-		seed2     += crypt_buf[0x400 + (seed & 0xFF)];
-		ch         = *in_buf++ ^ (seed + seed2);
-		seed       = ((~seed << 0x15) + 0x11111111) | (seed >> 0x0B);
-		seed2      = ch + seed2 + (seed2 << 5) + 3;
-		*out_buf++ = ch;
+	for (; in_size >= 4; in_size -= 4) {
+		seed2    += crypt_buf[0x400 + (seed & 0xFF)];
+		ch        = *in_buf ^ (seed + seed2);
+		seed      = ((~seed << 0x15) + 0x11111111) | (seed >> 0x0B);
+		seed2     = ch + seed2 + (seed2 << 5) + 3;
+		*in_buf++ = ch;
 	}
-
-	/* if there's any data left, just copy it over. */
-	if (out_size)
-		memcpy (out_buf, in_buf, out_size);
 
 	/* if no error was found, return decrypted bytes. */
-	return in_size;
-}
-
-/* function to decrypt whole read buffer. */
-int32_t libmpq__decrypt_memory(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t block_count, uint32_t *crypt_buf) {
-
-	/* some common variables. */
-	uint32_t i;
-	uint32_t seed;
-	uint32_t out_offset = sizeof(uint32_t) * (block_count + 1);
-	int32_t rb = 0;
-	int32_t tb = 0;
-
-	/* check if we don't know the file seed, try to find it. */
-	if ((seed = libmpq__decrypt_key(in_buf, out_offset, crypt_buf)) < 0) {
-
-		/* sorry without seed, we cannot extract file. */
-		return seed;
-	}
-
-	/* decrypt the compressed offset block. */
-	if ((tb = libmpq__decrypt_block(in_buf, out_offset, out_buf, out_offset, seed - 1, crypt_buf)) < 0) {
-
-		/* something on decrypt failed. */
-		return tb;
-	}
-
-	/* check if the block positions are correctly decrypted, we need to cast here, because internally libmpq used only char buffers. */
-	if (((uint32_t *)out_buf)[0] != out_offset) {
-
-		/* sorry without compressed offset table, we cannot extract file. */
-		return LIBMPQ_ERROR_DECRYPT;
-	}
-
-	/* loop through all blocks and decrypt them. */
-	for (i = 0; i < block_count; i++) {
-
-		/* decrypt block. */
-		if ((rb = libmpq__decrypt_block(in_buf + ((uint32_t *)out_buf)[i], ((uint32_t *)out_buf)[i + 1] - ((uint32_t *)out_buf)[i], out_buf + tb, ((uint32_t *)out_buf)[i + 1] - ((uint32_t *)out_buf)[i], seed + i, crypt_buf)) < 0) {
-
-			/* something on decrypt failed. */
-			return rb;
-		}
-
-		/* store working buffer size as offset for next block. */
-		tb += rb;
-	}
-
-	/* if no error was found, return transferred bytes. */
-	return tb;
+	return out_size;
 }
 
 /* function to decompress or explode a block from mpq archive. */
@@ -305,65 +250,6 @@ int32_t libmpq__decompress_block(uint8_t *in_buf, uint32_t in_size, uint8_t *out
 
 			/* save the number of transferred bytes. */
 			tb += in_size;
-		}
-	}
-
-	/* if no error was found, return transferred bytes. */
-	return tb;
-}
-
-/* function to decompress or explode whole read buffer. */
-int32_t libmpq__decompress_memory(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t block_size, uint32_t compression_type) {
-
-	/* some common variables. */
-	int32_t tb = 0;
-	int32_t rb = 0;
-	uint32_t i;
-
-	/* check if buffer is not compressed. */
-	if (compression_type == LIBMPQ_FLAG_COMPRESS_NONE) {
-
-		/* no compressed data, so copy input buffer to output buffer. */
-		memcpy(out_buf, in_buf, out_size);
-
-		/* store number of bytes copied. */
-		tb = out_size;
-	}
-
-	/* check if one compression mode is used. */
-	if (compression_type == LIBMPQ_FLAG_COMPRESS_PKWARE ||
-	    compression_type == LIBMPQ_FLAG_COMPRESS_MULTI) {
-
-		/* check if we are working with multiple sectors. */
-		if (block_size != out_size) {
-
-			/* loop through all blocks and decompress them. */
-			for (i = 0; i < (out_size + block_size - 1) / block_size; i++) {
-
-				/* decompress using mutliple algorithm. */
-				if ((rb = libmpq__decompress_block(in_buf + ((uint32_t *)in_buf)[i], ((uint32_t *)in_buf)[i + 1] - ((uint32_t *)in_buf)[i], out_buf + block_size * i, (block_size * i + block_size > out_size) ? out_size - block_size * i : block_size, compression_type)) < 0) {
-
-					/* something on decompression failed. */
-					return rb;
-				}
-
-				/* save the number of transferred bytes. */
-				tb += rb;
-			}
-		}
-
-		/* check if we are working with single sector. */
-		if (block_size == out_size) {
-
-			/* decompress using mutliple algorithm. */
-			if ((rb = libmpq__decompress_block(in_buf, in_size, out_buf, out_size, compression_type)) < 0) {
-
-				/* something on decompression failed. */
-				return rb;
-			}
-
-			/* save the number of transferred bytes. */
-			tb += rb;
 		}
 	}
 

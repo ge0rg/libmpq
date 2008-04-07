@@ -69,28 +69,22 @@ extern "C" {
 #define LIBMPQ_ARCHIVE_VERSION			8		/* mpq archive version. */
 
 /* define generic values for returning file information. */
-#define LIBMPQ_FILE_COMPRESSED_SIZE		1		/* compressed size of the given file in archive. */
-#define LIBMPQ_FILE_UNCOMPRESSED_SIZE		2		/* uncompressed size of the given file in archive. */
-#define LIBMPQ_FILE_ENCRYPTED_SIZE		3		/* encrypted size of the given file in archive. */
-#define LIBMPQ_FILE_DECRYPTED_SIZE		4		/* decrypted size of the given file in archive. */
-#define LIBMPQ_FILE_ENCRYPTED			5		/* return true if file is encrypted. */
-#define LIBMPQ_FILE_COMPRESSED			6		/* return true if file is compressed using multiple compression algorithm. */
-#define LIBMPQ_FILE_IMPLODED			7		/* return true if file is imploded using pkware implode algorithm. */
-#define LIBMPQ_FILE_COPIED			8		/* return true if file is neither compressed nor imploded. */
-#define LIBMPQ_FILE_SINGLE			9		/* return true if file is stored in single sector. */
-#define LIBMPQ_FILE_OFFSET			10		/* return absolute start position of file in archive. */
-#define LIBMPQ_FILE_BLOCKS			11		/* return the number of blocks for the file, if file is stored in single sector return one. */
-#define LIBMPQ_FILE_BLOCKSIZE			12		/* return the block size for the file, if file is stored in single sector return uncompressed size. */
-#define LIBMPQ_FILE_SIZE			13		/* return the read file size after decryption or decompression. */
+#define LIBMPQ_FILE_PACKED_SIZE			1		/* compressed and/or encrypted size of file. */
+#define LIBMPQ_FILE_UNPACKED_SIZE		2		/* uncompressed and/or decrypted size of file. */
+#define LIBMPQ_FILE_ENCRYPTED			3		/* return true if file is encrypted. */
+#define LIBMPQ_FILE_COMPRESSED			4		/* return true if file is compressed using multiple compression algorithm. */
+#define LIBMPQ_FILE_IMPLODED			5		/* return true if file is imploded using pkware implode algorithm. */
+#define LIBMPQ_FILE_COPIED			6		/* return true if file is neither compressed nor imploded. */
+#define LIBMPQ_FILE_SINGLE			7		/* return true if file is stored in single sector. */
+#define LIBMPQ_FILE_OFFSET			8		/* return absolute start position of file in archive. */
+#define LIBMPQ_FILE_BLOCKS			9		/* return the number of blocks for the file, if file is stored in single sector return one. */
+#define LIBMPQ_FILE_BLOCKSIZE			10		/* return the block size for the file, if file is stored in single sector return uncompressed size. */
 
 /* define generic values for returning block information. */
-#define LIBMPQ_BLOCK_COMPRESSED_SIZE		1		/* compressed size of the given block in archive. */
-#define LIBMPQ_BLOCK_UNCOMPRESSED_SIZE		2		/* uncompressed size of the given block in archive. */
-#define LIBMPQ_BLOCK_ENCRYPTED_SIZE		3		/* encrypted size of the given block in archive. */
-#define LIBMPQ_BLOCK_DECRYPTED_SIZE		4		/* decrypted size of the given block in archive. */
-#define LIBMPQ_BLOCK_OFFSET			5		/* return absolute start position of block in archive. */
-#define LIBMPQ_BLOCK_SEED			6		/* return the block seed used for decryption. */
-#define LIBMPQ_BLOCK_SIZE			7		/* return the read block size after decryption or decompression. */
+#define LIBMPQ_BLOCK_PACKED_SIZE		1		/* compressed and/or encrypted size of block. */
+#define LIBMPQ_BLOCK_UNPACKED_SIZE		2		/* uncompressed and/or decrypted size of block. */
+#define LIBMPQ_BLOCK_OFFSET			3		/* return absolute start position of block in archive. */
+#define LIBMPQ_BLOCK_SEED			4		/* return the block seed used for decryption. */
 
 /* mpq archive header. */
 typedef struct {
@@ -181,32 +175,8 @@ extern LIBMPQ_API int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint8_t 
 /* generic block information. */
 extern LIBMPQ_API int32_t libmpq__block_info(mpq_archive_s *mpq_archive, uint32_t info_type, uint32_t file_number, uint32_t block_number);
 
-/* generic block decrypt function. */
-extern LIBMPQ_API int32_t libmpq__block_decrypt(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t seed);
-
-/* generic block decompress function. */
-extern LIBMPQ_API int32_t libmpq__block_decompress(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size);
-
-/* generic block explode function. */
-extern LIBMPQ_API int32_t libmpq__block_explode(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size);
-
-/* generic block copy function. */
-extern LIBMPQ_API int32_t libmpq__block_copy(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size);
-
 /* generic block read function. */
 extern LIBMPQ_API int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, uint32_t out_size, uint32_t file_number, uint32_t block_number);
-
-/* generic memory decrypt function. */
-extern LIBMPQ_API int32_t libmpq__memory_decrypt(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t block_count);
-
-/* generic memory decompress function. */
-extern LIBMPQ_API int32_t libmpq__memory_decompress(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t block_size);
-
-/* generic memory explode function. */
-extern LIBMPQ_API int32_t libmpq__memory_explode(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t block_size);
-
-/* generic memory copy function. */
-extern LIBMPQ_API int32_t libmpq__memory_copy(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t block_size);
 
 #ifdef __cplusplus
 }
