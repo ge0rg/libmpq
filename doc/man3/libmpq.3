@@ -19,7 +19,7 @@
 .\" License along with this manual; if not, write to the Free
 .\" Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111,
 .\" USA.
-.TH libmpq 3 2008-03-31 "The MoPaQ archive library"
+.TH libmpq 3 2008-04-07 "The MoPaQ archive library"
 .SH NAME
 libmpq \- cross-platform C library for manipulating mpq archives.
 .SH SYNOPSIS
@@ -73,6 +73,13 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 .BI "        const char    *" "filename"
 .BI ");"
 .sp
+.BI "int32_t libmpq__file_read("
+.BI "        mpq_archive_s *" "mpq_archive",
+.BI "        uint8_t       *" "out_buf",
+.BI "        uint32_t       " "out_size",
+.BI "        uint32_t       " "file_number"
+.BI ");"
+.sp
 .BI "int32_t libmpq__block_info("
 .BI "        mpq_archive_s *" "mpq_archive",
 .BI "        uint32_t       " "info_type",
@@ -80,65 +87,12 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 .BI "        uint32_t       " "block_number"
 .BI ");"
 .sp
-.BI "int32_t libmpq__block_decrypt("
-.BI "        uint8_t       *" "in_buf",
-.BI "        uint32_t       " "in_size",
+.BI "int32_t libmpq__block_read("
+.BI "        mpq_archive_s *" "mpq_archive",
 .BI "        uint8_t       *" "out_buf",
 .BI "        uint32_t       " "out_size",
-.BI "        uint32_t       " "seed"
-.BI ");"
-.sp
-.BI "int32_t libmpq__block_decompress("
-.BI "        uint8_t       *" "in_buf",
-.BI "        uint32_t       " "in_size",
-.BI "        uint8_t       *" "out_buf",
-.BI "        uint32_t       " "out_size"
-.BI ");"
-.sp
-.BI "int32_t libmpq__block_explode("
-.BI "        uint8_t       *" "in_buf",
-.BI "        uint32_t       " "in_size",
-.BI "        uint8_t       *" "out_buf",
-.BI "        uint32_t       " "out_size"
-.BI ");"
-.sp
-.BI "int32_t libmpq__block_copy("
-.BI "        uint8_t       *" "in_buf",
-.BI "        uint32_t       " "in_size",
-.BI "        uint8_t       *" "out_buf",
-.BI "        uint32_t       " "out_size"
-.BI ");"
-.sp
-.BI "int32_t libmpq__memory_decrypt("
-.BI "        uint8_t       *" "in_buf",
-.BI "        uint32_t       " "in_size",
-.BI "        uint8_t       *" "out_buf",
-.BI "        uint32_t       " "out_size",
-.BI "        uint32_t       " "block_count"
-.BI ");"
-.sp
-.BI "int32_t libmpq__memory_decompress("
-.BI "        uint8_t       *" "in_buf",
-.BI "        uint32_t       " "in_size",
-.BI "        uint8_t       *" "out_buf",
-.BI "        uint32_t       " "out_size",
-.BI "        uint32_t       " "block_size"
-.BI ");"
-.sp
-.BI "int32_t libmpq__memory_explode("
-.BI "        uint8_t       *" "in_buf",
-.BI "        uint32_t       " "in_size",
-.BI "        uint8_t       *" "out_buf",
-.BI "        uint32_t       " "out_size",
-.BI "        uint32_t       " "block_size"
-.BI ");"
-.sp
-.BI "int32_t libmpq__memory_copy("
-.BI "        uint8_t       *" "in_buf",
-.BI "        uint32_t       " "in_size",
-.BI "        uint8_t       *" "out_buf",
-.BI "        uint32_t       " "out_size",
-.BI "        uint32_t       " "block_size"
+.BI "        uint32_t       " "file_number",
+.BI "        uint32_t       " "block_number"
 .BI ");"
 .fi
 .SH DESCRIPTION
@@ -156,15 +110,9 @@ The \fIlibmpq\fP library supports decrypting, decompressing, exploding and vario
 .BR libmpq__file_info (3),
 .BR libmpq__file_name (3),
 .BR libmpq__file_number (3),
+.BR libmpq__file_read (3),
 .BR libmpq__block_info (3),
-.BR libmpq__block_decrypt (3),
-.BR libmpq__block_decompress (3),
-.BR libmpq__block_explode (3),
-.BR libmpq__block_copy (3),
-.BR libmpq__memory_decrypt (3),
-.BR libmpq__memory_decompress (3),
-.BR libmpq__memory_explode (3),
-.BR libmpq__memory_copy (3)
+.BR libmpq__block_read (3)
 .SH AUTHOR
 Check documentation.
 .TP
