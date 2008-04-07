@@ -19,7 +19,7 @@
 .\" License along with this manual; if not, write to the Free
 .\" Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111,
 .\" USA.
-.TH libmpq 3 2008-03-31 "The MoPaQ archive library"
+.TH libmpq 3 2008-04-07 "The MoPaQ archive library"
 .SH NAME
 libmpq \- cross-platform C library for manipulating mpq archives.
 .SH SYNOPSIS
@@ -27,44 +27,46 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 .B
 #include <mpq.h>
 .sp
-.BI "int32_t libmpq__block_info("
+.BI "int32_t libmpq__file_read("
 .BI "        mpq_archive_s *" "mpq_archive",
-.BI "        uint32_t       " "info_type",
-.BI "        uint32_t       " "file_number",
-.BI "        uint32_t       " "block_number"
+.BI "        uint8_t       *" "out_buf",
+.BI "        uint32_t       " "out_size",
+.BI "        uint32_t       " "file_number"
 .BI ");"
 .fi
 .SH DESCRIPTION
 .PP
-Call \fBlibmpq__block_info\fP() to get useful information about the block of a opened file inside mpq archive, depending on the requested information type and block number.
+Call \fBlibmpq__file_read\fP() to read a given file into memory. If the file is encrypted it will be first decrypted and then decompressed.
 .LP
-The \fBlibmpq__block_info\fP() function takes as first argument the archive structure \fImpq_archive\fP which have to be allocated first and opened by \fBlibmpq__archive_open\fP(). The second argument \fIinfo_type\fP is one of the following constants, the third argument \fIfile_number\fP is the number of file opened by \fBlibmpq__file_open\fP() and the fourth argument \fIblock_number\fP is the number of the block in \fIfile_number\fP.
-.TP
-.B LIBMPQ_BLOCK_PACKED_SIZE
-Return the compressed size of the block.
-.TP
-.B LIBMPQ_BLOCK_UNPACKED_SIZE
-Return the uncompressed size of the block.
-.TP
-.B LIBMPQ_BLOCK_OFFSET
-Return the absolute start position of the block.
-.TP
-.B LIBMPQ_BLOCK_SEED
-Return the decryption seed for the block.
+The \fBlibmpq__file_read\fP() function takes as first argument the archive structure \fImpq_archive\fP which have to be allocated first and opened by \fBlibmpq__archive_open\fP(). The second argument \fIout_buf\fP is the output data buffer which contains the extracted data. The third argument \fIout_size\fP is the size of \fIout_buf\fP and the fourth argument \fIfile_number\fP is the file to extract.
 .SH RETURN VALUE
-On success, the value to the requested argument \fIinfo_type\fP is returned and on error one of the following constants.
+On success, the transferred bytes are returned and on error one of the following constants.
 .TP
 .B LIBMPQ_ERROR_NOT_INITIALIZED
 libmpq wasn't initialized by calling \fBlibmpq__initialize\fP(), or it was shut down by an \fBlibmpq__shutdown\fP() call.
 .TP
 .B LIBMPQ_ERROR_EXIST
-The given file or block does not exist.
+File does not exist in archive.
 .TP
-.B LIBMPQ_ERROR_INFO
-The given info type does not exist.
+.B LIBMPQ_ERROR_SIZE
+The output buffer is to small.
+.TP
+.B LIBMPQ_ERROR_SEEK
+Seeking in file failed.
+.TP
+.B LIBMPQ_ERROR_MALLOC
+Not enough memory for creating required structures.
+.TP
+.B LIBMPQ_ERROR_READ
+Reading in archive failed.
+.TP
+.B LIBMPQ_ERROR_DECRYPT
+Decrypting file failed.
+.TP
+.B LIBMPQ_ERROR_DECOMPRESS
+Decompressing file failed.
 .SH SEE ALSO
-.BR libmpq__archive_info (3),
-.BR libmpq__file_info (3)
+.BR libmpq__block_read (3)
 .SH AUTHOR
 Check documentation.
 .TP
