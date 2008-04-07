@@ -150,7 +150,7 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 			}
 
 			/* seek in file failed. */
-			return LIBMPQ_ERROR_LSEEK;
+			return LIBMPQ_ERROR_SEEK;
 		}
 
 		/* read header from file. */
@@ -515,7 +515,7 @@ int32_t libmpq__file_open(mpq_archive_s *mpq_archive, uint32_t file_number) {
 			free(mpq_archive->mpq_file[file_number - 1]);
 
 			/* seek in file failed. */
-			return LIBMPQ_ERROR_LSEEK;
+			return LIBMPQ_ERROR_SEEK;
 		}
 
 		/* read block positions from begin of file. */
@@ -801,7 +801,7 @@ int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, uint32_t
 	if (fseek(mpq_archive->fp, file_offset, SEEK_SET) < 0) {
 
 		/* something with seek in file failed. */
-		return LIBMPQ_ERROR_LSEEK;
+		return LIBMPQ_ERROR_SEEK;
 	}
 
 	/* check if file has blocks. */
@@ -1042,7 +1042,7 @@ int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, uint32_
 	if (fseek(mpq_archive->fp, block_offset, SEEK_SET) < 0) {
 
 		/* something with seek in file failed. */
-		return LIBMPQ_ERROR_LSEEK;
+		return LIBMPQ_ERROR_SEEK;
 	}
 
 	/* check if file is encrypted. */

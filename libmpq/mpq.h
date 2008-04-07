@@ -46,7 +46,7 @@ extern "C" {
 /* define errors. */
 #define LIBMPQ_ERROR_OPEN			-1		/* open error on file. */
 #define LIBMPQ_ERROR_CLOSE			-2		/* close error on file. */
-#define LIBMPQ_ERROR_LSEEK			-3		/* lseek error on file. */
+#define LIBMPQ_ERROR_SEEK			-3		/* lseek error on file. */
 #define LIBMPQ_ERROR_READ			-4		/* read error on file. */
 #define LIBMPQ_ERROR_WRITE			-5		/* write error on file. */
 #define LIBMPQ_ERROR_MALLOC			-6		/* memory allocation error. */
