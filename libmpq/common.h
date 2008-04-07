@@ -35,21 +35,9 @@ int32_t libmpq__decrypt_key(
 
 /* function to decrypt a block. */
 int32_t libmpq__decrypt_block(
-	uint8_t		*in_buf,
+	uint32_t	*in_buf,
 	uint32_t	in_size,
-	uint8_t		*out_buf,
-	uint32_t	out_size,
 	uint32_t	seed,
-	uint32_t	*crypt_buf
-);
-
-/* function to decrypt whole read buffer. */
-int32_t libmpq__decrypt_memory(
-	uint8_t		*in_buf,
-	uint32_t	in_size,
-	uint8_t		*out_buf,
-	uint32_t	out_size,
-	uint32_t	block_count,
 	uint32_t	*crypt_buf
 );
 
@@ -59,16 +47,6 @@ int32_t libmpq__decompress_block(
 	uint32_t	in_size,
 	uint8_t		*out_buf,
 	uint32_t	out_size,
-	uint32_t	compression_type
-);
-
-/* function to decompress or explode whole read buffer. */
-int32_t libmpq__decompress_memory(
-	uint8_t		*in_buf,
-	uint32_t	in_size,
-	uint8_t		*out_buf,
-	uint32_t	out_size,
-	uint32_t	block_size,
 	uint32_t	compression_type
 );
 
