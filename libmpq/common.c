@@ -382,7 +382,7 @@ int32_t libmpq__read_table_hash(mpq_archive_s *mpq_archive, uint32_t *crypt_buf)
 	if ((tb = fseek(mpq_archive->fp, mpq_archive->mpq_header->hash_table_offset, SEEK_SET)) < 0) {
 
 		/* seek in file failed. */
-		return LIBMPQ_ERROR_LSEEK;
+		return LIBMPQ_ERROR_SEEK;
 	}
 
 	/* read the hash table into the buffer. */
@@ -410,7 +410,7 @@ int32_t libmpq__read_table_block(mpq_archive_s *mpq_archive, uint32_t *crypt_buf
 	if ((tb = fseek(mpq_archive->fp, mpq_archive->mpq_header->block_table_offset, SEEK_SET)) < 0) {
 
 		/* seek in file failed. */
-		return LIBMPQ_ERROR_LSEEK;
+		return LIBMPQ_ERROR_SEEK;
 	}
 
 	/* read the block table into the buffer. */
