@@ -24,7 +24,7 @@ A: Yes, help is needed, not only with developing, also with testing.
 
 Q: Can you give a small example to demonstrate the usage?
 A: Of course :-) The example below takes first parameter
-   as mpq archive and open the first file from it.
+   as mpq archive and extracts the first file to a buffer.
 
    /*
     *  Compile with:
@@ -32,22 +32,32 @@ A: Of course :-) The example below takes first parameter
     *  gcc mpq-example.c -o mpq-example -lmpq -lz -I/usr/local/include/libmpq
     */
 
+   #include <libmpq/mpq.h>
+   #include <stdlib.h>
    #include <limits.h>
-   #include <mpq.h>
 
    int main(int argc, char **argv) {
            mpq_archive_s *mpq_archive;
+           int size;
+           char *buffer;
 
            mpq_archive = malloc(sizeof(mpq_archive_s));
-           memset(mpq_archive, 0, sizeof(mpq_archive_s));
 
            libmpq__init();
 
            libmpq__archive_open(mpq_archive, argv[1]);
            libmpq__file_open(mpq_archive, 1);
+
+           size = libmpq__file_info(mpq_archive, LIBMPQ_FILE_UNPACKED_SIZE, 1);
+           buffer = malloc(size);
+
+           libmpq__file_read(mpq_archive, buffer, size, 1);
+
+           libmpq__file_close(mpq_archive, 1);
            libmpq__archive_close(mpq_archive);
 
            libmpq__shutdown();
 
            free(mpq_archive);
    }
+
