@@ -29,14 +29,15 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 .sp
 .BI "int32_t libmpq__archive_open("
 .BI "        mpq_archive_s *" "mpq_archive",
-.BI "        const char    *" "mpq_filename"
+.BI "        const char    *" "mpq_filename",
+.BI "        uint32_t       " "archive_offset"
 .BI ");"
 .fi
 .SH DESCRIPTION
 .PP
 Call \fBlibmpq__archive_open\fP() to open a given mpq archive for later use to extract or manipulate files inside the archive. It will create all required file structures and you have to call \fBlibmpq__archive_close\fP() on success to clean the opened structures. On failure there is no need to call \fBlibmpq__archive_close\fP() because everything will be cleaned up.
 .LP
-The \fBlibmpq__archive_open\fP() function takes as first argument the archive structure \fImpq_archive\fP which have to be allocated first and will open the file \fImpq_filename\fP to the structure \fImpq_archive\fP.
+The \fBlibmpq__archive_open\fP() function takes as first argument the archive structure \fImpq_archive\fP which has to be allocated first and will open the file \fImpq_filename\fP to the structure \fImpq_archive\fP. The last argument, \fIarchive_offset\fP is normally -1, but can be specified when the archive offset is known, or not 512-byte aligned.
 .SH RETURN VALUE
 On success, a zero is returned and on error one of the following constants.
 .TP
