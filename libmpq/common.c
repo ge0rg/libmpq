@@ -35,15 +35,16 @@
 
 #include "common.h"
 
+/* function to decrypt hash/block table of mpq archive. */
 static int32_t libmpq__decrypt_table(
-	uint32_t	*buffer,
+	uint32_t	*crypt_buf,
 	uint32_t	*hash,
 	const char	*key,
 	uint32_t	size
 );
 
 /* function to initialize decryption buffer. */
-int32_t libmpq__decrypt_buffer_init(uint32_t *buffer) {
+int32_t libmpq__decrypt_buffer_init(uint32_t *crypt_buf) {
 
 	/* some common variables. */
 	uint32_t seed   = 0x00100001;
@@ -67,7 +68,7 @@ int32_t libmpq__decrypt_buffer_init(uint32_t *buffer) {
 			temp2 = (seed & 0xFFFF);
 
 			/* assign buffer. */
-			buffer[index2] = (temp1 | temp2);
+			crypt_buf[index2] = (temp1 | temp2);
 		}
 	}
 
@@ -75,7 +76,8 @@ int32_t libmpq__decrypt_buffer_init(uint32_t *buffer) {
 	return LIBMPQ_SUCCESS;
 }
 
-uint32_t libmpq__hash_string (uint32_t *buffer, const char *key, uint32_t offset) {
+/* function to return the hash to a given string. */
+uint32_t libmpq__hash_string(uint32_t *crypt_buf, const char *key, uint32_t offset) {
 
 	/* some common variables. */
 	uint32_t seed1 = 0x7FED7FED;
@@ -87,7 +89,7 @@ uint32_t libmpq__hash_string (uint32_t *buffer, const char *key, uint32_t offset
 	/* prepare seeds. */
 	while (*key != 0) {
 		ch    = toupper(*key++);
-		seed1 = buffer[offset + ch] ^ (seed1 + seed2);
+		seed1 = crypt_buf[offset + ch] ^ (seed1 + seed2);
 		seed2 = ch + seed1 + seed2 + (seed2 << 5) + 3;
 	}
 
@@ -95,7 +97,7 @@ uint32_t libmpq__hash_string (uint32_t *buffer, const char *key, uint32_t offset
 }
 
 /* function to decrypt hash/block table of mpq archive. */
-static int32_t libmpq__decrypt_table(uint32_t *buffer, uint32_t *hash, const char *key, uint32_t size) {
+static int32_t libmpq__decrypt_table(uint32_t *crypt_buf, uint32_t *hash, const char *key, uint32_t size) {
 
 	/* some common variables. */
 	uint32_t seed1;
@@ -104,11 +106,11 @@ static int32_t libmpq__decrypt_table(uint32_t *buffer, uint32_t *hash, const cha
 	/* one key character. */
 	uint32_t ch;
 
-	seed1 = libmpq__hash_string (buffer, key, 0x300);
+	seed1 = libmpq__hash_string(crypt_buf, key, 0x300);
 
 	/* decrypt it. */
 	while (size-- > 0) {
-		seed2   += buffer[0x400 + (seed1 & 0xFF)];
+		seed2   += crypt_buf[0x400 + (seed1 & 0xFF)];
 		ch       = *hash ^ (seed1 + seed2);
 		seed1    = ((~seed1 << 0x15) + 0x11111111) | (seed1 >> 0x0B);
 		seed2    = ch + seed2 + (seed2 << 5) + 3;
@@ -345,9 +347,9 @@ int32_t libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 			continue;
 		}
 
+		/* create final indices tables. */
 		mpq_archive->mpq_list->block_table_indices[count] = mpq_archive->mpq_hash[i].block_table_index;
-		mpq_archive->mpq_list->hash_table_indices[count]  = i;
-
+ 
 		/* increase file counter. */
 		count++;
 	}
@@ -364,8 +366,6 @@ int32_t libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 	uint32_t w;
 	uint32_t max;
 	uint32_t temp_block;
-	uint32_t temp_hash;
-	char *temp_file;
 
 	/* sort the array using heap sort (i use a non-recursive sort algorithm because this should be faster due to the fact of the relational arrays) */
 	while (TRUE) {
@@ -378,8 +378,6 @@ int32_t libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 
 			/* value to sift. */
 			temp_block = mpq_archive->mpq_list->block_table_indices[parent];
-			temp_hash  = mpq_archive->mpq_list->hash_table_indices[parent];
-			temp_file  = mpq_archive->mpq_list->file_names[parent];
 		} else {
 
 			/* part 2 - real sort. */
@@ -387,13 +385,9 @@ int32_t libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 
 				/* sift value from heap end. */
 				temp_block                                    = mpq_archive->mpq_list->block_table_indices[n];
-				temp_hash                                     = mpq_archive->mpq_list->hash_table_indices[n];
-				temp_file                                     = mpq_archive->mpq_list->file_names[n];
 
 				/* top of heap after heap in. */
 				mpq_archive->mpq_list->block_table_indices[n] = mpq_archive->mpq_list->block_table_indices[0];
-				mpq_archive->mpq_list->hash_table_indices[n]  = mpq_archive->mpq_list->hash_table_indices[0];
-				mpq_archive->mpq_list->file_names[n]          = mpq_archive->mpq_list->file_names[0];
 
 				/* move sorted area. */
 				parent                                        = 0;
@@ -433,8 +427,6 @@ int32_t libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 
 			/* move highest child above. */
 			mpq_archive->mpq_list->block_table_indices[parent] = mpq_archive->mpq_list->block_table_indices[child];
-			mpq_archive->mpq_list->hash_table_indices[parent]  = mpq_archive->mpq_list->hash_table_indices[child];
-			mpq_archive->mpq_list->file_names[parent]          = mpq_archive->mpq_list->file_names[child];
 
 			/* search next level. */
 			parent = child;
@@ -442,8 +434,6 @@ int32_t libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 
 		/* store sifted value. */
 		mpq_archive->mpq_list->block_table_indices[parent] = temp_block;
-		mpq_archive->mpq_list->hash_table_indices[parent]  = temp_hash;
-		mpq_archive->mpq_list->file_names[parent]          = temp_file;
 	}
 
 	/* if no error was found, return zero. */

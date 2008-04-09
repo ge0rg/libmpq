@@ -26,6 +26,13 @@ int32_t libmpq__decrypt_buffer_init(
 	uint32_t	*buffer
 );
 
+/* function to return the hash to a given string. */
+uint32_t libmpq__hash_string(
+	uint32_t	*crypt_buf,
+	const char	*key,
+	uint32_t	offset
+);
+
 /* function to detect decryption key. */
 int32_t libmpq__decrypt_key(
 	uint8_t		*in_buf,
@@ -65,12 +72,6 @@ int32_t libmpq__read_table_block(
 /* function to read listfile from mpq archive. */
 int32_t libmpq__read_file_list(
 	mpq_archive_s	*mpq_archive
-);
-
-uint32_t libmpq__hash_string (
-	uint32_t	*buffer,
-	const char	*key,
-	uint32_t	offset
 );
 
 #endif						/* _COMMON_H */

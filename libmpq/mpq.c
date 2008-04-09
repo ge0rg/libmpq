@@ -321,9 +321,7 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 
 	/* allocate memory, some mpq archives have block table greater than hash table, avoid buffer overruns. */
 	if ((mpq_archive->mpq_file                      = calloc(mpq_archive->mpq_header->hash_table_count,                                                  sizeof(mpq_file_s))) == NULL ||
-	    (mpq_archive->mpq_list->file_names          = calloc(max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count), sizeof(char *))) == NULL ||
-	    (mpq_archive->mpq_list->block_table_indices = calloc(max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count), sizeof(uint32_t))) == NULL ||
-	    (mpq_archive->mpq_list->hash_table_indices  = calloc(max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count), sizeof(uint32_t))) == NULL) {
+	    (mpq_archive->mpq_list->block_table_indices = calloc(max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count), sizeof(uint32_t))) == NULL) {
 
 		/* free header, tables and list. */
 		free(mpq_archive->mpq_list);
@@ -345,19 +343,7 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 	/* try to read list file. */
 	if ((result = libmpq__read_file_list(mpq_archive)) != 0) {
 
-		/* check if there is some real data in the file list. */
-		if (mpq_archive->mpq_list->file_names != NULL) {
-
-			/* free the filelist. */
-			for (i = 0; i < max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count); i++) {
-
-				/* free the filelist element. */
-				free(mpq_archive->mpq_list->file_names[i]);
-			}
-		}
-
 		/* free header, tables and list. */
-		free(mpq_archive->mpq_list->hash_table_indices);
 		free(mpq_archive->mpq_list->block_table_indices);
 		free(mpq_archive->mpq_list);
 		free(mpq_archive->mpq_file);
@@ -383,24 +369,9 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 /* this function close the file descriptor, free the decryption buffer and the file list. */
 int32_t libmpq__archive_close(mpq_archive_s *mpq_archive) {
 
-	/* some common variables. */
-	uint32_t i;
-
 	CHECK_IS_INITIALIZED();
 
-	/* check if there is some real data in the file list. */
-	if (mpq_archive->mpq_list->file_names != NULL) {
-
-		/* free the filelist. */
-		for (i = 0; i < max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count); i++) {
-
-			/* free the filelist element. */
-			free(mpq_archive->mpq_list->file_names[i]);
-		}
-	}
-
 	/* free header, tables and list. */
-	free(mpq_archive->mpq_list->hash_table_indices);
 	free(mpq_archive->mpq_list->block_table_indices);
 	free(mpq_archive->mpq_list);
 	free(mpq_archive->mpq_file);
@@ -709,20 +680,33 @@ int32_t libmpq__file_info(mpq_archive_s *mpq_archive, uint32_t info_type, uint32
 }
 
 /* this function return filename by the given number. */
-const char *libmpq__file_name(mpq_archive_s *mpq_archive, uint32_t file_number) {
+int32_t libmpq__file_name(mpq_archive_s *mpq_archive, uint32_t file_number, char *filename, size_t filename_size) {
 
-	if (init_count <= 0)
-		return NULL;
+	/* check if initilization was done. */
+	if (init_count <= 0) {
+
+		/* file not found, set name to NULL. */
+		filename = NULL;
+
+		/* initialization was not done. */
+		return LIBMPQ_ERROR_NOT_INITIALIZED;
+	}
 
 	/* check if we are in the range of available files. */
 	if (file_number < 1 || file_number > mpq_archive->files) {
 
-		/* file not found by number, so return NULL. */
-		return NULL;
+		/* file not found, set name to NULL. */
+		filename = NULL;
+
+		/* file not in valid range. */
+		return LIBMPQ_ERROR_EXIST;
 	}
 
-	/* return the filename. */
-	return mpq_archive->mpq_list->file_names[file_number - 1];
+	/* file was found but no internal listfile exist. */
+	snprintf(filename, filename_size, "file%06i.xxx", file_number);
+
+	/* if no error was found, return zero. */
+	return LIBMPQ_SUCCESS;
 }
 
 /* this function return filenumber by the given name. */
@@ -732,17 +716,6 @@ int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename) {
 	uint32_t i, hash1, hash2, hash3, ht_count;
 
 	CHECK_IS_INITIALIZED();
-
-	/* loop through all filenames in mpq archive. */
-	for (i = 0; mpq_archive->mpq_list->file_names[i]; i++) {
-
-		/* check if given filename was found in list. */
-		if (strncmp(mpq_archive->mpq_list->file_names[i], filename, strlen(filename)) == 0) {
-
-			/* if file found return the number */
-			return i + 1;
-		}
-	}
 
 	/* if the list of file names doesn't include this one, we'll have
 	 * to figure out the file number the "hard" way.
