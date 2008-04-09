@@ -108,7 +108,7 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 	}
 
 	/* check if file exists and is readable */
-	if ((mpq_archive->fp = fopen(mpq_filename, "rb")) < 0) {
+	if ((mpq_archive->fp = fopen(mpq_filename, "rb")) == NULL) {
 
 		/* file could not be opened. */
 		return LIBMPQ_ERROR_OPEN;
