@@ -43,7 +43,7 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 .BI "        mpq_archive_s *" "mpq_archive"
 .BI ");"
 .sp
-.BI "int libmpq__archive_info("
+.BI "int32_t libmpq__archive_info("
 .BI "        mpq_archive_s *" "mpq_archive",
 .BI "        uint32_t       " "info_type"
 .BI ");"
@@ -64,9 +64,11 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 .BI "        uint32_t       " "file_number"
 .BI ");"
 .sp
-.BI "const char *libmpq__file_name("
+.BI "int32_t libmpq__file_name("
 .BI "        mpq_archive_s *" "mpq_archive",
-.BI "        uint32_t       " "file_number"
+.BI "        uint32_t       " "file_number",
+.BI "        char          *" "filename",
+.BI "        size_t         " "filename_size"
 .BI ");"
 .sp
 .BI "int32_t libmpq__file_number("

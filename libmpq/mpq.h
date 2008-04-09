@@ -124,9 +124,7 @@ typedef struct {
 
 /* file list structure. */
 typedef struct {
-	char		**file_names;		/* file name for archive members. */
 	uint32_t	*block_table_indices;	/* pointer which stores the mapping for file number to block entry. */
-	uint32_t	*hash_table_indices;	/* pointer which stores the mapping for file number to hash entry. */
 } mpq_list_s;
 
 /* archive structure used since diablo 1.00 by blizzard. */
@@ -166,7 +164,7 @@ extern LIBMPQ_API int32_t libmpq__archive_info(mpq_archive_s *mpq_archive, uint3
 extern LIBMPQ_API int32_t libmpq__file_open(mpq_archive_s *mpq_archive, uint32_t file_number);
 extern LIBMPQ_API int32_t libmpq__file_close(mpq_archive_s *mpq_archive, uint32_t file_number);
 extern LIBMPQ_API int32_t libmpq__file_info(mpq_archive_s *mpq_archive, uint32_t info_type, uint32_t file_number);
-extern LIBMPQ_API const char *libmpq__file_name(mpq_archive_s *mpq_archive, uint32_t file_number);
+extern LIBMPQ_API int32_t libmpq__file_name(mpq_archive_s *mpq_archive, uint32_t file_number, char *filename, size_t filename_size);
 extern LIBMPQ_API int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename);
 
 /* generic file read functions. */
