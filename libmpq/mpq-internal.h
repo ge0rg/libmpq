@@ -45,6 +45,11 @@
 /* define generic hash values. */
 #define LIBMPQ_HASH_FREE			0xFFFFFFFF	/* hash table entry is empty and has always been empty. */
 
+/* define special files. */
+#define LIBMPQ_LISTFILE_NAME			"(listfile)"	/* internal listfile. */
+#define LIBMPQ_SIGNATURE_NAME			"(signature)"	/* internal signature file. */
+#define LIBMPQ_ATTRIBUTES_NAME			"(attributes)"	/* internal attributes file. */
+
 /* define true and false, because not all systems have them. */
 #ifndef FALSE
 #define FALSE 0
