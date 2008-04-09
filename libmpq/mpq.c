@@ -92,15 +92,20 @@ const char *libmpq__version(void) {
 }
 
 /* this function read a file and verify if it is a valid mpq archive, then it read and decrypt the hash table. */
-int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename) {
+int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename, uint32_t archive_offset) {
 
 	/* some common variables. */
 	uint32_t rb             = 0;
-	uint32_t archive_offset = 0;
 	uint32_t i              = 0;
 	int32_t result          = 0;
+	uint32_t header_search	= FALSE;
 
 	CHECK_IS_INITIALIZED();
+
+	if (archive_offset == (uint32_t) -1) {
+		archive_offset = 0;
+		header_search = TRUE;
+	}
 
 	/* check if file exists and is readable */
 	if ((mpq_archive->fp = fopen(mpq_filename, "rb")) < 0) {
@@ -207,6 +212,20 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 		}
 
 		/* move to the next possible offset. */
+		if (!header_search) {
+			/* free the allocated memory for mpq header. */
+			free(mpq_archive->mpq_header);
+
+			/* check if file descriptor is valid. */
+			if ((fclose(mpq_archive->fp)) < 0) {
+
+				/* file was not opened. */
+				return LIBMPQ_ERROR_CLOSE;
+			}
+
+			/* no valid mpq archive. */
+			return LIBMPQ_ERROR_FORMAT;
+		}
 		archive_offset += 512;
 	}
 

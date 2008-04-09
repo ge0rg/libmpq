@@ -45,7 +45,7 @@ A: Of course :-) The example below takes first parameter
 
            libmpq__init();
 
-           libmpq__archive_open(mpq_archive, argv[1]);
+           libmpq__archive_open(mpq_archive, argv[1], -1);
            libmpq__file_open(mpq_archive, 1);
 
            size = libmpq__file_info(mpq_archive, LIBMPQ_FILE_UNPACKED_SIZE, 1);
