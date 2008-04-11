@@ -682,22 +682,10 @@ int32_t libmpq__file_info(mpq_archive_s *mpq_archive, uint32_t info_type, uint32
 /* this function return filename by the given number. */
 int32_t libmpq__file_name(mpq_archive_s *mpq_archive, uint32_t file_number, char *filename, size_t filename_size) {
 
-	/* check if initilization was done. */
-	if (init_count <= 0) {
-
-		/* file not found, set name to NULL. */
-		filename = NULL;
-
-		/* initialization was not done. */
-		return LIBMPQ_ERROR_NOT_INITIALIZED;
-	}
+	CHECK_IS_INITIALIZED();
 
 	/* check if we are in the range of available files. */
 	if (file_number < 1 || file_number > mpq_archive->files) {
-
-		/* file not found, set name to NULL. */
-		filename = NULL;
-
 		/* file not in valid range. */
 		return LIBMPQ_ERROR_EXIST;
 	}
