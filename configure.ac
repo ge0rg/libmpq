@@ -32,6 +32,8 @@ AC_TRY_COMPILE([
 #endif
 ], [], [CFLAGS="$CFLAGS -fvisibility=hidden"])
 
+AM_PATH_PYTHON([2.2],,[:])
+
 # configuration files.
 AC_CONFIG_FILES([libmpq.pc])
 AC_CONFIG_FILES([libmpq-config],[chmod +x libmpq-config])
@@ -40,6 +42,7 @@ AC_CONFIG_FILES([libmpq-config],[chmod +x libmpq-config])
 AC_OUTPUT([
 Makefile
 libmpq/Makefile
+python/Makefile
 doc/Makefile
 doc/man1/Makefile
 doc/man3/Makefile
