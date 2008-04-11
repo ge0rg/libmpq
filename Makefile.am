@@ -2,7 +2,7 @@
 AUTOMAKE_OPTIONS		= 1.6
 
 # any directories which should be built and installed.
-SUBDIRS				= libmpq doc
+SUBDIRS				= libmpq doc python
 
 # the directories which are part of the distribution.
 DIST_SUBDIRS			= $(SUBDIRS)
