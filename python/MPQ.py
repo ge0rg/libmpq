@@ -109,7 +109,7 @@ class Archive:
           offset = -1
         
 #        self._mpq = ctypes.c_void_p()
-        self._mpq = ctypes.create_string_buffer(4128) # bad constant
+        self._mpq = ctypes.create_string_buffer(5000)
         
 #        libmpq.libmpq__archive_open(ctypes.byref(self._mpq), self.filename, offset)
         libmpq.libmpq__archive_open(self._mpq, self.filename, offset)
