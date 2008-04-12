@@ -337,6 +337,9 @@ int32_t libmpq__read_file_list(mpq_archive_s *mpq_archive) {
 			continue;
 		}
 
+		if (mpq_archive->mpq_hash[i].block_table_index >= mpq_archive->mpq_header->block_table_count)
+			continue; 
+
 		/* check if file exists, sizes are correct and block size is above zero. */
 		if ((mpq_archive->mpq_block[mpq_archive->mpq_hash[i].block_table_index].flags & LIBMPQ_FLAG_EXISTS) == 0 ||
 		     mpq_archive->mpq_block[mpq_archive->mpq_hash[i].block_table_index].offset > mpq_archive->mpq_header->archive_size ||
