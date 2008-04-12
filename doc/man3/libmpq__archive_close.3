@@ -33,9 +33,9 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 .fi
 .SH DESCRIPTION
 .PP
-Call \fBlibmpq__archive_close\fP() to close a mpq archive which was opened by \fBlibmpq__archive_open\fP(). The function does not free the archive structure itself only the contents of it.
+Call \fBlibmpq__archive_close\fP() to close a mpq archive which was opened by \fBlibmpq__archive_open\fP(). The function frees the archive structure itself and the contents of it.
 .LP
-The \fBlibmpq__archive_close\fP() function takes only one argument the archive structure \fImpq_archive\fP which have to be allocated first and free the contents of the structure.
+The \fBlibmpq__archive_close\fP() function one takes one argument of the archive structure \fImpq_archive\fP which has to be set by \fBlibmpq__archive_open\fP.
 .SH RETURN VALUE
 On success, a zero is returned and on error one of the following constants.
 .TP

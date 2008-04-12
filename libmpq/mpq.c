@@ -92,9 +92,10 @@ const char *libmpq__version(void) {
 }
 
 /* this function read a file and verify if it is a valid mpq archive, then it read and decrypt the hash table. */
-int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filename, uint32_t archive_offset) {
+int32_t libmpq__archive_open(mpq_archive_s **dest_mpq_archive, const char *mpq_filename, uint32_t archive_offset) {
 
 	/* some common variables. */
+	mpq_archive_s *mpq_archive	= NULL;
 	uint32_t rb             = 0;
 	uint32_t i              = 0;
 	int32_t result          = 0;
@@ -106,10 +107,15 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 		archive_offset = 0;
 		header_search = TRUE;
 	}
-
+	
+	if ((mpq_archive = calloc(1, sizeof(mpq_archive_s))) == NULL) {
+		/* archive struct could not be allocated */
+		return LIBMPQ_ERROR_MALLOC;
+	}
+	
 	/* check if file exists and is readable */
 	if ((mpq_archive->fp = fopen(mpq_filename, "rb")) == NULL) {
-
+		free(mpq_archive);
 		/* file could not be opened. */
 		return LIBMPQ_ERROR_OPEN;
 	}
@@ -119,11 +125,11 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 
 		/* check if file descriptor is valid. */
 		if ((fclose(mpq_archive->fp)) < 0) {
-
+			free(mpq_archive);
 			/* file was not opened. */
 			return LIBMPQ_ERROR_CLOSE;
 		}
-
+		free(mpq_archive);
 		/* memory allocation problem. */
 		return LIBMPQ_ERROR_MALLOC;
 	}
@@ -149,11 +155,11 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 
 			/* check if file descriptor is valid. */
 			if ((fclose(mpq_archive->fp)) < 0) {
-
+				free(mpq_archive);
 				/* file was not opened. */
 				return LIBMPQ_ERROR_CLOSE;
 			}
-
+			free(mpq_archive);
 			/* seek in file failed. */
 			return LIBMPQ_ERROR_SEEK;
 		}
@@ -166,11 +172,11 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 
 			/* check if file descriptor is valid. */
 			if ((fclose(mpq_archive->fp)) < 0) {
-
+				free(mpq_archive);
 				/* file was not opened. */
 				return LIBMPQ_ERROR_CLOSE;
 			}
-
+			free(mpq_archive);
 			/* no valid mpq archive. */
 			return LIBMPQ_ERROR_FORMAT;
 		}
@@ -200,11 +206,11 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 
 				/* check if file descriptor is valid. */
 				if ((fclose(mpq_archive->fp)) < 0) {
-
+					free(mpq_archive);
 					/* file was not opened. */
 					return LIBMPQ_ERROR_CLOSE;
 				}
-
+				free(mpq_archive);
 				/* TODO: add support for mpq version two. */
 				/* support for version two will be added soon. */
 				return LIBMPQ_ERROR_FORMAT;
@@ -218,11 +224,11 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 
 			/* check if file descriptor is valid. */
 			if ((fclose(mpq_archive->fp)) < 0) {
-
+				free(mpq_archive);
 				/* file was not opened. */
 				return LIBMPQ_ERROR_CLOSE;
 			}
-
+			free(mpq_archive);
 			/* no valid mpq archive. */
 			return LIBMPQ_ERROR_FORMAT;
 		}
@@ -246,11 +252,11 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 
 		/* check if file descriptor is valid. */
 		if ((fclose(mpq_archive->fp)) < 0) {
-
+			free(mpq_archive);
 			/* file was not opened. */
 			return LIBMPQ_ERROR_CLOSE;
 		}
-
+		free(mpq_archive);
 		/* memory allocation problem. */
 		return LIBMPQ_ERROR_MALLOC;
 	}
@@ -265,11 +271,11 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 
 		/* check if file descriptor is valid. */
 		if ((fclose(mpq_archive->fp)) < 0) {
-
+			free(mpq_archive);
 			/* file was not opened. */
 			return LIBMPQ_ERROR_CLOSE;
 		}
-
+		free(mpq_archive);
 		/* the hash table seems corrupt. */
 		return result;
 	}
@@ -284,11 +290,11 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 
 		/* check if file descriptor is valid. */
 		if ((fclose(mpq_archive->fp)) < 0) {
-
+			free(mpq_archive);
 			/* file was not opened. */
 			return LIBMPQ_ERROR_CLOSE;
 		}
-
+		free(mpq_archive);
 		/* the block table seems corrupt. */
 		return result;
 	}
@@ -310,11 +316,11 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 
 		/* check if file descriptor is valid. */
 		if ((fclose(mpq_archive->fp)) < 0) {
-
+			free(mpq_archive);
 			/* file was not opened. */
 			return LIBMPQ_ERROR_CLOSE;
 		}
-
+		free(mpq_archive);
 		/* memory allocation problem. */
 		return LIBMPQ_ERROR_MALLOC;
 	}
@@ -331,11 +337,11 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 
 		/* check if file descriptor is valid. */
 		if ((fclose(mpq_archive->fp)) < 0) {
-
+			free(mpq_archive);
 			/* file was not opened. */
 			return LIBMPQ_ERROR_CLOSE;
 		}
-
+		free(mpq_archive);
 		/* memory allocation problem. */
 		return LIBMPQ_ERROR_MALLOC;
 	}
@@ -353,16 +359,17 @@ int32_t libmpq__archive_open(mpq_archive_s *mpq_archive, const char *mpq_filenam
 
 		/* check if file descriptor is valid. */
 		if ((fclose(mpq_archive->fp)) < 0) {
-
+			free(mpq_archive);
 			/* file was not opened. */
 			return LIBMPQ_ERROR_CLOSE;
 		}
-
+		free(mpq_archive);
 		/* the list file seems corrupt. */
 		return result;
 	}
 
-	/* if no error was found, return zero. */
+	/* if no error was found, set dest_mpq_archive and return zero. */
+	*dest_mpq_archive = mpq_archive;
 	return LIBMPQ_SUCCESS;
 }
 
@@ -381,11 +388,11 @@ int32_t libmpq__archive_close(mpq_archive_s *mpq_archive) {
 
 	/* check if file descriptor is valid. */
 	if ((fclose(mpq_archive->fp)) < 0) {
-
+		free(mpq_archive);
 		/* file was not opened. */
 		return LIBMPQ_ERROR_CLOSE;
 	}
-
+	free(mpq_archive);
 	/* if no error was found, return zero. */
 	return LIBMPQ_SUCCESS;
 }
