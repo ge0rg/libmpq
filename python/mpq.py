@@ -63,7 +63,6 @@ class File:
         if isinstance(item, str):
             self.name = item
             self.number = libmpq.libmpq__file_number(self._archive._mpq, item)
-            
         elif isinstance(item, int):
             buf = ctypes.create_string_buffer(1024)
             libmpq.libmpq__file_name(self._archive._mpq, item, buf, len(buf))
@@ -108,11 +107,9 @@ class Archive:
           self.filename = filename
           offset = -1
         
-#        self._mpq = ctypes.c_void_p()
-        self._mpq = ctypes.create_string_buffer(5000)
+        self._mpq = ctypes.c_void_p()
         
-#        libmpq.libmpq__archive_open(ctypes.byref(self._mpq), self.filename, offset)
-        libmpq.libmpq__archive_open(self._mpq, self.filename, offset)
+        libmpq.libmpq__archive_open(ctypes.byref(self._mpq), self.filename, offset)
         self._opened = True
         
         for name, number in {
