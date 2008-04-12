@@ -327,6 +327,14 @@ int32_t libmpq__archive_close(mpq_archive_s *mpq_archive) {
 
 	CHECK_IS_INITIALIZED();
 
+	/* try to close the file */
+	if ((fclose(mpq_archive->fp)) < 0) {
+		/* don't free anything here, so the caller can try calling us
+		 * again.
+		 */
+		return LIBMPQ_ERROR_CLOSE;
+	}
+
 	/* free header, tables and list. */
 	free(mpq_archive->mpq_list->block_table_indices);
 	free(mpq_archive->mpq_list);
@@ -334,14 +342,8 @@ int32_t libmpq__archive_close(mpq_archive_s *mpq_archive) {
 	free(mpq_archive->mpq_hash);
 	free(mpq_archive->mpq_block);
 	free(mpq_archive->mpq_header);
-
-	/* check if file descriptor is valid. */
-	if ((fclose(mpq_archive->fp)) < 0) {
-		free(mpq_archive);
-		/* file was not opened. */
-		return LIBMPQ_ERROR_CLOSE;
-	}
 	free(mpq_archive);
+
 	/* if no error was found, return zero. */
 	return LIBMPQ_SUCCESS;
 }
