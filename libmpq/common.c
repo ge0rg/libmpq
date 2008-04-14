@@ -122,7 +122,7 @@ static int32_t libmpq__decrypt_table(uint32_t *crypt_buf, uint32_t *hash, const 
 }
 
 /* function to detect decryption key. */
-int32_t libmpq__decrypt_key(uint8_t *in_buf, uint32_t in_size, uint32_t *crypt_buf) {
+int32_t libmpq__decrypt_key(uint8_t *in_buf, uint32_t in_size, uint32_t block_size, uint32_t *crypt_buf) {
 
 	/* some common variables. */
 	uint32_t saveseed1;
@@ -141,6 +141,7 @@ int32_t libmpq__decrypt_key(uint8_t *in_buf, uint32_t in_size, uint32_t *crypt_b
 		uint32_t seed1;
 		uint32_t seed2 = 0xEEEEEEEE;
 		uint32_t ch;
+		uint32_t ch2;
 
 		/* try the first uint32_t's (we exactly know the value). */
 		seed1  = temp - crypt_buf[0x400 + i];
@@ -153,6 +154,7 @@ int32_t libmpq__decrypt_key(uint8_t *in_buf, uint32_t in_size, uint32_t *crypt_b
 
 		/* add one because we are decrypting block positions. */
 		saveseed1 = seed1 + 1;
+		ch2       = ch;
 
 		/*
 		 *  if ok, continue and test the second value. we don't know exactly the value,
@@ -165,7 +167,7 @@ int32_t libmpq__decrypt_key(uint8_t *in_buf, uint32_t in_size, uint32_t *crypt_b
 		ch     = ((uint32_t *)in_buf)[1] ^ (seed1 + seed2);
 
 		/* check if we found the file seed. */
-		if ((ch & 0xFFFF0000) == 0) {
+		if ((ch - ch2) <= block_size) {
 
 			/* file seed found, so return it. */
 			return saveseed1;
