@@ -98,6 +98,7 @@ int32_t libmpq__archive_open(mpq_archive_s **dest_mpq_archive, const char *mpq_f
 	mpq_archive_s *mpq_archive	= NULL;
 	uint32_t rb             = 0;
 	uint32_t i              = 0;
+	uint32_t count          = 0;
 	int32_t result          = 0;
 	uint32_t header_search	= FALSE;
 
@@ -260,13 +261,6 @@ int32_t libmpq__archive_open(mpq_archive_s **dest_mpq_archive, const char *mpq_f
 		return result;
 	}
 
-	/* loop through all files in mpq archive and add archive offset to file offset. */
-	for (i = 0; i < mpq_archive->mpq_header->block_table_count; i++) {
-
-		/* add archive offset to file offset. */
-		mpq_archive->mpq_block[i].offset += archive_offset;
-	}
-
 	/* allocate memory for the mpq header and file list. */
 	if ((mpq_archive->mpq_list = calloc(1, sizeof(mpq_list_s))) == NULL) {
 
@@ -283,8 +277,8 @@ int32_t libmpq__archive_open(mpq_archive_s **dest_mpq_archive, const char *mpq_f
 	}
 
 	/* allocate memory, some mpq archives have block table greater than hash table, avoid buffer overruns. */
-	if ((mpq_archive->mpq_file                      = calloc(mpq_archive->mpq_header->hash_table_count,                                                  sizeof(mpq_file_s))) == NULL ||
-	    (mpq_archive->mpq_list->block_table_indices = calloc(max(mpq_archive->mpq_header->block_table_count, mpq_archive->mpq_header->hash_table_count), sizeof(uint32_t))) == NULL) {
+	if ((mpq_archive->mpq_file                      = calloc(mpq_archive->mpq_header->hash_table_count,  sizeof(mpq_file_s))) == NULL ||
+	    (mpq_archive->mpq_list->block_table_indices = calloc(mpq_archive->mpq_header->block_table_count, sizeof(uint32_t))) == NULL) {
 
 		/* clean up */
 		fclose(mpq_archive->fp);
@@ -299,23 +293,31 @@ int32_t libmpq__archive_open(mpq_archive_s **dest_mpq_archive, const char *mpq_f
 		return LIBMPQ_ERROR_MALLOC;
 	}
 
-	/* try to read list file. */
-	if ((result = libmpq__read_file_list(mpq_archive)) != 0) {
+	/* loop through all files in mpq archive and check if they are valid. */
+	for (i = 0; i < mpq_archive->mpq_header->block_table_count; i++) {
 
-		/* clean up */
-		fclose(mpq_archive->fp);
+		/* check if file exists, sizes and offsets are correct. */
+		if ((mpq_archive->mpq_block[i].flags & LIBMPQ_FLAG_EXISTS) == 0 ||
+		     mpq_archive->mpq_block[i].offset > mpq_archive->mpq_header->archive_size ||
+		     mpq_archive->mpq_block[i].compressed_size > mpq_archive->mpq_header->archive_size ||
+		     mpq_archive->mpq_block[i].uncompressed_size == 0) {
 
-		free(mpq_archive->mpq_list->block_table_indices);
-		free(mpq_archive->mpq_list);
-		free(mpq_archive->mpq_file);
-		free(mpq_archive->mpq_hash);
-		free(mpq_archive->mpq_block);
-		free(mpq_archive->mpq_header);
-		free(mpq_archive);
+			/* file does not exist, so nothing to do with that block. */
+			continue;
+		}
 
-		/* the list file seems corrupt. */
-		return result;
+		/* add archive offset to file offset. */
+		mpq_archive->mpq_block[i].offset += archive_offset;
+
+		/* create final indices tables. */
+		mpq_archive->mpq_list->block_table_indices[count] = i;
+
+		/* increase file counter. */
+		count++;
 	}
+
+	/* save the number of files. */
+	mpq_archive->files = count;
 
 	/* if no error was found, set dest_mpq_archive and return zero. */
 	*dest_mpq_archive = mpq_archive;

@@ -70,9 +70,4 @@ int32_t libmpq__read_table_block(
 	uint32_t	*crypt_buf
 );
 
-/* function to read listfile from mpq archive. */
-int32_t libmpq__read_file_list(
-	mpq_archive_s	*mpq_archive
-);
-
 #endif						/* _COMMON_H */
