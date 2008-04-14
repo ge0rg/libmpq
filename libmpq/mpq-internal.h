@@ -58,9 +58,4 @@
 #define TRUE 1
 #endif
 
-/* define max, because not all systems have it. */
-#ifndef max
-#define max(a, b) ((a > b) ? a : b)
-#endif
-
 #endif						/* _MPQ_INTERNAL_H */
