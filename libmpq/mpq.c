@@ -488,7 +488,7 @@ int32_t libmpq__file_open(mpq_archive_s *mpq_archive, uint32_t file_number) {
 		if (mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_ENCRYPTED) {
 
 			/* check if we don't know the file seed, try to find it. */
-			if ((mpq_archive->mpq_file[file_number - 1]->seed = libmpq__decrypt_key((uint8_t *)mpq_archive->mpq_file[file_number - 1]->compressed_offset, compressed_size, crypt_buf)) < 0) {
+			if ((mpq_archive->mpq_file[file_number - 1]->seed = libmpq__decrypt_key((uint8_t *)mpq_archive->mpq_file[file_number - 1]->compressed_offset, compressed_size, mpq_archive->block_size, crypt_buf)) < 0) {
 
 				/* free compressed block offset table, file pointer and mpq buffer. */
 				free(mpq_archive->mpq_file[file_number - 1]->compressed_offset);

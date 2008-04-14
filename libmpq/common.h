@@ -37,6 +37,7 @@ uint32_t libmpq__hash_string(
 int32_t libmpq__decrypt_key(
 	uint8_t		*in_buf,
 	uint32_t	in_size,
+	uint32_t	block_size,
 	uint32_t	*crypt_buf
 );
 
