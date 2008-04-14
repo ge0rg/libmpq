@@ -33,7 +33,6 @@ extern "C" {
 #endif
 
 /* generic includes. */
-#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -131,7 +130,6 @@ typedef struct {
 typedef struct {
 
 	/* generic file information. */
-	char		filename[PATH_MAX];	/* archive file name. */
 	FILE		*fp;			/* file handle. */
 
 	/* generic size information. */

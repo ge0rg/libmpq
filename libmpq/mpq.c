@@ -108,29 +108,32 @@ int32_t libmpq__archive_open(mpq_archive_s **dest_mpq_archive, const char *mpq_f
 		archive_offset = 0;
 		header_search = TRUE;
 	}
-	
+
 	if ((mpq_archive = calloc(1, sizeof(mpq_archive_s))) == NULL) {
+
 		/* archive struct could not be allocated */
 		return LIBMPQ_ERROR_MALLOC;
 	}
-	
+
 	/* check if file exists and is readable */
 	if ((mpq_archive->fp = fopen(mpq_filename, "rb")) == NULL) {
+
+		/* clean up */
 		free(mpq_archive);
+
 		/* file could not be opened. */
 		return LIBMPQ_ERROR_OPEN;
 	}
 
 	/* allocate memory for the mpq header and file list. */
 	if ((mpq_archive->mpq_header = calloc(1, sizeof(mpq_header_s))) == NULL) {
+
 		fclose(mpq_archive->fp);
 		free(mpq_archive);
 
+		/* header struct could not be allocated */
 		return LIBMPQ_ERROR_MALLOC;
 	}
-
-	/* fill the structures with informations. */
-	strncpy(mpq_archive->filename, mpq_filename, strlen(mpq_filename));
 
 	/* assign some default values. */
 	mpq_archive->mpq_header->mpq_magic = 0;
