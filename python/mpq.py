@@ -16,12 +16,12 @@ def check_error(result, func, arguments):
         -4: (IOError, "read"),
         -5: (IOError, "write"),
         -6: (MemoryError,),
-        -7: (Error, "format"),
-        -8: (Error, "not initialized"),
-        -9: (Error, "buffer size too small"),
-        -10: (Error, "file does not exist in archive"),
-        -11: (Error, "decrypt"),
-        -12: (Error, "decompress"),
+        -7: (Error, "file is not an mpq or is corrupted"),
+        -8: (AssertionError, "not initialized"),
+        -9: (AssertionError, "buffer size too small"),
+        -10: (KeyError, "file does not exist in archive"),
+        -11: (AssertionError, "decrypt"),
+        -12: (AssertionError, "decompress"),
         -13: (ValueError, "info"),
     }
     
@@ -69,7 +69,7 @@ class File:
             self.name = buf.value
             self.number = item
         else:
-            raise TypeError, "incorrect index type"
+            raise TypeError, "Archive indices must be strings or integers"
         
         libmpq.libmpq__file_open(self._archive._mpq, self.number)
         self._opened = True
