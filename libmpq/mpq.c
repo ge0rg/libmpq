@@ -215,10 +215,8 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 	/* store block size for later use. */
 	(*mpq_archive)->block_size = 512 << (*mpq_archive)->mpq_header->block_size;
 
-	/* add archive offset to size, hash and block table offset. */
-	(*mpq_archive)->mpq_header->archive_size       += archive_offset;
-	(*mpq_archive)->mpq_header->hash_table_offset  += archive_offset;
-	(*mpq_archive)->mpq_header->block_table_offset += archive_offset;
+	/* store archive offset for later use. */
+	(*mpq_archive)->archive_offset = archive_offset;
 
 	/* allocate memory for the block table and hash table. */
 	if (((*mpq_archive)->mpq_block = calloc((*mpq_archive)->mpq_header->block_table_count, sizeof(mpq_block_s))) == NULL ||
@@ -308,9 +306,6 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 			continue;
 		}
 
-		/* add archive offset to file offset. */
-		(*mpq_archive)->mpq_block[i].offset += archive_offset;
-
 		/* create final indices tables. */
 		(*mpq_archive)->mpq_list->block_table_indices[count] = i;
 
@@ -366,7 +361,7 @@ int32_t libmpq__archive_info(mpq_archive_s *mpq_archive, uint32_t info_type) {
 		case LIBMPQ_ARCHIVE_SIZE:
 
 			/* return the archive size. */
-			return mpq_archive->mpq_header->archive_size;
+			return mpq_archive->mpq_header->archive_size + mpq_archive->archive_offset;
 		case LIBMPQ_ARCHIVE_COMPRESSED_SIZE:
 
 			/* loop through all files in archive and count compressed size. */
@@ -459,7 +454,7 @@ int32_t libmpq__file_open(mpq_archive_s *mpq_archive, uint32_t file_number) {
 	    (mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) == 0) {
 
 		/* seek to block position. */
-		if (fseek(mpq_archive->fp, mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].offset, SEEK_SET) < 0) {
+		if (fseek(mpq_archive->fp, mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].offset + mpq_archive->archive_offset, SEEK_SET) < 0) {
 
 			/* free compressed block offset table and file pointer. */
 			free(mpq_archive->mpq_file[file_number - 1]->compressed_offset);
@@ -621,7 +616,7 @@ int32_t libmpq__file_info(mpq_archive_s *mpq_archive, uint32_t info_type, uint32
 		case LIBMPQ_FILE_OFFSET:
 
 			/* return the absolute file start position in archive. */
-			return mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].offset;
+			return mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].offset + mpq_archive->archive_offset;
 		case LIBMPQ_FILE_BLOCKS:
 
 			/* return the number of blocks for file, on single sector files return one. */
@@ -808,7 +803,7 @@ int32_t libmpq__block_info(mpq_archive_s *mpq_archive, uint32_t info_type, uint3
 		case LIBMPQ_BLOCK_OFFSET:
 
 			/* return the absolute block start position in archive. */
-			return mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].offset + mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number - 1];
+			return mpq_archive->mpq_block[mpq_archive->mpq_list->block_table_indices[file_number - 1]].offset + mpq_archive->archive_offset + mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number - 1];
 		case LIBMPQ_BLOCK_SEED:
 
 			/* return the seed of the block for decryption. */

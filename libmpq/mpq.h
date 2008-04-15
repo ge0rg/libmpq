@@ -134,6 +134,7 @@ typedef struct {
 
 	/* generic size information. */
 	uint32_t	block_size;		/* size of the mpq block. */
+	uint32_t	archive_offset;		/* absolute start position of archive. */
 
 	/* archive related buffers and tables. */
 	mpq_header_s	*mpq_header;		/* mpq file header. */
