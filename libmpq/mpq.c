@@ -202,7 +202,7 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 	/* allocate memory for the block table, hash table, file and block table to file mapping. */
 	if (((*mpq_archive)->mpq_block           = calloc((*mpq_archive)->mpq_header->block_table_count, sizeof(mpq_block_s))) == NULL ||
 	    ((*mpq_archive)->mpq_hash            = calloc((*mpq_archive)->mpq_header->hash_table_count,  sizeof(mpq_hash_s))) == NULL ||
-	    ((*mpq_archive)->mpq_file            = calloc((*mpq_archive)->mpq_header->hash_table_count,  sizeof(mpq_file_s))) == NULL ||
+	    ((*mpq_archive)->mpq_file            = calloc((*mpq_archive)->mpq_header->block_table_count, sizeof(mpq_file_s))) == NULL ||
 	    ((*mpq_archive)->block_table_indices = calloc((*mpq_archive)->mpq_header->block_table_count, sizeof(uint32_t))) == NULL) {
 
 		/* memory allocation problem. */
@@ -597,7 +597,8 @@ int32_t libmpq__file_name(mpq_archive_s *mpq_archive, uint32_t file_number, char
 int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename) {
 
 	/* some common variables. */
-	uint32_t i, hash1, hash2, hash3, ht_count;
+	uint32_t i, j, hash1, hash2, hash3, ht_count;
+	uint32_t count = 0;
 
 	CHECK_IS_INITIALIZED();
 
@@ -625,8 +626,25 @@ int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename) {
 
 		/* if the other two hashes match, we found our file number. */
 		if (mpq_archive->mpq_hash[i].hash_a == hash2 &&
-		    mpq_archive->mpq_hash[i].hash_b == hash3)
-			return mpq_archive->mpq_hash[i].block_table_index + 1;
+		    mpq_archive->mpq_hash[i].hash_b == hash3) {
+
+			/* loop through files in mpq archive until block table index from hash and check if they are valid. */
+			for (j = 0; j < mpq_archive->mpq_hash[i].block_table_index; j++) {
+
+				/* check if file exists, sizes and offsets are correct. */
+				if ((mpq_archive->mpq_block[j].flags & LIBMPQ_FLAG_EXISTS) == 0 ||
+				     mpq_archive->mpq_block[j].offset > mpq_archive->mpq_header->archive_size ||
+				     mpq_archive->mpq_block[j].compressed_size > mpq_archive->mpq_header->archive_size ||
+				     mpq_archive->mpq_block[j].uncompressed_size == 0) {
+
+					/* file does not exist, so increase counter. */
+					count++;
+				}
+			}
+
+			/* return the file number. */
+			return mpq_archive->mpq_hash[i].block_table_index - count + 1;
+		}
 	}
 
 	/* if no matching entry found, so return error. */
