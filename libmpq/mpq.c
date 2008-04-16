@@ -185,6 +185,7 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 
 		/* move to the next possible offset. */
 		if (!header_search) {
+
 			/* no valid mpq archive. */
 			result = LIBMPQ_ERROR_FORMAT;
 			goto error;
@@ -198,40 +199,27 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 	/* store archive offset for later use. */
 	(*mpq_archive)->archive_offset = archive_offset;
 
-	/* allocate memory for the block table and hash table. */
+	/* allocate memory for the block table, hash table, list and file. */
 	if (((*mpq_archive)->mpq_block = calloc((*mpq_archive)->mpq_header->block_table_count, sizeof(mpq_block_s))) == NULL ||
-	    ((*mpq_archive)->mpq_hash  = calloc((*mpq_archive)->mpq_header->hash_table_count,  sizeof(mpq_hash_s))) == NULL) {
+	    ((*mpq_archive)->mpq_hash  = calloc((*mpq_archive)->mpq_header->hash_table_count,  sizeof(mpq_hash_s))) == NULL ||
+	    ((*mpq_archive)->mpq_list  = calloc(1, sizeof(mpq_list_s))) == NULL ||
+	    ((*mpq_archive)->mpq_file  = calloc((*mpq_archive)->mpq_header->hash_table_count,  sizeof(mpq_file_s))) == NULL) {
 
 		/* memory allocation problem. */
 		result = LIBMPQ_ERROR_MALLOC;
 		goto error;
 	}
 
-	/* try to read and decrypt the hash table. */
-	if ((result = libmpq__read_table_hash(*mpq_archive, crypt_buf)) != 0) {
+	/* try to read and decrypt the hash and block table. */
+	if ((result = libmpq__read_table_hash(*mpq_archive, crypt_buf)) != 0 ||
+	    (result = libmpq__read_table_block((*mpq_archive), crypt_buf)) != 0) {
 
-		/* the hash table seems corrupt. */
-		goto error;
-	}
-
-	/* try to read and decrypt the block table. */
-	if ((result = libmpq__read_table_block((*mpq_archive), crypt_buf)) != 0) {
-
-		/* the block table seems corrupt. */
-		goto error;
-	}
-
-	/* allocate memory for the mpq header and file list. */
-	if (((*mpq_archive)->mpq_list = calloc(1, sizeof(mpq_list_s))) == NULL) {
-
-		/* memory allocation problem. */
-		result = LIBMPQ_ERROR_MALLOC;
+		/* the hash or block table seems corrupt. */
 		goto error;
 	}
 
 	/* allocate memory, some mpq archives have block table greater than hash table, avoid buffer overruns. */
-	if (((*mpq_archive)->mpq_file                      = calloc((*mpq_archive)->mpq_header->hash_table_count,  sizeof(mpq_file_s))) == NULL ||
-	    ((*mpq_archive)->mpq_list->block_table_indices = calloc((*mpq_archive)->mpq_header->block_table_count, sizeof(uint32_t))) == NULL) {
+	if (((*mpq_archive)->mpq_list->block_table_indices = calloc((*mpq_archive)->mpq_header->block_table_count, sizeof(uint32_t))) == NULL) {
 
 		/* memory allocation problem. */
 		result = LIBMPQ_ERROR_MALLOC;
