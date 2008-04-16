@@ -290,6 +290,8 @@ error:
 	free((*mpq_archive)->mpq_header);
 	free(*mpq_archive);
 
+	*mpq_archive = NULL;
+
 	return result;
 }
 
