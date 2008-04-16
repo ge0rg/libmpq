@@ -151,11 +151,6 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 		/* read header from file. */
 		if ((rb = fread((*mpq_archive)->mpq_header, 1, sizeof(mpq_header_s), (*mpq_archive)->fp)) != sizeof(mpq_header_s)) {
 
-			/* clean up */
-			fclose((*mpq_archive)->fp);
-			free((*mpq_archive)->mpq_header);
-			free(*mpq_archive);
-
 			/* no valid mpq archive. */
 			result = LIBMPQ_ERROR_FORMAT;
 			goto error;
@@ -181,11 +176,6 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 			/* check if we process new mpq archive version. */
 			if ((*mpq_archive)->mpq_header->version == LIBMPQ_ARCHIVE_VERSION_TWO) {
 
-				/* clean up */
-				fclose((*mpq_archive)->fp);
-				free((*mpq_archive)->mpq_header);
-				free(*mpq_archive);
-
 				/* TODO: add support for mpq version two. */
 				/* support for version two will be added soon. */
 				result = LIBMPQ_ERROR_FORMAT;
@@ -195,11 +185,6 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 
 		/* move to the next possible offset. */
 		if (!header_search) {
-			/* clean up */
-			fclose((*mpq_archive)->fp);
-			free((*mpq_archive)->mpq_header);
-			free(*mpq_archive);
-
 			/* no valid mpq archive. */
 			result = LIBMPQ_ERROR_FORMAT;
 			goto error;
