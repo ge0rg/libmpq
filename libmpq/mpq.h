@@ -121,11 +121,6 @@ typedef struct {
 	uint32_t	*compressed_offset;	/* position of each file block (only for compressed files). */
 } mpq_file_s;
 
-/* file list structure. */
-typedef struct {
-	uint32_t	*block_table_indices;	/* pointer which stores the mapping for file number to block entry. */
-} mpq_list_s;
-
 /* archive structure used since diablo 1.00 by blizzard. */
 typedef struct {
 
@@ -143,7 +138,7 @@ typedef struct {
 	mpq_file_s	**mpq_file;		/* pointer to the file pointers which are opened. */
 
 	/* non archive structure related members. */
-	mpq_list_s	*mpq_list;		/* handle to file list (in most cases this is the last file in the archive). */
+	uint32_t	*block_table_indices;	/* pointer which stores the mapping for file number to block entry. */
 	uint32_t	files;			/* number of files in archive, which could be extracted. */
 } mpq_archive_s;
 
