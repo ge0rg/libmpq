@@ -117,21 +117,17 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 	/* check if file exists and is readable */
 	if (((*mpq_archive)->fp = fopen(mpq_filename, "rb")) == NULL) {
 
-		/* clean up */
-		free(*mpq_archive);
-
 		/* file could not be opened. */
-		return LIBMPQ_ERROR_OPEN;
+		result = LIBMPQ_ERROR_OPEN;
+		goto error;
 	}
 
 	/* allocate memory for the mpq header and file list. */
 	if (((*mpq_archive)->mpq_header = calloc(1, sizeof(mpq_header_s))) == NULL) {
 
-		fclose((*mpq_archive)->fp);
-		free(*mpq_archive);
-
 		/* header struct could not be allocated */
-		return LIBMPQ_ERROR_MALLOC;
+		result = LIBMPQ_ERROR_MALLOC;
+		goto error;
 	}
 
 	/* assign some default values. */
@@ -147,13 +143,9 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 		/* seek in file. */
 		if (fseek((*mpq_archive)->fp, archive_offset, SEEK_SET) < 0) {
 
-			/* clean up */
-			fclose((*mpq_archive)->fp);
-			free((*mpq_archive)->mpq_header);
-			free(*mpq_archive);
-
 			/* seek in file failed. */
-			return LIBMPQ_ERROR_SEEK;
+			result = LIBMPQ_ERROR_SEEK;
+			goto error;
 		}
 
 		/* read header from file. */
@@ -165,7 +157,8 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 			free(*mpq_archive);
 
 			/* no valid mpq archive. */
-			return LIBMPQ_ERROR_FORMAT;
+			result = LIBMPQ_ERROR_FORMAT;
+			goto error;
 		}
 
 		/* check if we found a valid mpq header. */
@@ -195,7 +188,8 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 
 				/* TODO: add support for mpq version two. */
 				/* support for version two will be added soon. */
-				return LIBMPQ_ERROR_FORMAT;
+				result = LIBMPQ_ERROR_FORMAT;
+				goto error;
 			}
 		}
 
@@ -207,7 +201,8 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 			free(*mpq_archive);
 
 			/* no valid mpq archive. */
-			return LIBMPQ_ERROR_FORMAT;
+			result = LIBMPQ_ERROR_FORMAT;
+			goto error;
 		}
 		archive_offset += 512;
 	}
@@ -222,75 +217,40 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 	if (((*mpq_archive)->mpq_block = calloc((*mpq_archive)->mpq_header->block_table_count, sizeof(mpq_block_s))) == NULL ||
 	    ((*mpq_archive)->mpq_hash  = calloc((*mpq_archive)->mpq_header->hash_table_count,  sizeof(mpq_hash_s))) == NULL) {
 
-		/* clean up */
-		fclose((*mpq_archive)->fp);
-		free((*mpq_archive)->mpq_header);
-		free(*mpq_archive);
-
 		/* memory allocation problem. */
-		return LIBMPQ_ERROR_MALLOC;
+		result = LIBMPQ_ERROR_MALLOC;
+		goto error;
 	}
 
 	/* try to read and decrypt the hash table. */
 	if ((result = libmpq__read_table_hash(*mpq_archive, crypt_buf)) != 0) {
 
-		/* clean up */
-		fclose((*mpq_archive)->fp);
-
-		free((*mpq_archive)->mpq_hash);
-		free((*mpq_archive)->mpq_block);
-		free((*mpq_archive)->mpq_header);
-		free(*mpq_archive);
-
 		/* the hash table seems corrupt. */
-		return result;
+		goto error;
 	}
 
 	/* try to read and decrypt the block table. */
 	if ((result = libmpq__read_table_block((*mpq_archive), crypt_buf)) != 0) {
 
-		/* clean up */
-		fclose((*mpq_archive)->fp);
-
-		free((*mpq_archive)->mpq_hash);
-		free((*mpq_archive)->mpq_block);
-		free((*mpq_archive)->mpq_header);
-		free(*mpq_archive);
-
 		/* the block table seems corrupt. */
-		return result;
+		goto error;
 	}
 
 	/* allocate memory for the mpq header and file list. */
 	if (((*mpq_archive)->mpq_list = calloc(1, sizeof(mpq_list_s))) == NULL) {
 
-		/* clean up */
-		fclose((*mpq_archive)->fp);
-
-		free((*mpq_archive)->mpq_hash);
-		free((*mpq_archive)->mpq_block);
-		free((*mpq_archive)->mpq_header);
-		free(*mpq_archive);
-
 		/* memory allocation problem. */
-		return LIBMPQ_ERROR_MALLOC;
+		result = LIBMPQ_ERROR_MALLOC;
+		goto error;
 	}
 
 	/* allocate memory, some mpq archives have block table greater than hash table, avoid buffer overruns. */
 	if (((*mpq_archive)->mpq_file                      = calloc((*mpq_archive)->mpq_header->hash_table_count,  sizeof(mpq_file_s))) == NULL ||
 	    ((*mpq_archive)->mpq_list->block_table_indices = calloc((*mpq_archive)->mpq_header->block_table_count, sizeof(uint32_t))) == NULL) {
 
-		/* clean up */
-		fclose((*mpq_archive)->fp);
-
-		free((*mpq_archive)->mpq_list);
-		free((*mpq_archive)->mpq_hash);
-		free((*mpq_archive)->mpq_block);
-		free((*mpq_archive)->mpq_header);
-		free(*mpq_archive);
-
 		/* memory allocation problem. */
-		return LIBMPQ_ERROR_MALLOC;
+		result = LIBMPQ_ERROR_MALLOC;
+		goto error;
 	}
 
 	/* loop through all files in mpq archive and check if they are valid. */
@@ -318,6 +278,19 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 
 	/* if no error was found, return zero. */
 	return LIBMPQ_SUCCESS;
+
+error:
+	fclose((*mpq_archive)->fp);
+
+	free((*mpq_archive)->mpq_list->block_table_indices);
+	free((*mpq_archive)->mpq_list);
+	free((*mpq_archive)->mpq_file);
+	free((*mpq_archive)->mpq_hash);
+	free((*mpq_archive)->mpq_block);
+	free((*mpq_archive)->mpq_header);
+	free(*mpq_archive);
+
+	return result;
 }
 
 /* this function close the file descriptor, free the decryption buffer and the file list. */
