@@ -245,7 +245,8 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 	return LIBMPQ_SUCCESS;
 
 error:
-	fclose((*mpq_archive)->fp);
+	if ((*mpq_archive)->fp)
+		fclose((*mpq_archive)->fp);
 
 	free((*mpq_archive)->block_table_indices);
 	free((*mpq_archive)->mpq_file);
