@@ -70,12 +70,6 @@ extern "C" {
 #define LIBMPQ_FILE_BLOCKS			9		/* return the number of blocks for the file, if file is stored in single sector return one. */
 #define LIBMPQ_FILE_BLOCKSIZE			10		/* return the block size for the file, if file is stored in single sector return uncompressed size. */
 
-/* define generic values for returning block information. */
-#define LIBMPQ_BLOCK_PACKED_SIZE		1		/* compressed and/or encrypted size of block. */
-#define LIBMPQ_BLOCK_UNPACKED_SIZE		2		/* uncompressed and/or decrypted size of block. */
-#define LIBMPQ_BLOCK_OFFSET			3		/* return absolute start position of block in archive. */
-#define LIBMPQ_BLOCK_SEED			4		/* return the block seed used for decryption. */
-
 /* mpq archive header. */
 typedef struct {
 	uint32_t	mpq_magic;		/* the 0x1A51504D ('MPQ\x1A') signature. */
@@ -120,7 +114,7 @@ typedef struct {
 
 	/* generic size information. */
 	uint32_t	block_size;		/* size of the mpq block. */
-	uint32_t	archive_offset;		/* absolute start position of archive. */
+	off_t		archive_offset;		/* absolute start position of archive. */
 
 	/* archive related buffers and tables. */
 	mpq_header_s	*mpq_header;		/* mpq file header. */
@@ -159,10 +153,8 @@ extern LIBMPQ_API int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const 
 /* generic file read functions. */
 extern LIBMPQ_API int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, uint32_t out_size, uint32_t file_number);
 
-/* generic block information. */
-extern LIBMPQ_API int32_t libmpq__block_info(mpq_archive_s *mpq_archive, uint32_t info_type, uint32_t file_number, uint32_t block_number);
-
-/* generic block read function. */
+/* generic block processing functions. */
+extern LIBMPQ_API int32_t libmpq__block_uncompressed_size(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, off_t *uncompressed_size);
 extern LIBMPQ_API int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, uint32_t out_size, uint32_t file_number, uint32_t block_number);
 
 #ifdef __cplusplus
