@@ -662,12 +662,12 @@ int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename) {
 int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, uint32_t out_size, uint32_t file_number) {
 
 	/* some common variables. */
-	int32_t tb = 0;
-	int32_t rb = 0;
 	uint32_t file_offset;
 	uint32_t blocks;
-	uint32_t unpacked_size;
 	uint32_t i;
+	int32_t tb              = 0;
+	int32_t rb              = 0;
+	off_t uncompressed_size = 0;
 
 	CHECK_IS_INITIALIZED();
 
@@ -700,10 +700,10 @@ int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, uint32_t
 	for (i = 1; i <= blocks; i++) {
 
 		/* get unpacked block size. */
-		unpacked_size = libmpq__block_info(mpq_archive, LIBMPQ_BLOCK_UNPACKED_SIZE, file_number, i);
+		libmpq__block_uncompressed_size(mpq_archive, file_number, i, &uncompressed_size);
 
 		/* read block. */
-		if ((rb = libmpq__block_read(mpq_archive, out_buf + tb, unpacked_size, file_number, i)) < 0) {
+		if ((rb = libmpq__block_read(mpq_archive, out_buf + tb, uncompressed_size, file_number, i)) < 0) {
 
 			/* something on reading block failed. */
 			return rb;
@@ -717,8 +717,8 @@ int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, uint32_t
 	return tb;
 }
 
-/* this function return some useful block information. */
-int32_t libmpq__block_info(mpq_archive_s *mpq_archive, uint32_t info_type, uint32_t file_number, uint32_t block_number) {
+/* this function return the uncompressed size of the given file and block in the archive. */
+int32_t libmpq__block_uncompressed_size(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, off_t *uncompressed_size) {
 
 	CHECK_IS_INITIALIZED();
 
@@ -736,47 +736,26 @@ int32_t libmpq__block_info(mpq_archive_s *mpq_archive, uint32_t info_type, uint3
 		return LIBMPQ_ERROR_EXIST;
 	}
 
-	/* check which information type should be returned. */
-	switch (info_type) {
-		case LIBMPQ_BLOCK_PACKED_SIZE:
+	/* check if block is stored as single sector. */
+	if ((mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) != 0) {
 
-			/* return the compressed size of the block in the mpq archive. */
-			return mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number] - mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number - 1];
-		case LIBMPQ_BLOCK_UNPACKED_SIZE:
+		/* return the uncompressed size of the block in the mpq archive. */
+		*uncompressed_size = mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number - 1]].uncompressed_size;
+	}
 
-			/* check if block is stored as single sector. */
-			if ((mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) != 0) {
+	/* check if block is not stored as single sector. */
+	if ((mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) == 0) {
 
-				/* return the uncompressed size of the block in the mpq archive. */
-				return mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number - 1]].uncompressed_size;
-			}
+		/* check if we not process the last block. */
+		if (block_number < (mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number - 1]].uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size) {
 
-			/* check if block is not stored as single sector. */
-			if ((mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) == 0) {
+			/* return the block size as uncompressed size. */
+			*uncompressed_size = mpq_archive->block_size;
+		} else {
 
-				/* check if we not process the last block. */
-				if (block_number < (mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number - 1]].uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size) {
-
-					/* return the block size as uncompressed size. */
-					return mpq_archive->block_size;
-				} else {
-
-					/* return the uncompressed size of the last block in the mpq archive. */
-					return mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number - 1]].uncompressed_size - mpq_archive->block_size * (block_number - 1);
-				}
-			}
-		case LIBMPQ_BLOCK_OFFSET:
-
-			/* return the absolute block start position in archive. */
-			return mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number - 1]].offset + mpq_archive->archive_offset + mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number - 1];
-		case LIBMPQ_BLOCK_SEED:
-
-			/* return the seed of the block for decryption. */
-			return mpq_archive->mpq_file[file_number - 1]->seed + block_number - 1;
-		default:
-
-			/* if info type was not found, return error. */
-			return LIBMPQ_ERROR_INFO;
+			/* return the uncompressed size of the last block in the mpq archive. */
+			*uncompressed_size = mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number - 1]].uncompressed_size - mpq_archive->block_size * (block_number - 1);
+		}
 	}
 
 	/* if no error was found, return zero. */
@@ -787,28 +766,42 @@ int32_t libmpq__block_info(mpq_archive_s *mpq_archive, uint32_t info_type, uint3
 int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, uint32_t out_size, uint32_t file_number, uint32_t block_number) {
 
 	/* some common variables. */
-	int32_t tb = 0;
 	uint32_t block_offset;
 	uint32_t seed;
-	uint8_t *in_buf;
 	uint32_t in_size;
+	uint8_t *in_buf;
+	int32_t tb              = 0;
+	off_t uncompressed_size = 0;
 
 	CHECK_IS_INITIALIZED();
 
-	/* check if file and block exist in archive. */
-	if ((block_offset = libmpq__block_info(mpq_archive, LIBMPQ_BLOCK_OFFSET, file_number, block_number)) < 0) {
+	/* check if given file number is not out of range. */
+	if (file_number < 1 || file_number > mpq_archive->files) {
 
-		/* file or block does not exist. */
+		/* file number is out of range. */
 		return LIBMPQ_ERROR_EXIST;
 	}
 
+	/* check if given block number is not out of range. */
+	if (block_number < 1 || block_number > ((mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) != 0 ? 1 : (mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number - 1]].uncompressed_size + mpq_archive->block_size - 1) / mpq_archive->block_size)) {
+
+		/* file number is out of range. */
+		return LIBMPQ_ERROR_EXIST;
+	}
+
+	/* get target size of block. */
+	libmpq__block_uncompressed_size(mpq_archive, file_number, block_number, &uncompressed_size);
+
 	/* check if target buffer is to small. */
-	if ((libmpq__block_info(mpq_archive, LIBMPQ_BLOCK_UNPACKED_SIZE, file_number, block_number)) < 0 ||
-	    (libmpq__block_info(mpq_archive, LIBMPQ_BLOCK_UNPACKED_SIZE, file_number, block_number)) > out_size) {
+	if (uncompressed_size > out_size) {
 
 		/* output buffer size is to small or block size is unknown. */
 		return LIBMPQ_ERROR_SIZE;
 	}
+
+	/* fetch some required values like input buffer size, block offset and decryption key. */
+	block_offset = mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number - 1]].offset + mpq_archive->archive_offset + mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number - 1];
+	in_size      = mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number] - mpq_archive->mpq_file[file_number - 1]->compressed_offset[block_number - 1];
 
 	/* seek in file. */
 	if (fseek(mpq_archive->fp, block_offset, SEEK_SET) < 0) {
@@ -816,9 +809,6 @@ int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, uint32_
 		/* something with seek in file failed. */
 		return LIBMPQ_ERROR_SEEK;
 	}
-
-	/* get buffer sizes. */
-	in_size = libmpq__block_info(mpq_archive, LIBMPQ_BLOCK_PACKED_SIZE, file_number, block_number);
 
 	/* allocate memory for the read buffer. */
 	if ((in_buf = calloc(1, in_size)) == NULL) {
@@ -841,7 +831,7 @@ int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, uint32_
 	if (libmpq__file_info(mpq_archive, LIBMPQ_FILE_ENCRYPTED, file_number) == 1) {
 
 		/* get decryption key. */
-		seed = libmpq__block_info(mpq_archive, LIBMPQ_BLOCK_SEED, file_number, block_number);
+		seed = mpq_archive->mpq_file[file_number - 1]->seed + block_number - 1;
 
 		/* decrypt block. */
 		if ((tb = libmpq__decrypt_block((uint32_t *)in_buf, in_size, seed, crypt_buf)) < 0) {
