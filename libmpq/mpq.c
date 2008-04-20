@@ -286,65 +286,71 @@ int32_t libmpq__archive_close(mpq_archive_s *mpq_archive) {
 	return LIBMPQ_SUCCESS;
 }
 
-/* this function return some information for the requested type of a mpq archive. */
-int32_t libmpq__archive_info(mpq_archive_s *mpq_archive, uint32_t info_type) {
+/* this function return the compressed size of all files in the archive. */
+int32_t libmpq__archive_compressed_size(mpq_archive_s *mpq_archive, off_t *compressed_size) {
 
 	/* some common variables. */
-	uint32_t uncompressed_size = 0;
-	uint32_t compressed_size   = 0;
 	uint32_t i;
 
 	CHECK_IS_INITIALIZED();
 
-	/* check which information type should be returned. */
-	switch (info_type) {
-		case LIBMPQ_ARCHIVE_SIZE:
-
-			/* return the archive size. */
-			return mpq_archive->mpq_header->archive_size + mpq_archive->archive_offset;
-		case LIBMPQ_ARCHIVE_COMPRESSED_SIZE:
-
-			/* loop through all files in archive and count compressed size. */
-			for (i = 0; i < mpq_archive->files; i++) {
-				compressed_size += mpq_archive->mpq_block[mpq_archive->block_table_indices[i]].compressed_size;
-			}
-
-			/* return the compressed size of all files in the mpq archive. */
-			return compressed_size;
-		case LIBMPQ_ARCHIVE_UNCOMPRESSED_SIZE:
-
-			/* loop through all files in archive and count compressed size. */
-			for (i = 0; i < mpq_archive->files; i++) {
-				uncompressed_size += mpq_archive->mpq_block[mpq_archive->block_table_indices[i]].uncompressed_size;
-			}
-
-			/* return the uncompressed size of all files in the mpq archive. */
-			return uncompressed_size;
-		case LIBMPQ_ARCHIVE_FILES:
-
-			/* return the number of files in archive. */
-			return mpq_archive->files;
-		case LIBMPQ_ARCHIVE_HASHTABLE_ENTRIES:
-
-			/* return the number of hash table entries. */
-			return mpq_archive->mpq_header->hash_table_count;
-		case LIBMPQ_ARCHIVE_BLOCKTABLE_ENTRIES:
-
-			/* return the number of block table entries. */
-			return mpq_archive->mpq_header->block_table_count;
-		case LIBMPQ_ARCHIVE_BLOCKSIZE:
-
-			/* return the block size. */
-			return mpq_archive->block_size;
-		case LIBMPQ_ARCHIVE_VERSION:
-
-			/* return the archive version. */
-			return mpq_archive->mpq_header->version + 1;
-		default:
-
-			/* if info type was not found, return error. */
-			return LIBMPQ_ERROR_INFO;
+	/* loop through all files in archive and count compressed size. */
+	for (i = 0; i < mpq_archive->files; i++) {
+		*compressed_size += mpq_archive->mpq_block[mpq_archive->block_table_indices[i]].compressed_size;
 	}
+
+	/* if no error was found, return zero. */
+	return LIBMPQ_SUCCESS;
+}
+
+/* this function return the uncompressed size of all files in the archive. */
+int32_t libmpq__archive_uncompressed_size(mpq_archive_s *mpq_archive, off_t *uncompressed_size) {
+
+	/* some common variables. */
+	uint32_t i;
+
+	CHECK_IS_INITIALIZED();
+
+	/* loop through all files in archive and count uncompressed size. */
+	for (i = 0; i < mpq_archive->files; i++) {
+		*uncompressed_size += mpq_archive->mpq_block[mpq_archive->block_table_indices[i]].uncompressed_size;
+	}
+
+	/* if no error was found, return zero. */
+	return LIBMPQ_SUCCESS;
+}
+
+/* this function return the archive offset (beginning of archive in file). */
+int32_t libmpq__archive_offset(mpq_archive_s *mpq_archive, off_t *offset) {
+
+	CHECK_IS_INITIALIZED();
+
+	/* return archive offset. */
+	*offset = mpq_archive->archive_offset;
+
+	/* if no error was found, return zero. */
+	return LIBMPQ_SUCCESS;
+}
+
+/* this function return the archive offset. */
+int32_t libmpq__archive_version(mpq_archive_s *mpq_archive, uint32_t *version) {
+
+	CHECK_IS_INITIALIZED();
+
+	/* return archive version. */
+	*version = mpq_archive->mpq_header->version + 1;
+
+	/* if no error was found, return zero. */
+	return LIBMPQ_SUCCESS;
+}
+
+/* this function return the number of valid files in archive. */
+int32_t libmpq__archive_files(mpq_archive_s *mpq_archive, uint32_t *files) {
+
+	CHECK_IS_INITIALIZED();
+
+	/* return archive version. */
+	*files = mpq_archive->files;
 
 	/* if no error was found, return zero. */
 	return LIBMPQ_SUCCESS;
