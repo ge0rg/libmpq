@@ -35,6 +35,7 @@ extern "C" {
 /* generic includes. */
 #include <stdint.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #if defined(__GNUC__) && (__GNUC__ >= 4)
 # define LIBMPQ_API __attribute__((visibility("default")))
@@ -56,16 +57,6 @@ extern "C" {
 #define LIBMPQ_ERROR_DECRYPT			-11		/* we don't know the decryption seed. */
 #define LIBMPQ_ERROR_DECOMPRESS			-12		/* error on decompression. */
 #define LIBMPQ_ERROR_INFO			-13		/* requested info type was not found. */
-
-/* define generic values for returning archive information. */
-#define LIBMPQ_ARCHIVE_SIZE			1		/* mpq archive size. */
-#define LIBMPQ_ARCHIVE_COMPRESSED_SIZE		2		/* compressed archive size. */
-#define LIBMPQ_ARCHIVE_UNCOMPRESSED_SIZE	3		/* uncompressed archive size. */
-#define LIBMPQ_ARCHIVE_FILES			4		/* number of files in the mpq archive */
-#define LIBMPQ_ARCHIVE_HASHTABLE_ENTRIES	5		/* mpq archive hashtable size. */
-#define LIBMPQ_ARCHIVE_BLOCKTABLE_ENTRIES	6		/* mpq archive blocktable size. */
-#define LIBMPQ_ARCHIVE_BLOCKSIZE		7		/* mpq archive block size. */
-#define LIBMPQ_ARCHIVE_VERSION			8		/* mpq archive version. */
 
 /* define generic values for returning file information. */
 #define LIBMPQ_FILE_PACKED_SIZE			1		/* compressed and/or encrypted size of file. */
@@ -152,7 +143,11 @@ extern LIBMPQ_API const char *libmpq__version(void);
 /* generic mpq archive information. */
 extern LIBMPQ_API int32_t libmpq__archive_open(mpq_archive_s **dest_mpq_archive, const char *mpq_filename, uint32_t archive_offset);
 extern LIBMPQ_API int32_t libmpq__archive_close(mpq_archive_s *mpq_archive);
-extern LIBMPQ_API int32_t libmpq__archive_info(mpq_archive_s *mpq_archive, uint32_t info_type);
+extern LIBMPQ_API int32_t libmpq__archive_compressed_size(mpq_archive_s *mpq_archive, off_t *compressed_size);
+extern LIBMPQ_API int32_t libmpq__archive_uncompressed_size(mpq_archive_s *mpq_archive, off_t *uncompressed_size);
+extern LIBMPQ_API int32_t libmpq__archive_offset(mpq_archive_s *mpq_archive, off_t *offset);
+extern LIBMPQ_API int32_t libmpq__archive_version(mpq_archive_s *mpq_archive, uint32_t *version);
+extern LIBMPQ_API int32_t libmpq__archive_files(mpq_archive_s *mpq_archive, uint32_t *files);
 
 /* generic file information. */
 extern LIBMPQ_API int32_t libmpq__file_open(mpq_archive_s *mpq_archive, uint32_t file_number);
