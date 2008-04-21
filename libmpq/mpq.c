@@ -141,7 +141,7 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 		(*mpq_archive)->mpq_header->mpq_magic = 0;
 
 		/* seek in file. */
-		if (fseek((*mpq_archive)->fp, archive_offset, SEEK_SET) < 0) {
+		if (fseeko((*mpq_archive)->fp, archive_offset, SEEK_SET) < 0) {
 
 			/* seek in file failed. */
 			result = LIBMPQ_ERROR_SEEK;
@@ -400,7 +400,7 @@ int32_t libmpq__file_open(mpq_archive_s *mpq_archive, uint32_t file_number) {
 	    (mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number - 1]].flags & LIBMPQ_FLAG_SINGLE) == 0) {
 
 		/* seek to block position. */
-		if (fseek(mpq_archive->fp, mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number - 1]].offset + mpq_archive->archive_offset, SEEK_SET) < 0) {
+		if (fseeko(mpq_archive->fp, mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number - 1]].offset + mpq_archive->archive_offset, SEEK_SET) < 0) {
 
 			/* free compressed block offset table and file pointer. */
 			free(mpq_archive->mpq_file[file_number - 1]->compressed_offset);
@@ -719,15 +719,15 @@ int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename, ui
 }
 
 /* this function read the given file from archive into a buffer. */
-int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, off_t out_size, uint32_t file_number) {
+int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, off_t out_size, uint32_t file_number, off_t *transferred) {
 
 	/* some common variables. */
 	uint32_t i;
 	uint32_t blocks         = 0;
-	int32_t tb              = 0;
 	int32_t rb              = 0;
 	off_t file_offset       = 0;
 	off_t uncompressed_size = 0;
+	off_t transferred_block = 0;
 
 	CHECK_IS_INITIALIZED();
 
@@ -752,7 +752,7 @@ int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, off_t ou
 	libmpq__file_offset(mpq_archive, file_number, &file_offset);
 
 	/* seek in file. */
-	if (fseek(mpq_archive->fp, file_offset + mpq_archive->archive_offset, SEEK_SET) < 0) {
+	if (fseeko(mpq_archive->fp, file_offset + mpq_archive->archive_offset, SEEK_SET) < 0) {
 
 		/* something with seek in file failed. */
 		return LIBMPQ_ERROR_SEEK;
@@ -771,18 +771,22 @@ int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, off_t ou
 		libmpq__block_uncompressed_size(mpq_archive, file_number, i, &uncompressed_size);
 
 		/* read block. */
-		if ((rb = libmpq__block_read(mpq_archive, out_buf + tb, uncompressed_size, file_number, i)) < 0) {
+		if ((rb = libmpq__block_read(mpq_archive, out_buf + *transferred, uncompressed_size, file_number, i, &transferred_block)) < 0) {
 
 			/* something on reading block failed. */
 			return rb;
 		}
 
-		/* save the number of transferred bytes. */
-		tb += rb;
+		/* check for null pointer. */
+		if (transferred != NULL) {
+
+			/* store transferred bytes. */
+			*transferred += transferred_block;
+		}
 	}
 
-	/* if no error was found, return transferred bytes. */
-	return tb;
+	/* if no error was found, return zero. */
+	return LIBMPQ_SUCCESS;
 }
 
 /* this function return the compressed size of the given file and block in the archive. */
@@ -909,7 +913,7 @@ int32_t libmpq__block_seed(mpq_archive_s *mpq_archive, uint32_t file_number, uin
 }
 
 /* this function read the given block from archive into a buffer. */
-int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, off_t out_size, uint32_t file_number, uint32_t block_number) {
+int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, off_t out_size, uint32_t file_number, uint32_t block_number, off_t *transferred) {
 
 	/* some common variables. */
 	uint8_t *in_buf;
@@ -957,7 +961,7 @@ int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, off_t o
                  archive start not file start. */
 
 	/* seek in file. */
-	if (fseek(mpq_archive->fp, block_offset, SEEK_SET) < 0) {
+	if (fseeko(mpq_archive->fp, block_offset, SEEK_SET) < 0) {
 
 		/* something with seek in file failed. */
 		return LIBMPQ_ERROR_SEEK;
@@ -1051,6 +1055,13 @@ int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, off_t o
 	/* free read buffer. */
 	free(in_buf);
 
-	/* if no error was found, return transferred bytes. */
-	return tb;
+	/* check for null pointer. */
+	if (transferred != NULL) {
+
+		/* store transferred bytes. */
+		*transferred = tb;
+	}
+
+	/* if no error was found, return zero. */
+	return LIBMPQ_SUCCESS;
 }
