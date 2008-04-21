@@ -82,15 +82,15 @@ typedef struct {
 /* file description block contains informations about the file. */
 typedef struct {
 	uint32_t	offset;			/* block file starting position in the archive. */
-	uint32_t	compressed_size;	/* compressed file size. */
-	uint32_t	uncompressed_size;	/* uncompressed file size. */
+	uint32_t	packed_size;		/* packed file size. */
+	uint32_t	unpacked_size;		/* unpacked file size. */
 	uint32_t	flags;			/* flags. */
 } __attribute__ ((packed)) mpq_block_s;
 
 /* file structure used since diablo 1.00 (0x38 bytes). */
 typedef struct {
 	uint32_t	seed;			/* seed used for file decrypt. */
-	uint32_t	*compressed_offset;	/* position of each file block (only for compressed files). */
+	uint32_t	*packed_offset;		/* position of each file block (only for packed files). */
 } mpq_file_s;
 
 /* archive structure used since diablo 1.00 by blizzard. */
@@ -124,8 +124,8 @@ extern LIBMPQ_API const char *libmpq__version(void);
 /* generic mpq archive information. */
 extern LIBMPQ_API int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filename, uint32_t archive_offset);
 extern LIBMPQ_API int32_t libmpq__archive_close(mpq_archive_s *mpq_archive);
-extern LIBMPQ_API int32_t libmpq__archive_compressed_size(mpq_archive_s *mpq_archive, off_t *compressed_size);
-extern LIBMPQ_API int32_t libmpq__archive_uncompressed_size(mpq_archive_s *mpq_archive, off_t *uncompressed_size);
+extern LIBMPQ_API int32_t libmpq__archive_packed_size(mpq_archive_s *mpq_archive, off_t *packed_size);
+extern LIBMPQ_API int32_t libmpq__archive_unpacked_size(mpq_archive_s *mpq_archive, off_t *unpacked_size);
 extern LIBMPQ_API int32_t libmpq__archive_offset(mpq_archive_s *mpq_archive, off_t *offset);
 extern LIBMPQ_API int32_t libmpq__archive_version(mpq_archive_s *mpq_archive, uint32_t *version);
 extern LIBMPQ_API int32_t libmpq__archive_files(mpq_archive_s *mpq_archive, uint32_t *files);
@@ -133,8 +133,8 @@ extern LIBMPQ_API int32_t libmpq__archive_files(mpq_archive_s *mpq_archive, uint
 /* generic file processing functions. */
 extern LIBMPQ_API int32_t libmpq__file_open(mpq_archive_s *mpq_archive, uint32_t file_number);
 extern LIBMPQ_API int32_t libmpq__file_close(mpq_archive_s *mpq_archive, uint32_t file_number);
-extern LIBMPQ_API int32_t libmpq__file_compressed_size(mpq_archive_s *mpq_archive, uint32_t file_number, off_t *compressed_size);
-extern LIBMPQ_API int32_t libmpq__file_uncompressed_size(mpq_archive_s *mpq_archive, uint32_t file_number, off_t *uncompressed_size);
+extern LIBMPQ_API int32_t libmpq__file_packed_size(mpq_archive_s *mpq_archive, uint32_t file_number, off_t *packed_size);
+extern LIBMPQ_API int32_t libmpq__file_unpacked_size(mpq_archive_s *mpq_archive, uint32_t file_number, off_t *unpacked_size);
 extern LIBMPQ_API int32_t libmpq__file_offset(mpq_archive_s *mpq_archive, uint32_t file_number, off_t *offset);
 extern LIBMPQ_API int32_t libmpq__file_blocks(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t *blocks);
 extern LIBMPQ_API int32_t libmpq__file_encrypted(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t *encrypted);
@@ -145,8 +145,8 @@ extern LIBMPQ_API int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const 
 extern LIBMPQ_API int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, off_t out_size, uint32_t file_number, off_t *transferred);
 
 /* generic block processing functions. */
-extern LIBMPQ_API int32_t libmpq__block_compressed_size(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, off_t *compressed_size);
-extern LIBMPQ_API int32_t libmpq__block_uncompressed_size(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, off_t *uncompressed_size);
+extern LIBMPQ_API int32_t libmpq__block_packed_size(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, off_t *packed_size);
+extern LIBMPQ_API int32_t libmpq__block_unpacked_size(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, off_t *unpacked_size);
 extern LIBMPQ_API int32_t libmpq__block_offset(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, off_t *offset);
 extern LIBMPQ_API int32_t libmpq__block_seed(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, uint32_t *seed);
 extern LIBMPQ_API int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, off_t out_size, uint32_t file_number, uint32_t block_number, off_t *transferred);
