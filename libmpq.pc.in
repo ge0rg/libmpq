@@ -7,4 +7,4 @@ Name: libmpq
 Description: GPL version of the libmpq library
 Version: @VERSION@
 Libs: -L${libdir} -lmpq -lz
-Cflags: -I${includedir}/libmpq
+Cflags: @LFS_CFLAGS@ -I${includedir}/libmpq
