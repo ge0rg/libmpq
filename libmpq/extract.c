@@ -80,7 +80,7 @@ int32_t libmpq__decompress_huffman(uint8_t *in_buf, uint32_t in_size, uint8_t *o
 //	if ((result = libmpq__huffman_tree_init(ht, hi, LIBMPQ_HUFF_DECOMPRESS)) < 0) {
 //
 //		/* something on zlib initialization failed. */
-//		return LIBMPQ_ERROR_DECOMPRESS;
+//		return LIBMPQ_ERROR_UNPACK;
 //	}
 
 	/* initialize the huffman tree for decompression. */
@@ -195,7 +195,7 @@ int32_t libmpq__decompress_bzip2(uint8_t *in_buf, uint32_t in_size, uint8_t *out
 
 	/* TODO: add bzip2 decompression here. */
 	/* if no error was found, return zero. */
-	return LIBMPQ_ERROR_DECOMPRESS;
+	return LIBMPQ_ERROR_UNPACK;
 }
 
 /* this function decompress a stream using wave algorithm. (1 channel) */
@@ -265,7 +265,7 @@ int32_t libmpq__decompress_multi(uint8_t *in_buf, uint32_t in_size, uint8_t *out
 	if (count == 0) {
 
 		/* compression type is unknown and we need to implement it. :) */
-		return LIBMPQ_ERROR_DECOMPRESS;
+		return LIBMPQ_ERROR_UNPACK;
 	}
 
 	/* if multiple decompressions should be made, we need temporary buffer for the data. */

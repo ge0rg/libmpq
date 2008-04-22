@@ -1006,7 +1006,7 @@ int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, off_t o
 			free(in_buf);
 
 			/* something on decompressing block failed. */
-			return LIBMPQ_ERROR_DECOMPRESS;
+			return LIBMPQ_ERROR_UNPACK;
 		}
 	}
 
@@ -1023,7 +1023,7 @@ int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, off_t o
 			free(in_buf);
 
 			/* something on decompressing block failed. */
-			return LIBMPQ_ERROR_DECOMPRESS;
+			return LIBMPQ_ERROR_UNPACK;
 		}
 	}
 
@@ -1037,7 +1037,7 @@ int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, off_t o
 			free(in_buf);
 
 			/* something on decompressing block failed. */
-			return LIBMPQ_ERROR_DECOMPRESS;
+			return LIBMPQ_ERROR_UNPACK;
 		}
 	}
 
