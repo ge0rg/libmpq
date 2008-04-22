@@ -123,7 +123,7 @@ class File:
     
     def __str__(self, libmpq=libmpq, ctypes=ctypes):
         data = ctypes.create_string_buffer(self.unpacked_size)
-        libmpq.libmpq__file_read(self._archive._mpq, data, self.unpacked_size, self.number)
+        libmpq.libmpq__file_read(self._archive._mpq, data, len(data), self.number, None)
         return data.raw
     
     def __iter__(self, Reader=Reader):
