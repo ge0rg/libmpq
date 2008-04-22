@@ -654,7 +654,7 @@ int32_t libmpq__file_name(mpq_archive_s *mpq_archive, uint32_t file_number, char
 	}
 
 	/* file was found but no internal listfile exist. */
-	snprintf(filename, filename_size, "file%06i.xxx", file_number);
+	snprintf(filename, filename_size, "file%06i.xxx", file_number + 1);
 
 	/* if no error was found, return zero. */
 	return LIBMPQ_SUCCESS;
