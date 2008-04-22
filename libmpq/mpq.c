@@ -654,7 +654,7 @@ int32_t libmpq__file_name(mpq_archive_s *mpq_archive, uint32_t file_number, char
 	}
 
 	/* file was found but no internal listfile exist. */
-	snprintf(filename, filename_size, "file%06i.xxx", file_number + 1);
+	snprintf(filename, filename_size, "file%06i.xxx", file_number);
 
 	/* if no error was found, return zero. */
 	return LIBMPQ_SUCCESS;
@@ -731,6 +731,7 @@ int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, off_t ou
 	off_t file_offset       = 0;
 	off_t unpacked_size     = 0;
 	off_t transferred_block = 0;
+	off_t transferred_total = 0;
 
 	CHECK_IS_INITIALIZED();
 
@@ -767,18 +768,21 @@ int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, off_t ou
 		libmpq__block_unpacked_size(mpq_archive, file_number, i, &unpacked_size);
 
 		/* read block. */
-		if ((rb = libmpq__block_read(mpq_archive, out_buf + *transferred, unpacked_size, file_number, i, &transferred_block)) < 0) {
+		if ((rb = libmpq__block_read(mpq_archive, out_buf + transferred_total, unpacked_size, file_number, i, &transferred_block)) < 0) {
 
 			/* something on reading block failed. */
 			return rb;
 		}
 
-		/* check for null pointer. */
-		if (transferred != NULL) {
+		transferred_total += transferred_block;
 
-			/* store transferred bytes. */
-			*transferred += transferred_block;
-		}
+	}
+
+	/* check for null pointer. */
+	if (transferred != NULL) {
+
+		/* store transferred bytes. */
+		*transferred = transferred_total;
 	}
 
 	/* if no error was found, return zero. */
