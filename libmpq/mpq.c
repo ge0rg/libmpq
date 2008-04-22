@@ -710,7 +710,10 @@ int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename, ui
 			}
 
 			/* return the file number. */
-			*number = mpq_archive->mpq_hash[i].block_table_index - count + 1;
+			*number = mpq_archive->mpq_hash[i].block_table_index - count;
+
+			/* we found our file, return zero. */
+			return LIBMPQ_SUCCESS;
 		}
 	}
 
