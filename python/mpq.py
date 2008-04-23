@@ -133,8 +133,8 @@ class Archive:
     def __init__(self, filename, libmpq=libmpq, File=File, ctypes=ctypes):
         if isinstance(filename, File):
           assert not filename.encrypted and not filename.compressed and not filename.imploded
-          self.filename = file._archive.filename
-          offset = filename.offset
+          self.filename = filename._archive.filename
+          offset = filename._archive.offset + filename.offset
         else:
           self.filename = filename
           offset = -1
