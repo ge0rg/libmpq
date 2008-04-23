@@ -92,7 +92,7 @@ const char *libmpq__version(void) {
 }
 
 /* this function read a file and verify if it is a valid mpq archive, then it read and decrypt the hash table. */
-int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filename, uint32_t archive_offset) {
+int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filename, off_t archive_offset) {
 
 	/* some common variables. */
 	uint32_t rb             = 0;
@@ -103,7 +103,7 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 
 	CHECK_IS_INITIALIZED();
 
-	if (archive_offset == (uint32_t) -1) {
+	if (archive_offset == (off_t) -1) {
 		archive_offset = 0;
 		header_search = TRUE;
 	}
@@ -736,7 +736,7 @@ int32_t libmpq__file_name(mpq_archive_s *mpq_archive, uint32_t file_number, char
 	}
 
 	/* file was found but no internal listfile exist. */
-	snprintf(filename, filename_size, "file%06i.xxx", file_number + 1);
+	snprintf(filename, filename_size, "file%06i.xxx", file_number);
 
 	/* if no error was found, return zero. */
 	return LIBMPQ_SUCCESS;

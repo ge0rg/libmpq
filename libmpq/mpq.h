@@ -136,7 +136,7 @@ extern LIBMPQ_API int32_t libmpq__shutdown(void);
 extern LIBMPQ_API const char *libmpq__version(void);
 
 /* generic mpq archive information. */
-extern LIBMPQ_API int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filename, uint32_t archive_offset);
+extern LIBMPQ_API int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filename, off_t archive_offset);
 extern LIBMPQ_API int32_t libmpq__archive_close(mpq_archive_s *mpq_archive);
 extern LIBMPQ_API int32_t libmpq__archive_packed_size(mpq_archive_s *mpq_archive, off_t *packed_size);
 extern LIBMPQ_API int32_t libmpq__archive_unpacked_size(mpq_archive_s *mpq_archive, off_t *unpacked_size);
