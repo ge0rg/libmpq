@@ -70,6 +70,13 @@ typedef struct {
 	uint32_t	block_table_count;	/* number of entries in the block table. */
 } __attribute__ ((packed)) mpq_header_s;
 
+/* mpq extended archive header, used since world of warcraft - the burning crusade. */
+typedef struct {
+	uint64_t	extended_offset;	/* offset to the beginning of the extended block table, relative to the beginning of the archive. */
+	uint16_t	hash_table_offset_high;	/* upper 16 bits of the hash table offset for large archives. */
+	uint16_t	block_table_offset_high;/* upper 16 bits of the block table offset for large archives.*/
+} __attribute__ ((packed)) mpq_header_ex_s;
+
 /* hash entry, all files in the archive are searched by their hashes. */
 typedef struct {
 	uint32_t	hash_a;			/* the first two uint32_ts are the encrypted file. */
@@ -86,6 +93,11 @@ typedef struct {
 	uint32_t	unpacked_size;		/* unpacked file size. */
 	uint32_t	flags;			/* flags. */
 } __attribute__ ((packed)) mpq_block_s;
+
+/* extended file description block contains information about the offset beyond 2^32 (4GB). */
+typedef struct {
+	uint16_t	offset_high;		/* upper 16 bit of the file offset in archive. */
+} __attribute__ ((packed)) mpq_block_ex_s;
 
 /* file structure used since diablo 1.00 (0x38 bytes). */
 typedef struct {
@@ -105,8 +117,10 @@ typedef struct {
 
 	/* archive related buffers and tables. */
 	mpq_header_s	*mpq_header;		/* mpq file header. */
+	mpq_header_ex_s	*mpq_header_ex;		/* mpq extended file header. */
 	mpq_hash_s	*mpq_hash;		/* hash table. */
 	mpq_block_s	*mpq_block;		/* block table. */
+	mpq_block_ex_s	*mpq_block_ex;		/* extended block table. */
 	mpq_file_s	**mpq_file;		/* pointer to the file pointers which are opened. */
 
 	/* non archive structure related members. */

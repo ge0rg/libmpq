@@ -33,6 +33,14 @@ uint32_t libmpq__hash_string(
 	uint32_t	offset
 );
 
+/* function to decrypt hash/block table of mpq archive. */
+int32_t libmpq__decrypt_table(
+	uint32_t	*crypt_buf,
+	uint32_t	*hash,
+	const char	*key,
+	uint32_t	size
+);
+
 /* function to detect decryption key. */
 int32_t libmpq__decrypt_key(
 	uint8_t		*in_buf,
@@ -56,18 +64,6 @@ int32_t libmpq__decompress_block(
 	uint8_t		*out_buf,
 	uint32_t	out_size,
 	uint32_t	compression_type
-);
-
-/* function to read and decrypt hash table. */
-int32_t libmpq__read_table_hash(
-	mpq_archive_s	*mpq_archive,
-	uint32_t	*crypt_buf
-);
-
-/* function to read and decrypt hash table. */
-int32_t libmpq__read_table_block(
-	mpq_archive_s	*mpq_archive,
-	uint32_t	*crypt_buf
 );
 
 #endif						/* _COMMON_H */
