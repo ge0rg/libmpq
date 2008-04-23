@@ -35,14 +35,6 @@
 
 #include "common.h"
 
-/* function to decrypt hash/block table of mpq archive. */
-static int32_t libmpq__decrypt_table(
-	uint32_t	*crypt_buf,
-	uint32_t	*hash,
-	const char	*key,
-	uint32_t	size
-);
-
 /* function to initialize decryption buffer. */
 int32_t libmpq__decrypt_buffer_init(uint32_t *crypt_buf) {
 
@@ -97,7 +89,7 @@ uint32_t libmpq__hash_string(uint32_t *crypt_buf, const char *key, uint32_t offs
 }
 
 /* function to decrypt hash/block table of mpq archive. */
-static int32_t libmpq__decrypt_table(uint32_t *crypt_buf, uint32_t *hash, const char *key, uint32_t size) {
+int32_t libmpq__decrypt_table(uint32_t *crypt_buf, uint32_t *hash, const char *key, uint32_t size) {
 
 	/* some common variables. */
 	uint32_t seed1;
@@ -259,62 +251,4 @@ int32_t libmpq__decompress_block(uint8_t *in_buf, uint32_t in_size, uint8_t *out
 
 	/* if no error was found, return transferred bytes. */
 	return tb;
-}
-
-/* function to read decrypted hash table. */
-int32_t libmpq__read_table_hash(mpq_archive_s *mpq_archive, uint32_t *crypt_buf) {
-
-	/* some common variables. */
-	int32_t rb = 0;
-
-	/* seek in file. */
-	if (fseeko(mpq_archive->fp, mpq_archive->mpq_header->hash_table_offset + mpq_archive->archive_offset, SEEK_SET) < 0) {
-
-		/* seek in file failed. */
-		return LIBMPQ_ERROR_SEEK;
-	}
-
-	/* read the hash table into the buffer. */
-	if ((rb = fread(mpq_archive->mpq_hash, 1, mpq_archive->mpq_header->hash_table_count * sizeof(mpq_hash_s), mpq_archive->fp)) < 0) {;
-
-		/* something on read failed. */
-		return LIBMPQ_ERROR_READ;
-	}
-
-	/* decrypt the hashtable. */
-	libmpq__decrypt_table(crypt_buf, (uint32_t *)(mpq_archive->mpq_hash), "(hash table)", mpq_archive->mpq_header->hash_table_count * 4);
-
-	/* if no error was found, return zero. */
-	return LIBMPQ_SUCCESS;
-}
-
-/* function to read decrypted hash table. */
-int32_t libmpq__read_table_block(mpq_archive_s *mpq_archive, uint32_t *crypt_buf) {
-
-	/* some common variables. */
-	int32_t rb = 0;
-
-	/* seek in file. */
-	if (fseeko(mpq_archive->fp, mpq_archive->mpq_header->block_table_offset + mpq_archive->archive_offset, SEEK_SET) < 0) {
-
-		/* seek in file failed. */
-		return LIBMPQ_ERROR_SEEK;
-	}
-
-	/* read the block table into the buffer. */
-	if ((rb = fread(mpq_archive->mpq_block, 1, mpq_archive->mpq_header->block_table_count * sizeof(mpq_block_s), mpq_archive->fp)) < 0) {
-
-		/* something on read failed. */
-		return LIBMPQ_ERROR_READ;
-	}
-
-	/* decrypt block table only if it is encrypted. */
-	if (mpq_archive->mpq_header->header_size != mpq_archive->mpq_block->offset) {
-
-		/* decrypt block table. */
-		libmpq__decrypt_table(crypt_buf, (uint32_t *)(mpq_archive->mpq_block), "(block table)", mpq_archive->mpq_header->block_table_count * 4);
-	}
-
-	/* if no error was found, return zero. */
-	return LIBMPQ_SUCCESS;
 }
