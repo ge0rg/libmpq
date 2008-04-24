@@ -18,12 +18,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-/* generic includes. */
-#include <fcntl.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
+/* mpq-tools configuration includes. */
+#include "config.h"
 
 /* libmpq main includes. */
 #include "mpq.h"
@@ -32,8 +28,12 @@
 /* libmpq generic includes. */
 #include "common.h"
 
-/* mpq-tools configuration includes. */
-#include "config.h"
+/* generic includes. */
+#include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #define CHECK_IS_INITIALIZED() \
 	if (init_count <= 0) return LIBMPQ_ERROR_NOT_INITIALIZED
@@ -103,7 +103,7 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 
 	CHECK_IS_INITIALIZED();
 
-	if (archive_offset == (uint32_t) -1) {
+	if (archive_offset == (off_t) -1) {
 		archive_offset = 0;
 		header_search = TRUE;
 	}
