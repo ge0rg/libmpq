@@ -73,7 +73,7 @@ class Reader:
         self._file = file
         self._pos = 0
         self._buf = ""
-        self._cur_block = 1
+        self._cur_block = 0
     
     def read(self, length=-1, libmpq=libmpq, ctypes=ctypes):
         if length < 0:
@@ -99,23 +99,23 @@ class File:
         libmpq.libmpq__file_open(self._archive._mpq, self.number)
         self._opened = True
         
-        data = ctypes.c_int()
-        for name in [
-                    "packed_size",
-                    "unpacked_size",
-                    "offset",
-                    "blocks",
-                    "encrypted",
-                    "compressed",
-                    "imploded",
+        for name, type in [
+                    ("packed_size", ctypes.c_longlong),
+                    ("unpacked_size", ctypes.c_longlong),
+                    ("offset", ctypes.c_longlong),
+                    ("blocks", ctypes.c_int),
+                    ("encrypted", ctypes.c_int),
+                    ("compressed", ctypes.c_int),
+                    ("imploded", ctypes.c_int),
                 ]:
+            data = type()
             func = getattr(libmpq, "libmpq__file_"+name)
             func(self._archive._mpq, self.number, ctypes.byref(data))
             setattr(self, name, data.value)
         
-            buf = ctypes.create_string_buffer(1024)
-            libmpq.libmpq__file_name(self._archive._mpq, self.number, buf, len(buf))
-            self.name = buf.value
+        buf = ctypes.create_string_buffer(1024)
+        libmpq.libmpq__file_name(self._archive._mpq, self.number, buf, len(buf))
+        self.name = buf.value
     
     def __del__(self, libmpq=libmpq):
         if getattr(self, "_opened", False):
@@ -123,7 +123,7 @@ class File:
     
     def __str__(self, libmpq=libmpq, ctypes=ctypes):
         data = ctypes.create_string_buffer(self.unpacked_size)
-        libmpq.libmpq__file_read(self._archive._mpq, data, len(data), self.number, None)
+        libmpq.libmpq__file_read(self._archive._mpq, data, ctypes.c_longlong(len(data)), self.number, None)
         return data.raw
     
     def __iter__(self, Reader=Reader):
@@ -143,14 +143,14 @@ class Archive:
         libmpq.libmpq__archive_open(ctypes.byref(self._mpq), self.filename, ctypes.c_longlong(offset))
         self._opened = True
         
-        data = ctypes.c_int()
-        for name in [
-                    "packed_size",
-                    "unpacked_size",
-                    "offset",
-                    "version",
-                    "files",
+        for name, type in [
+                    ("packed_size", ctypes.c_longlong),
+                    ("unpacked_size", ctypes.c_longlong),
+                    ("offset", ctypes.c_longlong),
+                    ("version", ctypes.c_int),
+                    ("files", ctypes.c_int),
                 ]:
+            data = type()
             func = getattr(libmpq, "libmpq__archive_"+name)
             func(self._mpq, ctypes.byref(data))
             setattr(self, name, data.value)
