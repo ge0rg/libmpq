@@ -140,7 +140,7 @@ class Archive:
           offset = -1
         
         self._mpq = ctypes.c_void_p()
-        libmpq.libmpq__archive_open(ctypes.byref(self._mpq), self.filename, offset)
+        libmpq.libmpq__archive_open(ctypes.byref(self._mpq), self.filename, ctypes.c_longlong(offset))
         self._opened = True
         
         data = ctypes.c_int()
