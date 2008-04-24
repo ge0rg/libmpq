@@ -103,7 +103,7 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 
 	CHECK_IS_INITIALIZED();
 
-	if (archive_offset == (off_t) -1) {
+	if (archive_offset == (uint32_t) -1) {
 		archive_offset = 0;
 		header_search = TRUE;
 	}
