@@ -8,23 +8,23 @@ libmpq = ctypes.CDLL("libmpq.so")
 
 class Error(Exception): pass
 
-def check_error(result, func, arguments):
-    errors = {
-        -1: (IOError, "open"),
-        -2: (IOError, "close"),
-        -3: (IOError, "seek"),
-        -4: (IOError, "read"),
-        -5: (IOError, "write"),
-        -6: (MemoryError,),
-        -7: (Error, "file is not an mpq or is corrupted"),
-        -8: (AssertionError, "not initialized"),
-        -9: (AssertionError, "buffer size too small"),
-        -10: (KeyError, "file not in archive"),
-        -11: (AssertionError, "decrypt"),
-        -12: (AssertionError, "decompress"),
-        -13: (ValueError, "info"),
-    }
-    
+errors = {
+    -1: (IOError, "open"),
+    -2: (IOError, "close"),
+    -3: (IOError, "seek"),
+    -4: (IOError, "read"),
+    -5: (IOError, "write"),
+    -6: (MemoryError,),
+    -7: (Error, "file is not an mpq or is corrupted"),
+    -8: (AssertionError, "not initialized"),
+    -9: (AssertionError, "buffer size too small"),
+    -10: (IndexError, "file not in archive"),
+    -11: (AssertionError, "decrypt"),
+    -12: (AssertionError, "decompress"),
+    -13: (ValueError, "info"),
+}
+
+def check_error(result, func, arguments, libmpq=libmpq, errors=errors):
     try:
         error = errors[result]
     except:  
