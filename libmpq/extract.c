@@ -25,6 +25,7 @@
 
 /* zlib includes. */
 #include <zlib.h>
+#include <bzlib.h>
 
 /* libmpq main includes. */
 #include "mpq.h"
@@ -193,9 +194,39 @@ int32_t libmpq__decompress_pkzip(uint8_t *in_buf, uint32_t in_size, uint8_t *out
 /* this function decompress a stream using bzip2 library. */
 int32_t libmpq__decompress_bzip2(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size) {
 
-	/* TODO: add bzip2 decompression here. */
-	/* if no error was found, return zero. */
-	return LIBMPQ_ERROR_UNPACK;
+	/* some common variables. */
+	int32_t result = 0;
+	int32_t tb     = 0;
+	bz_stream strm;
+
+	/* initialize the bzlib decompression. */
+	strm.bzalloc = NULL;
+	strm.bzfree  = NULL;
+
+	/* initialize the structure. */
+	if ((result = BZ2_bzDecompressInit(&strm, 0, 0)) != BZ_OK) {
+
+		/* something on bzlib initialization failed. */
+		return result;
+	}
+
+	/* fill the stream structure for bzlib. */
+	strm.next_in   = (char *)in_buf;
+	strm.avail_in  = in_size;
+	strm.next_out  = (char *)out_buf;
+	strm.avail_out = out_size;
+
+	/* do the decompression. */
+	while (BZ2_bzDecompress(&strm) != BZ_STREAM_END);
+
+	/* save transferred bytes. */
+	tb = strm.total_out_lo32;
+
+	/* cleanup of bzip stream. */
+	BZ2_bzDecompressEnd(&strm);
+
+	/* return transferred bytes. */
+	return tb;
 }
 
 /* this function decompress a stream using wave algorithm. (1 channel) */
