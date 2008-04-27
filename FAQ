@@ -19,45 +19,54 @@ A: Since version 0.4.0 libmpq comes with a API documentation for
 
 Q: Can i help?
 A: Yes, help is needed, not only with developing, also with testing.
-   A good point to start is using a recent SVN version of mpq-tools.
-   and trying to use it with every mpq archive you could get :)
+   A good point to start is using a recent SVN version of libmpq and
+   trying to use it with every mpq archive you could get :)
 
 Q: Can you give a small example to demonstrate the usage?
-A: Of course :-) The example below takes first parameter
-   as mpq archive and extracts the first file to a buffer.
+A: Of course :) The example below takes first parameter as mpq archive
+   and extracts the first file to a buffer.
 
    /*
     *  Compile with:
     *
-    *  gcc mpq-example.c -o mpq-example -lmpq -lz -I/usr/local/include/libmpq
+    *  x86_32:
+    *
+    *  gcc \
+    *    -D_FILE_OFFSET_BITS=64 \
+    *    -D_LARGE_FILES=1 \
+    *    -D_LARGEFILE_SOURCE=1 \
+    *    mpq-example.c -o mpq-example -lmpq -lz -lbz2 -I/usr/local/include/libmpq
+    *
+    *  x86_64:
+    *
+    *  gcc \
+    *    -D_LARGE_FILES=1 \
+    *    -D_LARGEFILE_SOURCE=1 \
+    *    mpq-example.c -o mpq-example -lmpq -lz -lbz2 -I/usr/local/include/libmpq
     */
 
-   #include <libmpq/mpq.h>
+   #include <mpq.h>
    #include <stdlib.h>
    #include <limits.h>
 
    int main(int argc, char **argv) {
            mpq_archive_s *mpq_archive;
-           int size;
-           char *buffer;
+           off_t transferred;
+           off_t out_size;
+           char *out_buf;
 
-           mpq_archive = malloc(sizeof(mpq_archive_s));
-
+           /* initialize libmpq and open the mpq archive given as first parameter. */
            libmpq__init();
+           libmpq__archive_open(&mpq_archive, argv[1], -1);
 
-           libmpq__archive_open(mpq_archive, argv[1], -1);
-           libmpq__file_open(mpq_archive, 1);
+           /* get size of first file (0) and malloc output buffer. */
+           libmpq__file_unpacked_size(mpq_archive, 0, &out_size);
+           out_buf = malloc(out_size);
 
-           size = libmpq__file_info(mpq_archive, LIBMPQ_FILE_UNPACKED_SIZE, 1);
-           buffer = malloc(size);
+           /* read, decrypt and unpack file to output buffer. */
+           libmpq__file_read(mpq_archive, out_buf, out_size, 0, &transferred);
 
-           libmpq__file_read(mpq_archive, buffer, size, 1);
-
-           libmpq__file_close(mpq_archive, 1);
+           /* close the mpq archive and shutdown libmpq. */
            libmpq__archive_close(mpq_archive);
-
            libmpq__shutdown();
-
-           free(mpq_archive);
    }
-
