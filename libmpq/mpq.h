@@ -116,8 +116,8 @@ typedef struct {
 	off_t		archive_offset;		/* absolute start position of archive. */
 
 	/* archive related buffers and tables. */
-	mpq_header_s	*mpq_header;		/* mpq file header. */
-	mpq_header_ex_s	*mpq_header_ex;		/* mpq extended file header. */
+	mpq_header_s	mpq_header;		/* mpq file header. */
+	mpq_header_ex_s	mpq_header_ex;		/* mpq extended file header. */
 	mpq_hash_s	*mpq_hash;		/* hash table. */
 	mpq_block_s	*mpq_block;		/* block table. */
 	mpq_block_ex_s	*mpq_block_ex;		/* extended block table. */
