@@ -629,7 +629,7 @@ int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename, ui
 }
 
 /* this function read the given file from archive into a buffer. */
-int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, off_t out_size, uint32_t file_number, off_t *transferred) {
+int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint32_t file_number, uint8_t *out_buf, off_t out_size, off_t *transferred) {
 
 	/* some common variables. */
 	uint32_t i;
@@ -682,7 +682,7 @@ int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, off_t ou
 		libmpq__block_unpacked_size(mpq_archive, file_number, i, &unpacked_size);
 
 		/* read block. */
-		if ((result = libmpq__block_read(mpq_archive, out_buf + transferred_total, unpacked_size, file_number, i, &transferred_block)) < 0) {
+		if ((result = libmpq__block_read(mpq_archive, file_number, i, out_buf + transferred_total, unpacked_size, &transferred_block)) < 0) {
 
 			/* close the packed block offset table. */
 			libmpq__block_close_offset(mpq_archive, file_number);
@@ -993,7 +993,7 @@ int32_t libmpq__block_seed(mpq_archive_s *mpq_archive, uint32_t file_number, uin
 }
 
 /* this function read the given block from archive into a buffer. */
-int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint8_t *out_buf, off_t out_size, uint32_t file_number, uint32_t block_number, off_t *transferred) {
+int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, uint8_t *out_buf, off_t out_size, off_t *transferred) {
 
 	/* some common variables. */
 	uint8_t *in_buf;
