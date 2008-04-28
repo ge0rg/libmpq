@@ -888,6 +888,14 @@ int32_t libmpq__block_packed_size(mpq_archive_s *mpq_archive, uint32_t file_numb
 		return LIBMPQ_ERROR_EXIST;
 	}
 
+	/* check if packed block offset table is opened. */
+	if (mpq_archive->mpq_file[file_number] == NULL ||
+	    mpq_archive->mpq_file[file_number]->packed_offset == NULL) {
+
+		/* packed block offset table is not opened. */
+		return LIBMPQ_ERROR_OPEN;
+	}
+
 	/* get the packed size of block. */
 	*packed_size = mpq_archive->mpq_file[file_number]->packed_offset[block_number + 1] - mpq_archive->mpq_file[file_number]->packed_offset[block_number];
 
@@ -912,6 +920,14 @@ int32_t libmpq__block_unpacked_size(mpq_archive_s *mpq_archive, uint32_t file_nu
 
 		/* file number is out of range. */
 		return LIBMPQ_ERROR_EXIST;
+	}
+
+	/* check if packed block offset table is opened. */
+	if (mpq_archive->mpq_file[file_number] == NULL ||
+	    mpq_archive->mpq_file[file_number]->packed_offset == NULL) {
+
+		/* packed block offset table is not opened. */
+		return LIBMPQ_ERROR_OPEN;
 	}
 
 	/* check if block is stored as single sector. */
@@ -959,6 +975,14 @@ int32_t libmpq__block_offset(mpq_archive_s *mpq_archive, uint32_t file_number, u
 		return LIBMPQ_ERROR_EXIST;
 	}
 
+	/* check if packed block offset table is opened. */
+	if (mpq_archive->mpq_file[file_number] == NULL ||
+	    mpq_archive->mpq_file[file_number]->packed_offset == NULL) {
+
+		/* packed block offset table is not opened. */
+		return LIBMPQ_ERROR_OPEN;
+	}
+
 	/* return block offset relative to file start. */
 	*offset = mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number]].offset + (((off_t)mpq_archive->mpq_block_ex[mpq_archive->block_table_indices[file_number]].offset_high) << 32) + mpq_archive->mpq_file[file_number]->packed_offset[block_number];
 
@@ -983,6 +1007,14 @@ int32_t libmpq__block_seed(mpq_archive_s *mpq_archive, uint32_t file_number, uin
 
 		/* file number is out of range. */
 		return LIBMPQ_ERROR_EXIST;
+	}
+
+	/* check if packed block offset table is opened. */
+	if (mpq_archive->mpq_file[file_number] == NULL ||
+	    mpq_archive->mpq_file[file_number]->packed_offset == NULL) {
+
+		/* packed block offset table is not opened. */
+		return LIBMPQ_ERROR_OPEN;
 	}
 
 	/* return the decryption key. */
