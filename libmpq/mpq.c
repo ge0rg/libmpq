@@ -197,7 +197,7 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 	if ((*mpq_archive)->mpq_header.version == LIBMPQ_ARCHIVE_VERSION_TWO) {
 
 		/* seek in file. */
-		if (fseek((*mpq_archive)->fp, sizeof(mpq_header_s) + archive_offset, SEEK_SET) < 0) {
+		if (fseeko((*mpq_archive)->fp, sizeof(mpq_header_s) + archive_offset, SEEK_SET) < 0) {
 
 			/* seek in file failed. */
 			result = LIBMPQ_ERROR_SEEK;
@@ -267,7 +267,7 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 	if ((*mpq_archive)->mpq_header_ex.extended_offset > 0) {
 
 		/* seek in file. */
-		if (fseek((*mpq_archive)->fp, (*mpq_archive)->mpq_header_ex.extended_offset + archive_offset, SEEK_SET) < 0) {
+		if (fseeko((*mpq_archive)->fp, (*mpq_archive)->mpq_header_ex.extended_offset + archive_offset, SEEK_SET) < 0) {
 
 			/* seek in file failed. */
 			result = LIBMPQ_ERROR_SEEK;
