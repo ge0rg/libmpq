@@ -41,7 +41,7 @@ while test "$#" -gt "0"; do
     --cflags)
       largefile="@LFS_CFLAGS@"
       includes=-I@includedir@/libmpq
-      echo "$largefile $includes"
+      echo "$includes $largefile"
       ;;
     --libs)
       libdirs="-L@libdir@"

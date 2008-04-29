@@ -17,10 +17,7 @@ AC_PROG_LIBTOOL
 AC_PROG_MAKE_SET
 AC_PROG_CC
 AC_SYS_LARGEFILE
-CCAS="$CC"
-CCASFLAGS=""
-AC_SUBST(CCAS)
-AC_SUBST(CCASFLAGS)
+AC_FUNC_FSEEKO
 
 # check if we need to export some largefile flags.
 if test "$enable_largefile" != no; then
