@@ -1,6 +1,4 @@
-"""
-wrapper for libmpq
-"""
+"""wrapper for libmpq"""
 
 import ctypes
 
@@ -20,8 +18,7 @@ errors = {
     -9: (AssertionError, "buffer size too small"),
     -10: (IndexError, "file not in archive"),
     -11: (AssertionError, "decrypt"),
-    -12: (AssertionError, "decompress"),
-    -13: (ValueError, "info"),
+    -12: (AssertionError, "unpack"),
 }
 
 def check_error(result, func, arguments, libmpq=libmpq, errors=errors):
@@ -45,8 +42,6 @@ libmpq.libmpq__archive_offset.errcheck = check_error
 libmpq.libmpq__archive_version.errcheck = check_error
 libmpq.libmpq__archive_files.errcheck = check_error
 
-libmpq.libmpq__file_open.errcheck = check_error
-libmpq.libmpq__file_close.errcheck = check_error
 libmpq.libmpq__file_packed_size.errcheck = check_error
 libmpq.libmpq__file_unpacked_size.errcheck = check_error
 libmpq.libmpq__file_offset.errcheck = check_error
@@ -58,6 +53,8 @@ libmpq.libmpq__file_name.errcheck = check_error
 libmpq.libmpq__file_number.errcheck = check_error
 libmpq.libmpq__file_read.errcheck = check_error
 
+libmpq.libmpq__block_open_offset.errcheck = check_error
+libmpq.libmpq__block_close_offset.errcheck = check_error
 libmpq.libmpq__block_packed_size.errcheck = check_error
 libmpq.libmpq__block_unpacked_size.errcheck = check_error
 libmpq.libmpq__block_offset.errcheck = check_error
@@ -69,25 +66,29 @@ __version__ = libmpq.libmpq__version()
 libmpq.libmpq__init()
 
 class Reader:
-    def __init__(self, file):
+    def __init__(self, file, libmpq=libmpq):
         self._file = file
         self._pos = 0
         self._buf = ""
         self._cur_block = 0
-    
+        libmpq.libmpq__block_open_offset(self._file._archive._mpq, self._file.number)
+    def tell(self):
+        return self._pos
     def read(self, length=-1, libmpq=libmpq, ctypes=ctypes):
         if length < 0:
             length = self._file.unpacked_size
         while True:
             bsize = ctypes.c_int()
             libmpq.libmpq__block_unpacked_size(self._file._archive._mpq, self._file.number, self._cur_block, ctypes.byref(bsize))
+            print bsize
             buf = ctypes.create_string_buffer(bsize.value)
-            libmpq.libmpq__block_read(self._file._archive._mpq, buf, bsize.value, self._file.number, self._cur_block)
-            self._buf += buf
+            libmpq.libmpq__block_read(self._file._archive._mpq, self._file.number, self._cur_block, buf, ctypes.c_longlong(len(buf)), None)
+            self._buf = self._buf + buf.raw
             self._cur_block += 1
             if len(self._buf) >= length:
                 ret = self._buf[:length]
                 self._buf = self._buf[length:]
+                self._pos += length
                 return ret
 
 
@@ -95,9 +96,6 @@ class File:
     def __init__(self, archive, number, libmpq=libmpq, ctypes=ctypes):
         self._archive = archive
         self.number = number
-        
-        libmpq.libmpq__file_open(self._archive._mpq, self.number)
-        self._opened = True
         
         for name, type in [
                     ("packed_size", ctypes.c_longlong),
@@ -116,10 +114,6 @@ class File:
         buf = ctypes.create_string_buffer(1024)
         libmpq.libmpq__file_name(self._archive._mpq, self.number, buf, len(buf))
         self.name = buf.value
-    
-    def __del__(self, libmpq=libmpq):
-        if getattr(self, "_opened", False):
-            libmpq.libmpq__file_close(self._archive._mpq, self.number)
     
     def __str__(self, libmpq=libmpq, ctypes=ctypes):
         data = ctypes.create_string_buffer(self.unpacked_size)
@@ -167,4 +161,4 @@ class Archive:
         return File(self, item)
 
 del check_error # clean
-del Reader, File, libmpq, ctypes # unclean
+del Reader, File, libmpq, ctypes, errors # unclean
