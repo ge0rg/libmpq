@@ -226,7 +226,7 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 	}
 
 	/* seek in file. */
-	if (fseeko((*mpq_archive)->fp, (*mpq_archive)->mpq_header.hash_table_offset + (((off_t)((*mpq_archive)->mpq_header_ex.hash_table_offset_high)) << 32) + (*mpq_archive)->archive_offset, SEEK_SET) < 0) {
+	if (fseeko((*mpq_archive)->fp, (*mpq_archive)->mpq_header.hash_table_offset + (((long long)((*mpq_archive)->mpq_header_ex.hash_table_offset_high)) << 32) + (*mpq_archive)->archive_offset, SEEK_SET) < 0) {
 
 		/* seek in file failed. */
 		result = LIBMPQ_ERROR_SEEK;
@@ -245,7 +245,7 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 	libmpq__decrypt_table(crypt_buf, (uint32_t *)((*mpq_archive)->mpq_hash), "(hash table)", (*mpq_archive)->mpq_header.hash_table_count * 4);
 
 	/* seek in file. */
-	if (fseeko((*mpq_archive)->fp, (*mpq_archive)->mpq_header.block_table_offset + (((off_t)((*mpq_archive)->mpq_header_ex.block_table_offset_high)) << 32) + (*mpq_archive)->archive_offset, SEEK_SET) < 0) {
+	if (fseeko((*mpq_archive)->fp, (*mpq_archive)->mpq_header.block_table_offset + (((long long)((*mpq_archive)->mpq_header_ex.block_table_offset_high)) << 32) + (*mpq_archive)->archive_offset, SEEK_SET) < 0) {
 
 		/* seek in file failed. */
 		result = LIBMPQ_ERROR_SEEK;
@@ -469,7 +469,7 @@ int32_t libmpq__file_offset(mpq_archive_s *mpq_archive, uint32_t file_number, of
 	}
 
 	/* return file offset relative to archive start. */
-	*offset = mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number]].offset + (((off_t)mpq_archive->mpq_block_ex[mpq_archive->block_table_indices[file_number]].offset_high) << 32);
+	*offset = mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number]].offset + (((long long)mpq_archive->mpq_block_ex[mpq_archive->block_table_indices[file_number]].offset_high) << 32);
 
 	/* if no error was found, return zero. */
 	return LIBMPQ_SUCCESS;
@@ -767,7 +767,7 @@ int32_t libmpq__block_open_offset(mpq_archive_s *mpq_archive, uint32_t file_numb
 	    (mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number]].flags & LIBMPQ_FLAG_SINGLE) == 0) {
 
 		/* seek to block position. */
-		if (fseeko(mpq_archive->fp, mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number]].offset + (((off_t)mpq_archive->mpq_block_ex[mpq_archive->block_table_indices[file_number]].offset_high) << 32) + mpq_archive->archive_offset, SEEK_SET) < 0) {
+		if (fseeko(mpq_archive->fp, mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number]].offset + (((long long)mpq_archive->mpq_block_ex[mpq_archive->block_table_indices[file_number]].offset_high) << 32) + mpq_archive->archive_offset, SEEK_SET) < 0) {
 
 			/* seek in file failed. */
 			result = LIBMPQ_ERROR_SEEK;
@@ -984,7 +984,7 @@ int32_t libmpq__block_offset(mpq_archive_s *mpq_archive, uint32_t file_number, u
 	}
 
 	/* return block offset relative to file start. */
-	*offset = mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number]].offset + (((off_t)mpq_archive->mpq_block_ex[mpq_archive->block_table_indices[file_number]].offset_high) << 32) + mpq_archive->mpq_file[file_number]->packed_offset[block_number];
+	*offset = mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number]].offset + (((long long)mpq_archive->mpq_block_ex[mpq_archive->block_table_indices[file_number]].offset_high) << 32) + mpq_archive->mpq_file[file_number]->packed_offset[block_number];
 
 	/* if no error was found, return zero. */
 	return LIBMPQ_SUCCESS;
