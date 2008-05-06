@@ -72,7 +72,8 @@ AC_CONFIG_FILES([libmpq-config],[chmod +x libmpq-config])
 AC_OUTPUT([
 Makefile
 libmpq/Makefile
-python/Makefile
+bindings/Makefile
+bindings/python/Makefile
 doc/Makefile
 doc/man1/Makefile
 doc/man3/Makefile

@@ -69,16 +69,14 @@ class Reader:
     def __init__(self, file, libmpq=libmpq):
         self._file = file
         self._pos = 0
-        self._buf = ""
+        self._buf = []
         self._cur_block = 0
         libmpq.libmpq__block_open_offset(self._file._archive._mpq, self._file.number)
     def tell(self):
         return self._pos
     def read(self, length=-1, libmpq=libmpq, ctypes=ctypes):
-        if length < 0:
-            length = self._file.unpacked_size
+        bsize = ctypes.c_int()
         while True:
-            bsize = ctypes.c_int()
             try:
                 libmpq.libmpq__block_unpacked_size(self._file._archive._mpq, self._file.number, self._cur_block, ctypes.byref(bsize))
             except IndexError:
@@ -86,11 +84,13 @@ class Reader:
             else:
                 buf = ctypes.create_string_buffer(bsize.value)
                 libmpq.libmpq__block_read(self._file._archive._mpq, self._file.number, self._cur_block, buf, ctypes.c_longlong(len(buf)), None)
-                self._buf = self._buf + buf.raw
+                self._buf.append(buf.raw)
                 self._cur_block += 1
-                if len(self._buf) < length: continue
+                if length < 0 or sum(map(len,self._buf)) < length:
+                    continue
+            self._buf = "".join(self._buf)
             ret = self._buf[:length]
-            self._buf = self._buf[length:]
+            self._buf = [self._buf[length:]]
             self._pos += length
             return ret
 
@@ -120,7 +120,7 @@ class File:
     
     def __str__(self, libmpq=libmpq, ctypes=ctypes):
         data = ctypes.create_string_buffer(self.unpacked_size)
-        libmpq.libmpq__file_read(self._archive._mpq, data, ctypes.c_longlong(len(data)), self.number, None)
+        libmpq.libmpq__file_read(self._archive._mpq, self.number, data, ctypes.c_longlong(len(data)), None)
         return data.raw
     
     def __iter__(self, Reader=Reader):
