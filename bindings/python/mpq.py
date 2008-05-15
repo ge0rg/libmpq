@@ -1,5 +1,19 @@
 """wrapper for libmpq"""
 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
 import ctypes
 
 libmpq = ctypes.CDLL("libmpq.so")
@@ -72,6 +86,11 @@ class Reader:
         self._buf = []
         self._cur_block = 0
         libmpq.libmpq__block_open_offset(self._file._archive._mpq, self._file.number)
+    def seek(self, pos):
+        self._pos = 0
+        self._buf = []
+        self._cur_block = 0
+        self.read(pos)
     def tell(self):
         return self._pos
     def read(self, length=-1, libmpq=libmpq, ctypes=ctypes):
