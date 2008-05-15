@@ -41,7 +41,6 @@ A: Of course :) The example below takes first parameter as mpq archive
     *
     *  gcc \
     *    -D_LARGE_FILES=1 \
-    *    -D_LARGEFILE_SOURCE=1 \
     *    mpq-example.c -o mpq-example -lmpq -lz -lbz2 -I/usr/local/include/libmpq
     */
 
