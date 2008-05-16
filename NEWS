@@ -1,3 +1,33 @@
+Changes version 0.4.2 (2008-05-16)
+==================================
+
+    * added full extraction support for protected maps used in
+      warcraft 3.
+
+    * added full extraction support for all blizzard titles until
+      world of warcraft - the burning crusade.
+
+    * added support for archives version 2 with extended header and
+      extended block table.
+
+    * added support for the bzip2 compression algorithm.
+
+    * added support for archives and files inside archive > 2gb.
+
+    * added generic read functions, which will do decryption,
+      decompression or exploding.
+
+    * the info functions are no longer exported by the library and
+      were replaced by separate api functions.
+
+    * the file number and block number are count from 0 instead
+      of 1.
+
+    * added python bindings.
+
+    * linking against libmpq requires from now on the usual largefile
+      macros -D_FILE_OFFSET_BITS=64 -D_LARGE_FILES=1 -D_LARGEFILE_SOURCE=1
+
 Changes version 0.4.1 (2008-04-02)
 ==================================
 
