@@ -861,6 +861,13 @@ int32_t libmpq__block_close_offset(mpq_archive_s *mpq_archive, uint32_t file_num
 
 	CHECK_IS_INITIALIZED();
 
+	/* check if given file number is not out of range. */
+	if (file_number < 0 || file_number > mpq_archive->files - 1) {
+
+		/* file number is out of range. */
+		return LIBMPQ_ERROR_EXIST;
+	}
+
 	/* free packed block offset table and file pointer. */
 	free(mpq_archive->mpq_file[file_number]->packed_offset);
 	free(mpq_archive->mpq_file[file_number]);
