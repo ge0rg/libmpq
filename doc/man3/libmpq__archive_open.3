@@ -19,7 +19,7 @@
 .\" License along with this manual; if not, write to the Free
 .\" Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111,
 .\" USA.
-.TH libmpq 3 2008-03-30 "The MoPaQ archive library"
+.TH libmpq 3 2008-04-29 "The MoPaQ archive library"
 .SH NAME
 libmpq \- cross-platform C library for manipulating mpq archives.
 .SH SYNOPSIS
@@ -28,18 +28,18 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 #include <mpq.h>
 .sp
 .BI "int32_t libmpq__archive_open("
-.BI "        mpq_archive_s **" "dest_mpq_archive",
+.BI "        mpq_archive_s **" "mpq_archive",
 .BI "        const char     *" "mpq_filename",
-.BI "        uint32_t        " "archive_offset"
+.BI "        off_t           " "archive_offset"
 .BI ");"
 .fi
 .SH DESCRIPTION
 .PP
 Call \fBlibmpq__archive_open\fP() to open a given mpq archive for later use to extract or manipulate files inside the archive. It will create all required file structures and you have to call \fBlibmpq__archive_close\fP() on success to clean the opened structures. On failure there is no need to call \fBlibmpq__archive_close\fP() because everything will be cleaned up.
 .LP
-The \fBlibmpq__archive_open\fP() function takes as first argument a reference to the archive structure \fIdest_mpq_archive\fP and will open the file \fImpq_filename\fP to the structure pointed to by \fIdest_mpq_archive\fP. The last argument, \fIarchive_offset\fP is normally -1, but can be specified when the archive offset is known, or not 512-byte aligned.
+The \fBlibmpq__archive_open\fP() function takes as first argument a reference to the archive structure \fImpq_archive\fP and will open the file \fImpq_filename\fP to the structure pointed to by \fImpq_archive\fP. The last argument, \fIarchive_offset\fP is normally -1, but can be specified when the archive offset is known, or not 512-byte aligned.
 .SH RETURN VALUE
-On success, *\fIdest_mpq_archive\fP is set to a new \fBmpq_archive_s\fP* and zero is returned, and on error one of the following constants is returned.
+On success, *\fImpq_archive\fP is set to a new \fBmpq_archive_s\fP* and zero is returned, and on error one of the following constants is returned.
 .TP
 .B LIBMPQ_ERROR_NOT_INITIALIZED
 libmpq wasn't initialized by calling \fBlibmpq__initialize\fP(), or it was shut down by an \fBlibmpq__shutdown\fP() call.
@@ -56,11 +56,15 @@ Seeking in file failed.
 .B LIBMPQ_ERROR_FORMAT
 The given file is no valid mpq archive.
 .TP
-.B LIBMPQ_ERROR_DECRYPT
-Decrypting block table or hash table failed.
+.B LIBMPQ_ERROR_READ
+Reading in archive failed.
 .SH SEE ALSO
 .BR libmpq__archive_close (3),
-.BR libmpq__archive_info (3)
+.BR libmpq__archive_packed_size (3),
+.BR libmpq__archive_unpacked_size (3),
+.BR libmpq__archive_offset (3),
+.BR libmpq__archive_version (3),
+.BR libmpq__archive_files (3)
 .SH AUTHOR
 Check documentation.
 .TP

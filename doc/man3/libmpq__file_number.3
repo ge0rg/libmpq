@@ -19,7 +19,7 @@
 .\" License along with this manual; if not, write to the Free
 .\" Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111,
 .\" USA.
-.TH libmpq 3 2008-03-31 "The MoPaQ archive library"
+.TH libmpq 3 2008-05-16 "The MoPaQ archive library"
 .SH NAME
 libmpq \- cross-platform C library for manipulating mpq archives.
 .SH SYNOPSIS
@@ -28,15 +28,16 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 #include <mpq.h>
 .sp
 .BI "int32_t libmpq__file_number("
-.BI "        mpq_archive_s *" "mpq_archive",
-.BI "        const char    *" "filename"
+.BI "        mpq_archive_s  *" "mpq_archive",
+.BI "        const char     *" "filename",
+.BI "        uint32_t       *" "number"
 .BI ");"
 .fi
 .SH DESCRIPTION
 .PP
-Call \fBlibmpq__file_number\fP() to get the number of a file inside mpq archive. There is no need to open the file with \fBlibmpq__file_open\fP() to retrieve the file number.
+Call \fBlibmpq__file_number\fP() to get the number of a given file in the archive. This function will return a file number regardless of a known or opened listfile.
 .LP
-The \fBlibmpq__file_number\fP() function takes as first argument the archive structure \fImpq_archive\fP which have to be allocated first and opened by \fBlibmpq__archive_open\fP(). The second argument \fIfilename\fP is the name of the file.
+The \fBlibmpq__file_number\fP() function takes as first argument the archive structure \fImpq_archive\fP which have to be allocated first and opened by \fBlibmpq__archive_open\fP(). The second argument \fIfilename\fP is the name of the file and the third argument is a reference to the \fInumber\fP of the file.
 .SH RETURN VALUE
 On success, the number of the file is returned and on error one of the following constants.
 .TP
@@ -44,10 +45,9 @@ On success, the number of the file is returned and on error one of the following
 libmpq wasn't initialized by calling \fBlibmpq__initialize\fP(), or it was shut down by an \fBlibmpq__shutdown\fP() call.
 .TP
 .B LIBMPQ_ERROR_EXIST
-The given file does not exist.
+File does not exist in archive.
 .SH SEE ALSO
-.BR libmpq__file_name (3),
-.BR libmpq__file_info (3)
+.BR libmpq__file_name (3)
 .SH AUTHOR
 Check documentation.
 .TP

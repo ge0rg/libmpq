@@ -19,7 +19,7 @@
 .\" License along with this manual; if not, write to the Free
 .\" Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111,
 .\" USA.
-.TH libmpq 3 2008-03-30 "The MoPaQ archive library"
+.TH libmpq 3 2008-04-29 "The MoPaQ archive library"
 .SH NAME
 libmpq \- cross-platform C library for manipulating mpq archives.
 .SH SYNOPSIS
@@ -28,7 +28,7 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 #include <mpq.h>
 .sp
 .BI "int32_t libmpq__archive_close("
-.BI "        mpq_archive_s *" "mpq_archive"
+.BI "        mpq_archive_s  *" "mpq_archive"
 .BI ");"
 .fi
 .SH DESCRIPTION
@@ -46,7 +46,11 @@ libmpq wasn't initialized by calling \fBlibmpq__initialize\fP(), or it was shut 
 The given file could not be closed.
 .SH SEE ALSO
 .BR libmpq__archive_open (3),
-.BR libmpq__archive_info (3)
+.BR libmpq__archive_packed_size (3),
+.BR libmpq__archive_unpacked_size (3),
+.BR libmpq__archive_offset (3),
+.BR libmpq__archive_version (3),
+.BR libmpq__archive_files (3)
 .SH AUTHOR
 Check documentation.
 .TP
