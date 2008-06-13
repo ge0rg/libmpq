@@ -80,23 +80,39 @@ __version__ = libmpq.libmpq__version()
 libmpq.libmpq__init()
 
 class Reader:
+    
     def __init__(self, file, libmpq=libmpq):
         self._file = file
         self._pos = 0
         self._buf = []
         self._cur_block = 0
         libmpq.libmpq__block_open_offset(self._file._archive._mpq, self._file.number)
-    def seek(self, pos):
-        self._pos = 0
-        self._buf = []
-        self._cur_block = 0
-        self.read(pos)
+    
+    def seek(self, offset, whence=0):
+        if whence == 0:
+            pass
+        if whence == 1:
+            offset += self._pos
+        elif whence == 2:
+            offset += self._file.unpacked_size
+        else:
+            raise ValueError, "invalid whence"
+        
+        if offset >= self._pos:
+            self.read(offset - self._pos)
+        else:
+            self._pos = 0
+            self._buf = []
+            self._cur_block = 0
+            self.read(offset)
+    
     def tell(self):
         return self._pos
-    def read(self, length=-1, libmpq=libmpq, ctypes=ctypes):
+    
+    def read(self, size=-1, libmpq=libmpq, ctypes=ctypes):
         bsize = ctypes.c_int()
         while True:
-            if length >= 0 and sum(map(len, self._buf)) >= length:
+            if size >= 0 and sum(map(len, self._buf)) >= size:
                 break
             try:
                 libmpq.libmpq__block_unpacked_size(self._file._archive._mpq, self._file.number, self._cur_block, ctypes.byref(bsize))
@@ -107,9 +123,9 @@ class Reader:
             self._buf.append(buf.raw)
             self._cur_block += 1
         self._buf = "".join(self._buf)
-        if length >= 0:
-            ret = self._buf[:length]
-            self._buf = [self._buf[length:]]
+        if size >= 0:
+            ret = self._buf[:size]
+            self._buf = [self._buf[size:]]
         else:
             ret = self._buf
             self._buf = []
@@ -117,11 +133,12 @@ class Reader:
         return ret
 
 class File:
+    
     def __init__(self, archive, number, libmpq=libmpq, ctypes=ctypes):
         self._archive = archive
         self.number = number
         
-        for name, type in [
+        for name, atype in [
                     ("packed_size", ctypes.c_longlong),
                     ("unpacked_size", ctypes.c_longlong),
                     ("offset", ctypes.c_longlong),
@@ -130,7 +147,7 @@ class File:
                     ("compressed", ctypes.c_int),
                     ("imploded", ctypes.c_int),
                 ]:
-            data = type()
+            data = atype()
             func = getattr(libmpq, "libmpq__file_"+name)
             func(self._archive._mpq, self.number, ctypes.byref(data))
             setattr(self, name, data.value)
@@ -148,6 +165,7 @@ class File:
         return Reader(self)
 
 class Archive:
+    
     def __init__(self, filename, libmpq=libmpq, File=File, ctypes=ctypes):
         if isinstance(filename, File):
           assert not filename.encrypted and not filename.compressed and not filename.imploded
