@@ -554,6 +554,9 @@ int32_t libmpq__file_imploded(mpq_archive_s *mpq_archive, uint32_t file_number, 
 /* this function return filename by the given number. */
 int32_t libmpq__file_name(mpq_archive_s *mpq_archive, uint32_t file_number, char *filename, size_t filename_size) {
 
+	/* some common variables. */
+	int32_t result = 0;
+
 	CHECK_IS_INITIALIZED();
 
 	/* check if we are in the range of available files. */
@@ -564,10 +567,14 @@ int32_t libmpq__file_name(mpq_archive_s *mpq_archive, uint32_t file_number, char
 	}
 
 	/* file was found but no internal listfile exist. */
-	snprintf(filename, filename_size, "file%06i.xxx", file_number);
+	if ((result = snprintf(filename, filename_size, "file%06i.xxx", file_number)) < 0) {
 
-	/* if no error was found, return zero. */
-	return LIBMPQ_SUCCESS;
+		/* something on output conversion failed. */
+		return LIBMPQ_ERROR_FORMAT;
+	}
+
+	/* if no error was found, return number of bytes converted by snprintf. */
+	return result;
 }
 
 /* this function return filenumber by the given name. */
