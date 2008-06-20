@@ -34,7 +34,6 @@ extern "C" {
 
 /* generic includes. */
 #include <stdint.h>
-#include <stdio.h>
 #include <unistd.h>
 
 #if defined(__GNUC__) && (__GNUC__ >= 4)
@@ -57,76 +56,8 @@ extern "C" {
 #define LIBMPQ_ERROR_DECRYPT			-11		/* we don't know the decryption seed. */
 #define LIBMPQ_ERROR_UNPACK			-12		/* error on unpacking file. */
 
-/* mpq archive header. */
-typedef struct {
-	uint32_t	mpq_magic;		/* the 0x1A51504D ('MPQ\x1A') signature. */
-	uint32_t	header_size;		/* mpq archive header size. */
-	uint32_t	archive_size;		/* size of mpq archive. */
-	uint16_t	version;		/* 0000 for starcraft and broodwar. */
-	uint16_t	block_size;		/* size of file block is (512 * 2 ^ block size). */
-	uint32_t	hash_table_offset;	/* file position of mpq_hash. */
-	uint32_t	block_table_offset;	/* file position of mpq_block, each entry has 16 bytes. */
-	uint32_t	hash_table_count;	/* number of entries in hash table. */
-	uint32_t	block_table_count;	/* number of entries in the block table. */
-} __attribute__ ((packed)) mpq_header_s;
-
-/* mpq extended archive header, used since world of warcraft - the burning crusade. */
-typedef struct {
-	uint64_t	extended_offset;	/* offset to the beginning of the extended block table, relative to the beginning of the archive. */
-	uint16_t	hash_table_offset_high;	/* upper 16 bits of the hash table offset for large archives. */
-	uint16_t	block_table_offset_high;/* upper 16 bits of the block table offset for large archives.*/
-} __attribute__ ((packed)) mpq_header_ex_s;
-
-/* hash entry, all files in the archive are searched by their hashes. */
-typedef struct {
-	uint32_t	hash_a;			/* the first two uint32_ts are the encrypted file. */
-	uint32_t	hash_b;			/* the first two uint32_ts are the encrypted file. */
-	uint16_t	locale;			/* locale information. */
-	uint16_t	platform;		/* platform information and zero is default. */
-	uint32_t	block_table_index;	/* index to file description block. */
-} __attribute__ ((packed)) mpq_hash_s;
-
-/* file description block contains informations about the file. */
-typedef struct {
-	uint32_t	offset;			/* block file starting position in the archive. */
-	uint32_t	packed_size;		/* packed file size. */
-	uint32_t	unpacked_size;		/* unpacked file size. */
-	uint32_t	flags;			/* flags. */
-} __attribute__ ((packed)) mpq_block_s;
-
-/* extended file description block contains information about the offset beyond 2^32 (4GB). */
-typedef struct {
-	uint16_t	offset_high;		/* upper 16 bit of the file offset in archive. */
-} __attribute__ ((packed)) mpq_block_ex_s;
-
-/* file structure used since diablo 1.00 (0x38 bytes). */
-typedef struct {
-	uint32_t	seed;			/* seed used for file decrypt. */
-	uint32_t	*packed_offset;		/* position of each file block (only for packed files). */
-} mpq_file_s;
-
-/* archive structure used since diablo 1.00 by blizzard. */
-typedef struct {
-
-	/* generic file information. */
-	FILE		*fp;			/* file handle. */
-
-	/* generic size information. */
-	uint32_t	block_size;		/* size of the mpq block. */
-	off_t		archive_offset;		/* absolute start position of archive. */
-
-	/* archive related buffers and tables. */
-	mpq_header_s	mpq_header;		/* mpq file header. */
-	mpq_header_ex_s	mpq_header_ex;		/* mpq extended file header. */
-	mpq_hash_s	*mpq_hash;		/* hash table. */
-	mpq_block_s	*mpq_block;		/* block table. */
-	mpq_block_ex_s	*mpq_block_ex;		/* extended block table. */
-	mpq_file_s	**mpq_file;		/* pointer to the file pointers which are opened. */
-
-	/* non archive structure related members. */
-	uint32_t	*block_table_indices;	/* pointer which stores the mapping for file number to block entry. */
-	uint32_t	files;			/* number of files in archive, which could be extracted. */
-} mpq_archive_s;
+/* internal data structure. */
+typedef struct mpq_archive mpq_archive_s;
 
 /* initialization and shut down. */
 extern LIBMPQ_API int32_t libmpq__init(void);
