@@ -1,2 +1,2 @@
 # any directories which should be built and installed.
-SUBDIRS				= python
+SUBDIRS				= d python

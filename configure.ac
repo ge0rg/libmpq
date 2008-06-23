@@ -73,6 +73,7 @@ AC_OUTPUT([
 Makefile
 libmpq/Makefile
 bindings/Makefile
+bindings/d/Makefile
 bindings/python/Makefile
 doc/Makefile
 doc/man1/Makefile
