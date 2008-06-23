@@ -272,11 +272,11 @@ int32_t libmpq__decompress_multi(uint8_t *in_buf, uint32_t in_size, uint8_t *out
 	uint32_t entries  = (sizeof(dcmp_table) / sizeof(decompress_table_s));
 	uint8_t *temp_buf = NULL;
 	uint8_t *work_buf;
-	uint8_t decompress_flag;
+	uint8_t decompress_flag, decompress_unsupp;
 	uint32_t i;
 
 	/* get applied compression types. */
-	decompress_flag = *in_buf++;
+	decompress_flag = decompress_unsupp = *in_buf++;
 
 	/* decrement data size. */
 	in_size--;
@@ -289,11 +289,13 @@ int32_t libmpq__decompress_multi(uint8_t *in_buf, uint32_t in_size, uint8_t *out
 
 			/* increase counter for used compression algorithms. */
 			count++;
+			/* this algorithm is supported, remove from unsupp mask */
+			decompress_unsupp &= ~dcmp_table[i].mask;
 		}
 	}
 
 	/* check if there is some method unhandled. (e.g. compressed by future versions) */
-	if (count == 0) {
+	if (decompress_unsupp) {
 
 		/* compression type is unknown and we need to implement it. :) */
 		return LIBMPQ_ERROR_UNPACK;
