@@ -298,7 +298,7 @@ class File {
 		this.a = a;
 		this.am = a.archive();
 		if (fileno >= a.files) {
-			throw new MPQException("File(" ~ fileno ~ ")",
+			throw new MPQException(format("File(%d)", fileno),
 				LIBMPQ_ERROR_EXIST);
 		}
 		this.filename = format("file%04d.xxx", fileno);
