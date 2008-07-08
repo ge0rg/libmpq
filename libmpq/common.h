@@ -23,19 +23,20 @@
 
 /* function to initialize decryption buffer. */
 int32_t libmpq__decrypt_buffer_init(
-	uint32_t	*buffer
+);
+
+/* function to deinitialize decryption buffer. */
+int32_t libmpq__decrypt_buffer_deinit(
 );
 
 /* function to return the hash to a given string. */
 uint32_t libmpq__hash_string(
-	uint32_t	*crypt_buf,
 	const char	*key,
 	uint32_t	offset
 );
 
 /* function to decrypt hash/block table of mpq archive. */
 int32_t libmpq__decrypt_table(
-	uint32_t	*crypt_buf,
 	uint32_t	*hash,
 	const char	*key,
 	uint32_t	size
@@ -45,16 +46,14 @@ int32_t libmpq__decrypt_table(
 int32_t libmpq__decrypt_key(
 	uint8_t		*in_buf,
 	uint32_t	in_size,
-	uint32_t	block_size,
-	uint32_t	*crypt_buf
+	uint32_t	block_size
 );
 
 /* function to decrypt a block. */
 int32_t libmpq__decrypt_block(
 	uint32_t	*in_buf,
 	uint32_t	in_size,
-	uint32_t	seed,
-	uint32_t	*crypt_buf
+	uint32_t	seed
 );
 
 /* function to decompress or explode block from archive. */

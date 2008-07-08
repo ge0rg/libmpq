@@ -79,6 +79,7 @@ __version__ = libmpq.libmpq__version()
 
 libmpq.libmpq__init()
 
+
 class Reader:
     
     def __init__(self, file, libmpq=libmpq):
@@ -135,6 +136,7 @@ class Reader:
     def __del__(self):
         libmpq.libmpq__block_close_offset(self._file._archive._mpq, self._file.number)
 
+
 class File:
     
     def __init__(self, archive, number, libmpq=libmpq, ctypes=ctypes):
@@ -166,6 +168,7 @@ class File:
     
     def __iter__(self, Reader=Reader):
         return Reader(self)
+
 
 class Archive:
     

@@ -43,29 +43,13 @@
  */
 static int32_t init_count;
 
-/* the global shared decryption buffer. it's set up by libmpq__init()
- * and killed by libmpq__shutdown().
- */
-static uint32_t *crypt_buf;
-
 /* initializes libmpq. returns < 0 on failure, 0 on success. */
 int32_t libmpq__init(void) {
-
-	if (init_count == 0) {
-		crypt_buf = malloc(sizeof(uint32_t) * LIBMPQ_BUFFER_SIZE);
-
-		if (!crypt_buf)
-			return LIBMPQ_ERROR_MALLOC;
-
-		if (libmpq__decrypt_buffer_init(crypt_buf) < 0) {
-			free(crypt_buf);
-			crypt_buf = NULL;
-
-			return LIBMPQ_ERROR_DECRYPT;
-		}
-	}
-
 	init_count++;
+
+	if (init_count == 1) {
+		return libmpq__decrypt_buffer_init();
+	}
 
 	return LIBMPQ_SUCCESS;
 }
@@ -77,8 +61,7 @@ int32_t libmpq__shutdown(void) {
 	init_count--;
 
 	if (!init_count) {
-		free(crypt_buf);
-		crypt_buf = NULL;
+		return libmpq__decrypt_buffer_deinit();
 	}
 
 	return LIBMPQ_SUCCESS;
@@ -242,7 +225,7 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 	}
 
 	/* decrypt the hashtable. */
-	libmpq__decrypt_table(crypt_buf, (uint32_t *)((*mpq_archive)->mpq_hash), "(hash table)", (*mpq_archive)->mpq_header.hash_table_count * 4);
+	libmpq__decrypt_table((uint32_t *)((*mpq_archive)->mpq_hash), "(hash table)", (*mpq_archive)->mpq_header.hash_table_count * 4);
 
 	/* seek in file. */
 	if (fseeko((*mpq_archive)->fp, (*mpq_archive)->mpq_header.block_table_offset + (((long long)((*mpq_archive)->mpq_header_ex.block_table_offset_high)) << 32) + (*mpq_archive)->archive_offset, SEEK_SET) < 0) {
@@ -261,7 +244,7 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 	}
 
 	/* decrypt block table. */
-	libmpq__decrypt_table(crypt_buf, (uint32_t *)((*mpq_archive)->mpq_block), "(block table)", (*mpq_archive)->mpq_header.block_table_count * 4);
+	libmpq__decrypt_table((uint32_t *)((*mpq_archive)->mpq_block), "(block table)", (*mpq_archive)->mpq_header.block_table_count * 4);
 
 	/* check if extended block table is present, regardless of version 2 it is only present in archives > 4GB. */
 	if ((*mpq_archive)->mpq_header_ex.extended_offset > 0) {
@@ -589,9 +572,9 @@ int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename, ui
 	/* if the list of file names doesn't include this one, we'll have
 	 * to figure out the file number the "hard" way.
 	 */
-	hash1 = libmpq__hash_string (crypt_buf, filename, 0x0);
-	hash2 = libmpq__hash_string (crypt_buf, filename, 0x100);
-	hash3 = libmpq__hash_string (crypt_buf, filename, 0x200);
+	hash1 = libmpq__hash_string (filename, 0x0);
+	hash2 = libmpq__hash_string (filename, 0x100);
+	hash3 = libmpq__hash_string (filename, 0x200);
 
 	ht_count = mpq_archive->mpq_header.hash_table_count;
 
@@ -800,7 +783,7 @@ int32_t libmpq__block_open_offset(mpq_archive_s *mpq_archive, uint32_t file_numb
 		if (mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number]].flags & LIBMPQ_FLAG_ENCRYPTED) {
 
 			/* check if we don't know the file seed, try to find it. */
-			if ((mpq_archive->mpq_file[file_number]->seed = libmpq__decrypt_key((uint8_t *)mpq_archive->mpq_file[file_number]->packed_offset, packed_size, mpq_archive->block_size, crypt_buf)) < 0) {
+			if ((mpq_archive->mpq_file[file_number]->seed = libmpq__decrypt_key((uint8_t *)mpq_archive->mpq_file[file_number]->packed_offset, packed_size, mpq_archive->block_size)) < 0) {
 
 				/* sorry without seed, we cannot extract file. */
 				result = LIBMPQ_ERROR_DECRYPT;
@@ -808,7 +791,7 @@ int32_t libmpq__block_open_offset(mpq_archive_s *mpq_archive, uint32_t file_numb
 			}
 
 			/* decrypt block in input buffer. */
-			if ((tb = libmpq__decrypt_block(mpq_archive->mpq_file[file_number]->packed_offset, packed_size, mpq_archive->mpq_file[file_number]->seed - 1, crypt_buf)) < 0 ) {
+			if ((tb = libmpq__decrypt_block(mpq_archive->mpq_file[file_number]->packed_offset, packed_size, mpq_archive->mpq_file[file_number]->seed - 1)) < 0 ) {
 
 				/* something on decrypt failed. */
 				result = LIBMPQ_ERROR_DECRYPT;
@@ -1124,7 +1107,7 @@ int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint32_t file_number, uin
 		libmpq__block_seed(mpq_archive, file_number, block_number, &seed);
 
 		/* decrypt block. */
-		if ((tb = libmpq__decrypt_block((uint32_t *)in_buf, in_size, seed, crypt_buf)) < 0) {
+		if ((tb = libmpq__decrypt_block((uint32_t *)in_buf, in_size, seed)) < 0) {
 
 			/* free buffers. */
 			free(in_buf);
