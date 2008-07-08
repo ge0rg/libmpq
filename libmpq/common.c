@@ -35,8 +35,17 @@
 
 #include "common.h"
 
+/* the global shared decryption buffer. it's set up by libmpq__decrypt_buffer_init()
+ * and killed by libmpq__decrypt_buffer_deinit().
+ */
+static uint32_t *crypt_buf;
+
 /* function to initialize decryption buffer. */
-int32_t libmpq__decrypt_buffer_init(uint32_t *crypt_buf) {
+int32_t libmpq__decrypt_buffer_init() {
+	crypt_buf = malloc(sizeof(uint32_t) * LIBMPQ_BUFFER_SIZE);
+
+	if (!crypt_buf)
+		return LIBMPQ_ERROR_MALLOC;
 
 	/* some common variables. */
 	uint32_t seed   = 0x00100001;
@@ -68,8 +77,15 @@ int32_t libmpq__decrypt_buffer_init(uint32_t *crypt_buf) {
 	return LIBMPQ_SUCCESS;
 }
 
+int32_t libmpq__decrypt_buffer_deinit() {
+	free(crypt_buf);
+
+	/* if no error was found, return zero. */
+	return LIBMPQ_SUCCESS;
+}
+
 /* function to return the hash to a given string. */
-uint32_t libmpq__hash_string(uint32_t *crypt_buf, const char *key, uint32_t offset) {
+uint32_t libmpq__hash_string(const char *key, uint32_t offset) {
 
 	/* some common variables. */
 	uint32_t seed1 = 0x7FED7FED;
@@ -89,7 +105,7 @@ uint32_t libmpq__hash_string(uint32_t *crypt_buf, const char *key, uint32_t offs
 }
 
 /* function to decrypt hash/block table of mpq archive. */
-int32_t libmpq__decrypt_table(uint32_t *crypt_buf, uint32_t *hash, const char *key, uint32_t size) {
+int32_t libmpq__decrypt_table(uint32_t *hash, const char *key, uint32_t size) {
 
 	/* some common variables. */
 	uint32_t seed1;
@@ -98,7 +114,7 @@ int32_t libmpq__decrypt_table(uint32_t *crypt_buf, uint32_t *hash, const char *k
 	/* one key character. */
 	uint32_t ch;
 
-	seed1 = libmpq__hash_string(crypt_buf, key, 0x300);
+	seed1 = libmpq__hash_string(key, 0x300);
 
 	/* decrypt it. */
 	while (size-- > 0) {
@@ -114,7 +130,7 @@ int32_t libmpq__decrypt_table(uint32_t *crypt_buf, uint32_t *hash, const char *k
 }
 
 /* function to detect decryption key. */
-int32_t libmpq__decrypt_key(uint8_t *in_buf, uint32_t in_size, uint32_t block_size, uint32_t *crypt_buf) {
+int32_t libmpq__decrypt_key(uint8_t *in_buf, uint32_t in_size, uint32_t block_size) {
 
 	/* some common variables. */
 	uint32_t saveseed1;
@@ -171,7 +187,7 @@ int32_t libmpq__decrypt_key(uint8_t *in_buf, uint32_t in_size, uint32_t block_si
 }
 
 /* function to decrypt a block. */
-int32_t libmpq__decrypt_block(uint32_t *in_buf, uint32_t in_size, uint32_t seed, uint32_t *crypt_buf) {
+int32_t libmpq__decrypt_block(uint32_t *in_buf, uint32_t in_size, uint32_t seed) {
 
 	/* some common variables. */
 	uint32_t seed2 = 0xEEEEEEEE;
