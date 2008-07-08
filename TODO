@@ -2,7 +2,6 @@ Features and functionality which should be added in the future.
 
 	* Porting for big endian systems.
 	* Porting for Windows? :)
-	* Namebased file extraction.
 	* Creating mpq archives.
 	* Brute all unknown filenames, Blizzard uses in their
 	  archives.
