@@ -92,7 +92,7 @@ class Reader:
     def seek(self, offset, whence=0):
         if whence == 0:
             pass
-        if whence == 1:
+        elif whence == 1:
             offset += self._pos
         elif whence == 2:
             offset += self._file.unpacked_size
