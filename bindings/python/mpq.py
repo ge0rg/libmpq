@@ -133,7 +133,7 @@ class Reader:
         self._pos += len(ret)
         return ret
     
-    def __del__(self):
+    def __del__(self, libmpq=libmpq):
         libmpq.libmpq__block_close_offset(self._file._archive._mpq, self._file.number)
 
 
