@@ -71,8 +71,6 @@ libmpq.libmpq__block_open_offset.errcheck = check_error
 libmpq.libmpq__block_close_offset.errcheck = check_error
 libmpq.libmpq__block_packed_size.errcheck = check_error
 libmpq.libmpq__block_unpacked_size.errcheck = check_error
-libmpq.libmpq__block_offset.errcheck = check_error
-libmpq.libmpq__block_seed.errcheck = check_error
 libmpq.libmpq__block_read.errcheck = check_error
 
 __version__ = libmpq.libmpq__version()

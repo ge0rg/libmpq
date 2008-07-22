@@ -953,40 +953,6 @@ int32_t libmpq__block_unpacked_size(mpq_archive_s *mpq_archive, uint32_t file_nu
 	return LIBMPQ_SUCCESS;
 }
 
-/* this function return the block offset (beginning of block in file). */
-int32_t libmpq__block_offset(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, off_t *offset) {
-
-	CHECK_IS_INITIALIZED();
-
-	/* check if given file number is not out of range. */
-	if (file_number < 0 || file_number > mpq_archive->files - 1) {
-
-		/* file number is out of range. */
-		return LIBMPQ_ERROR_EXIST;
-	}
-
-	/* check if given block number is not out of range. */
-	if (block_number < 0 || block_number >= ((mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number]].flags & LIBMPQ_FLAG_SINGLE) != 0 ? 1 : (mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number]].unpacked_size + mpq_archive->block_size - 1) / mpq_archive->block_size)) {
-
-		/* file number is out of range. */
-		return LIBMPQ_ERROR_EXIST;
-	}
-
-	/* check if packed block offset table is opened. */
-	if (mpq_archive->mpq_file[file_number] == NULL ||
-	    mpq_archive->mpq_file[file_number]->packed_offset == NULL) {
-
-		/* packed block offset table is not opened. */
-		return LIBMPQ_ERROR_OPEN;
-	}
-
-	/* return block offset relative to file start. */
-	*offset = mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number]].offset + (((long long)mpq_archive->mpq_block_ex[mpq_archive->block_table_indices[file_number]].offset_high) << 32) + mpq_archive->mpq_file[file_number]->packed_offset[block_number];
-
-	/* if no error was found, return zero. */
-	return LIBMPQ_SUCCESS;
-}
-
 /* this function return the decryption seed for the given file and block. */
 int32_t libmpq__block_seed(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, uint32_t *seed) {
 
@@ -1070,7 +1036,7 @@ int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint32_t file_number, uin
 	}
 
 	/* fetch some required values like input buffer size and block offset. */
-	libmpq__block_offset(mpq_archive, file_number, block_number, &block_offset);
+	block_offset = mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number]].offset + (((long long)mpq_archive->mpq_block_ex[mpq_archive->block_table_indices[file_number]].offset_high) << 32) + mpq_archive->mpq_file[file_number]->packed_offset[block_number];
 	libmpq__block_packed_size(mpq_archive, file_number, block_number, &in_size);
 
 	/* seek in file. */
