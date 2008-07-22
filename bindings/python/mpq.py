@@ -18,7 +18,8 @@ import ctypes
 
 libmpq = ctypes.CDLL("libmpq.so")
 
-class Error(Exception): pass
+class Error(Exception):
+    pass
 
 errors = {
     -1: (IOError, "open"),
@@ -38,7 +39,7 @@ errors = {
 def check_error(result, func, arguments, libmpq=libmpq, errors=errors):
     try:
         error = errors[result]
-    except:  
+    except KeyError:
         return result
     else:
         raise error[0](*error[1:])
@@ -69,13 +70,12 @@ libmpq.libmpq__file_read.errcheck = check_error
 
 libmpq.libmpq__block_open_offset.errcheck = check_error
 libmpq.libmpq__block_close_offset.errcheck = check_error
-libmpq.libmpq__block_packed_size.errcheck = check_error
 libmpq.libmpq__block_unpacked_size.errcheck = check_error
 libmpq.libmpq__block_read.errcheck = check_error
 
-__version__ = libmpq.libmpq__version()
-
 libmpq.libmpq__init()
+
+__version__ = libmpq.libmpq__version()
 
 
 class Reader:
@@ -108,7 +108,7 @@ class Reader:
     def tell(self):
         return self._pos
     
-    def read(self, size=-1, libmpq=libmpq, ctypes=ctypes):
+    def read(self, size=-1, ctypes=ctypes, libmpq=libmpq):
         bsize = ctypes.c_int()
         while True:
             if size >= 0 and sum(map(len, self._buf)) >= size:
@@ -137,7 +137,7 @@ class Reader:
 
 class File:
     
-    def __init__(self, archive, number, libmpq=libmpq, ctypes=ctypes):
+    def __init__(self, archive, number, ctypes=ctypes, libmpq=libmpq):
         self._archive = archive
         self.number = number
         
@@ -159,7 +159,7 @@ class File:
         libmpq.libmpq__file_name(self._archive._mpq, self.number, buf, len(buf))
         self.name = buf.value
     
-    def __str__(self, libmpq=libmpq, ctypes=ctypes):
+    def __str__(self, ctypes=ctypes, libmpq=libmpq):
         data = ctypes.create_string_buffer(self.unpacked_size)
         libmpq.libmpq__file_read(self._archive._mpq, self.number, data, ctypes.c_longlong(len(data)), None)
         return data.raw
@@ -170,7 +170,7 @@ class File:
 
 class Archive:
     
-    def __init__(self, filename, libmpq=libmpq, File=File, ctypes=ctypes):
+    def __init__(self, filename, ctypes=ctypes, File=File, libmpq=libmpq):
         if isinstance(filename, File):
           assert not filename.encrypted and not filename.compressed and not filename.imploded
           self.filename = filename._archive.filename
@@ -199,12 +199,11 @@ class Archive:
         if getattr(self, "_opened", False):
             libmpq.libmpq__archive_close(self._mpq)
     
-    def __getitem__(self, item, File=File, libmpq=libmpq, ctypes=ctypes):
+    def __getitem__(self, item, ctypes=ctypes, File=File, libmpq=libmpq):
         if isinstance(item, str):
             data = ctypes.c_int()
             libmpq.libmpq__file_number(self._mpq, item, ctypes.byref(data))
             item = data.value
         return File(self, item)
 
-del check_error # clean
-del Reader, File, libmpq, ctypes, errors # unclean
+del check_error, ctypes, errors, File, libmpq, Reader # everything except Error and Archive
