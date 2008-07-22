@@ -92,8 +92,6 @@ extern LIBMPQ_API int32_t libmpq__block_open_offset(mpq_archive_s *mpq_archive, 
 extern LIBMPQ_API int32_t libmpq__block_close_offset(mpq_archive_s *mpq_archive, uint32_t file_number);
 extern LIBMPQ_API int32_t libmpq__block_packed_size(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, off_t *packed_size);
 extern LIBMPQ_API int32_t libmpq__block_unpacked_size(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, off_t *unpacked_size);
-extern LIBMPQ_API int32_t libmpq__block_offset(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, off_t *offset);
-extern LIBMPQ_API int32_t libmpq__block_seed(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, uint32_t *seed);
 extern LIBMPQ_API int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, uint8_t *out_buf, off_t out_size, off_t *transferred);
 
 #ifdef __cplusplus
