@@ -35,20 +35,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define CHECK_IS_INITIALIZED()
-
-/* initializes libmpq. returns < 0 on failure, 0 on success. */
-int32_t libmpq__init(void) {
-        printf("warning: libmpq__init is depreciated");
-	return LIBMPQ_SUCCESS;
-}
-
-/* shuts down libmpq. */
-int32_t libmpq__shutdown(void) {
-        printf("warning: libmpq__shutdown is depreciated");
-	return LIBMPQ_SUCCESS;
-}
-
 /* this function returns the library version information. */
 const char *libmpq__version(void) {
 
@@ -65,8 +51,6 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 	uint32_t count          = 0;
 	int32_t result          = 0;
 	uint32_t header_search	= FALSE;
-
-	CHECK_IS_INITIALIZED();
 
 	if (archive_offset == (off_t) -1) {
 		archive_offset = 0;
@@ -290,8 +274,6 @@ error:
 /* this function close the file descriptor, free the decryption buffer and the file list. */
 int32_t libmpq__archive_close(mpq_archive_s *mpq_archive) {
 
-	CHECK_IS_INITIALIZED();
-
 	/* try to close the file */
 	if ((fclose(mpq_archive->fp)) < 0) {
 
@@ -319,8 +301,6 @@ int32_t libmpq__archive_packed_size(mpq_archive_s *mpq_archive, off_t *packed_si
 	/* some common variables. */
 	uint32_t i;
 
-	CHECK_IS_INITIALIZED();
-
 	/* loop through all files in archive and count packed size. */
 	for (i = 0; i < mpq_archive->files; i++) {
 		*packed_size += mpq_archive->mpq_block[mpq_archive->block_table_indices[i]].packed_size;
@@ -336,8 +316,6 @@ int32_t libmpq__archive_unpacked_size(mpq_archive_s *mpq_archive, off_t *unpacke
 	/* some common variables. */
 	uint32_t i;
 
-	CHECK_IS_INITIALIZED();
-
 	/* loop through all files in archive and count unpacked size. */
 	for (i = 0; i < mpq_archive->files; i++) {
 		*unpacked_size += mpq_archive->mpq_block[mpq_archive->block_table_indices[i]].unpacked_size;
@@ -350,8 +328,6 @@ int32_t libmpq__archive_unpacked_size(mpq_archive_s *mpq_archive, off_t *unpacke
 /* this function return the archive offset (beginning of archive in file). */
 int32_t libmpq__archive_offset(mpq_archive_s *mpq_archive, off_t *offset) {
 
-	CHECK_IS_INITIALIZED();
-
 	/* return archive offset. */
 	*offset = mpq_archive->archive_offset;
 
@@ -361,8 +337,6 @@ int32_t libmpq__archive_offset(mpq_archive_s *mpq_archive, off_t *offset) {
 
 /* this function return the archive offset. */
 int32_t libmpq__archive_version(mpq_archive_s *mpq_archive, uint32_t *version) {
-
-	CHECK_IS_INITIALIZED();
 
 	/* return archive version. */
 	*version = mpq_archive->mpq_header.version + 1;
@@ -374,8 +348,6 @@ int32_t libmpq__archive_version(mpq_archive_s *mpq_archive, uint32_t *version) {
 /* this function return the number of valid files in archive. */
 int32_t libmpq__archive_files(mpq_archive_s *mpq_archive, uint32_t *files) {
 
-	CHECK_IS_INITIALIZED();
-
 	/* return archive version. */
 	*files = mpq_archive->files;
 
@@ -385,8 +357,6 @@ int32_t libmpq__archive_files(mpq_archive_s *mpq_archive, uint32_t *files) {
 
 /* this function return the packed size of the given files in the archive. */
 int32_t libmpq__file_packed_size(mpq_archive_s *mpq_archive, uint32_t file_number, off_t *packed_size) {
-
-	CHECK_IS_INITIALIZED();
 
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
@@ -405,8 +375,6 @@ int32_t libmpq__file_packed_size(mpq_archive_s *mpq_archive, uint32_t file_numbe
 /* this function return the unpacked size of the given file in the archive. */
 int32_t libmpq__file_unpacked_size(mpq_archive_s *mpq_archive, uint32_t file_number, off_t *unpacked_size) {
 
-	CHECK_IS_INITIALIZED();
-
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
 
@@ -423,8 +391,6 @@ int32_t libmpq__file_unpacked_size(mpq_archive_s *mpq_archive, uint32_t file_num
 
 /* this function return the file offset (beginning of file in archive). */
 int32_t libmpq__file_offset(mpq_archive_s *mpq_archive, uint32_t file_number, off_t *offset) {
-
-	CHECK_IS_INITIALIZED();
 
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
@@ -443,8 +409,6 @@ int32_t libmpq__file_offset(mpq_archive_s *mpq_archive, uint32_t file_number, of
 /* this function return the number of blocks for the given file in the archive. */
 int32_t libmpq__file_blocks(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t *blocks) {
 
-	CHECK_IS_INITIALIZED();
-
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
 
@@ -461,8 +425,6 @@ int32_t libmpq__file_blocks(mpq_archive_s *mpq_archive, uint32_t file_number, ui
 
 /* this function return if the file is encrypted or not. */
 int32_t libmpq__file_encrypted(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t *encrypted) {
-
-	CHECK_IS_INITIALIZED();
 
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
@@ -481,8 +443,6 @@ int32_t libmpq__file_encrypted(mpq_archive_s *mpq_archive, uint32_t file_number,
 /* this function return if the file is compressed or not. */
 int32_t libmpq__file_compressed(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t *compressed) {
 
-	CHECK_IS_INITIALIZED();
-
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
 
@@ -499,8 +459,6 @@ int32_t libmpq__file_compressed(mpq_archive_s *mpq_archive, uint32_t file_number
 
 /* this function return if the file is imploded or not. */
 int32_t libmpq__file_imploded(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t *imploded) {
-
-	CHECK_IS_INITIALIZED();
 
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
@@ -521,8 +479,6 @@ int32_t libmpq__file_name(mpq_archive_s *mpq_archive, uint32_t file_number, char
 
 	/* some common variables. */
 	int32_t result = 0;
-
-	CHECK_IS_INITIALIZED();
 
 	/* check if we are in the range of available files. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
@@ -548,8 +504,6 @@ int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename, ui
 	/* some common variables. */
 	uint32_t i, j, hash1, hash2, hash3, ht_count;
 	uint32_t count = 0;
-
-	CHECK_IS_INITIALIZED();
 
 	/* if the list of file names doesn't include this one, we'll have
 	 * to figure out the file number the "hard" way.
@@ -611,8 +565,6 @@ int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint32_t file_number, uint
 	off_t unpacked_size     = 0;
 	off_t transferred_block = 0;
 	off_t transferred_total = 0;
-
-	CHECK_IS_INITIALIZED();
 
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
@@ -689,8 +641,6 @@ int32_t libmpq__block_open_offset(mpq_archive_s *mpq_archive, uint32_t file_numb
 	uint32_t packed_size;
 	int32_t rb     = 0;
 	int32_t result = 0;
-
-	CHECK_IS_INITIALIZED();
 
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
@@ -830,8 +780,6 @@ error:
 /* this function free the file pointer to the opened file in archive. */
 int32_t libmpq__block_close_offset(mpq_archive_s *mpq_archive, uint32_t file_number) {
 
-	CHECK_IS_INITIALIZED();
-
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
 
@@ -849,8 +797,6 @@ int32_t libmpq__block_close_offset(mpq_archive_s *mpq_archive, uint32_t file_num
 
 /* this function return the unpacked size of the given file and block in the archive. */
 int32_t libmpq__block_unpacked_size(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, off_t *unpacked_size) {
-
-	CHECK_IS_INITIALIZED();
 
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
@@ -903,8 +849,6 @@ int32_t libmpq__block_unpacked_size(mpq_archive_s *mpq_archive, uint32_t file_nu
 /* this function return the decryption seed for the given file and block. */
 int32_t libmpq__block_seed(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, uint32_t *seed) {
 
-	CHECK_IS_INITIALIZED();
-
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
 
@@ -947,8 +891,6 @@ int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint32_t file_number, uin
 	off_t block_offset  = 0;
 	off_t in_size       = 0;
 	off_t unpacked_size = 0;
-
-	CHECK_IS_INITIALIZED();
 
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
