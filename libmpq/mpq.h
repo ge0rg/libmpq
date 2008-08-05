@@ -51,7 +51,6 @@ extern "C" {
 #define LIBMPQ_ERROR_WRITE			-5		/* write error on file. */
 #define LIBMPQ_ERROR_MALLOC			-6		/* memory allocation error. */
 #define LIBMPQ_ERROR_FORMAT			-7		/* format errror. */
-#define LIBMPQ_ERROR_NOT_INITIALIZED		-8		/* libmpq__init() wasn't called. */
 #define LIBMPQ_ERROR_SIZE			-9		/* buffer size is to small. */
 #define LIBMPQ_ERROR_EXIST			-10		/* file or block does not exist in archive. */
 #define LIBMPQ_ERROR_DECRYPT			-11		/* we don't know the decryption seed. */
@@ -59,10 +58,6 @@ extern "C" {
 
 /* internal data structure. */
 typedef struct mpq_archive mpq_archive_s;
-
-/* initialization and shut down. */
-extern LIBMPQ_API int32_t libmpq__init(void);
-extern LIBMPQ_API int32_t libmpq__shutdown(void);
 
 /* generic information about library. */
 extern LIBMPQ_API const char *libmpq__version(void);
