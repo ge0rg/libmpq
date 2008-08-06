@@ -53,10 +53,6 @@ struct mpq_archive_s;
 
 extern(C) {
 
-/* initialization and shut down. */
-int libmpq__init();
-int libmpq__shutdown();
-
 /* libmpq__generic information about library. */
 char *libmpq__version();
 
@@ -156,8 +152,6 @@ template MPQ_FUNC(char[] func_name) {
 	const char[] MPQ_FUNC = "alias MPQ_CHECKERR!(libmpq__" ~ func_name ~ ") " ~ func_name ~ ";";
 }
 
-mixin(MPQ_FUNC!("init"));
-mixin(MPQ_FUNC!("shutdown"));
 alias libmpq__version libversion; /* must be direct alias because it returns char*, not error int */
 mixin(MPQ_FUNC!("archive_open"));
 mixin(MPQ_FUNC!("archive_close"));
@@ -210,7 +204,6 @@ class Archive {
 	char[][] listfiledata;
 
 	this(char[] archivename, off_t offset = -1) {
-		init();
 		archive_open(&m, toStringz(archivename), offset);
 	}
 
@@ -222,7 +215,6 @@ class Archive {
 
 	~this() {
 		archive_close(m);
-		shutdown();
 	}
 
 	mpq_archive_s* archive() {
