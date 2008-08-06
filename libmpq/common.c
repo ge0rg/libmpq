@@ -35,54 +35,10 @@
 
 #include "common.h"
 
-/* the global shared decryption buffer. it's set up by libmpq__decrypt_buffer_init()
- * and killed by libmpq__decrypt_buffer_deinit().
+/* the global shared decryption buffer. it's a static array compiled into the
+ * library, and can be re-created by compiling and running crypt_buf_gen.c
  */
-static uint32_t *crypt_buf;
-
-/* function to initialize decryption buffer. */
-int32_t libmpq__decrypt_buffer_init() {
-	crypt_buf = malloc(sizeof(uint32_t) * LIBMPQ_BUFFER_SIZE);
-
-	if (!crypt_buf)
-		return LIBMPQ_ERROR_MALLOC;
-
-	/* some common variables. */
-	uint32_t seed   = 0x00100001;
-	uint32_t index1 = 0;
-	uint32_t index2 = 0;
-	uint32_t i;
-
-	/* initialize the decryption buffer. */
-	for (index1 = 0; index1 < 0x100; index1++) {
-		for(index2 = index1, i = 0; i < 5; i++, index2 += 0x100) {
-
-			/* some common variables. */
-			uint32_t temp1, temp2;
-
-			/* temporary copy. */
-			seed  = (seed * 125 + 3) % 0x2AAAAB;
-			temp1 = (seed & 0xFFFF) << 0x10;
-
-			/* temporary copy. */
-			seed  = (seed * 125 + 3) % 0x2AAAAB;
-			temp2 = (seed & 0xFFFF);
-
-			/* assign buffer. */
-			crypt_buf[index2] = (temp1 | temp2);
-		}
-	}
-
-	/* if no error was found, return zero. */
-	return LIBMPQ_SUCCESS;
-}
-
-int32_t libmpq__decrypt_buffer_deinit() {
-	free(crypt_buf);
-
-	/* if no error was found, return zero. */
-	return LIBMPQ_SUCCESS;
-}
+#include "crypt_buf.h"
 
 /* function to return the hash to a given string. */
 uint32_t libmpq__hash_string(const char *key, uint32_t offset) {
