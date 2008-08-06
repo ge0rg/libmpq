@@ -34,7 +34,7 @@ int32_t libmpq__buffer_init() {
 	buffer = malloc(sizeof(uint32_t) * 0x500);
 
 	if (!buffer)
-		return 1;
+		return -1;
 
 	/* some common variables. */
 	uint32_t seed   = 0x00100001;
