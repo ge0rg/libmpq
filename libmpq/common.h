@@ -21,14 +21,6 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
-/* function to initialize decryption buffer. */
-int32_t libmpq__decrypt_buffer_init(
-);
-
-/* function to deinitialize decryption buffer. */
-int32_t libmpq__decrypt_buffer_deinit(
-);
-
 /* function to return the hash to a given string. */
 uint32_t libmpq__hash_string(
 	const char	*key,

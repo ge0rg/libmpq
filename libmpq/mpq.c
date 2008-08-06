@@ -35,35 +35,15 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define CHECK_IS_INITIALIZED() \
-	if (init_count <= 0) return LIBMPQ_ERROR_NOT_INITIALIZED
-
-/* stores how many times libmpq__init() was called.
- * for each of those calls, libmpq__shutdown() needs to be called.
- */
-static int32_t init_count;
+#define CHECK_IS_INITIALIZED()
 
 /* initializes libmpq. returns < 0 on failure, 0 on success. */
 int32_t libmpq__init(void) {
-	init_count++;
-
-	if (init_count == 1) {
-		return libmpq__decrypt_buffer_init();
-	}
-
 	return LIBMPQ_SUCCESS;
 }
 
 /* shuts down libmpq. */
 int32_t libmpq__shutdown(void) {
-	CHECK_IS_INITIALIZED();
-
-	init_count--;
-
-	if (!init_count) {
-		return libmpq__decrypt_buffer_deinit();
-	}
-
 	return LIBMPQ_SUCCESS;
 }
 
