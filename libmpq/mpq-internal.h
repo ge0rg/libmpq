@@ -32,7 +32,6 @@
 
 /* define generic mpq archive information. */
 #define LIBMPQ_HEADER				0x1A51504D	/* mpq archive header ('MPQ\x1A') */
-#define LIBMPQ_BUFFER_SIZE			0x500		/* mpq decryption and encryption buffer size. */
 
 /* define the known archive versions. */
 #define LIBMPQ_ARCHIVE_VERSION_ONE		0		/* version one used until world of warcraft. */
