@@ -6,5 +6,5 @@ includedir=@includedir@
 Name: libmpq
 Description: GPL version of the libmpq library
 Version: @VERSION@
-Libs: -L${libdir} -lmpq -lz
+Libs: -L${libdir} -lmpq
 Cflags: -I${includedir}/libmpq @LFS_CFLAGS@
