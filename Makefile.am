@@ -18,7 +18,6 @@ pkgconfig_DATA			= libmpq.pc
 EXTRA_DIST =			\
 	AUTHORS			\
 	COPYING			\
-	ChangeLog		\
 	FAQ			\
 	INSTALL			\
 	NEWS			\

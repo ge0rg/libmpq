@@ -62,7 +62,9 @@ AC_TRY_COMPILE([
 #endif
 ], [], [CFLAGS="$CFLAGS -fvisibility=hidden"])
 
+# find python for binding
 AM_PATH_PYTHON([2.4],,[:])
+AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != :])
 
 # configuration files.
 AC_CONFIG_FILES([libmpq.pc])
