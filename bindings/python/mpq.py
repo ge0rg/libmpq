@@ -44,9 +44,6 @@ def check_error(result, func, arguments, libmpq=libmpq, errors=errors):
     else:
         raise error[0](*error[1:])
 
-libmpq.libmpq__init.errcheck = check_error
-libmpq.libmpq__shutdown.errcheck = check_error
-
 libmpq.libmpq__version.restype = ctypes.c_char_p
 
 libmpq.libmpq__archive_open.errcheck = check_error
@@ -72,8 +69,6 @@ libmpq.libmpq__block_open_offset.errcheck = check_error
 libmpq.libmpq__block_close_offset.errcheck = check_error
 libmpq.libmpq__block_unpacked_size.errcheck = check_error
 libmpq.libmpq__block_read.errcheck = check_error
-
-libmpq.libmpq__init()
 
 __version__ = libmpq.libmpq__version()
 

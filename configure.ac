@@ -62,7 +62,7 @@ AC_TRY_COMPILE([
 #endif
 ], [], [CFLAGS="$CFLAGS -fvisibility=hidden"])
 
-AM_PATH_PYTHON([2.2],,[:])
+AM_PATH_PYTHON([2.4],,[:])
 
 # configuration files.
 AC_CONFIG_FILES([libmpq.pc])
