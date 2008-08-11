@@ -205,7 +205,7 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 	}
 
 	/* decrypt the hashtable. */
-	libmpq__decrypt_table((uint32_t *)((*mpq_archive)->mpq_hash), "(hash table)", (*mpq_archive)->mpq_header.hash_table_count * 4);
+	libmpq__decrypt_block((uint32_t *)((*mpq_archive)->mpq_hash), (*mpq_archive)->mpq_header.hash_table_count * 4 * 4, libmpq__hash_string("(hash table)", 0x300));
 
 	/* seek in file. */
 	if (fseeko((*mpq_archive)->fp, (*mpq_archive)->mpq_header.block_table_offset + (((long long)((*mpq_archive)->mpq_header_ex.block_table_offset_high)) << 32) + (*mpq_archive)->archive_offset, SEEK_SET) < 0) {
@@ -224,7 +224,7 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 	}
 
 	/* decrypt block table. */
-	libmpq__decrypt_table((uint32_t *)((*mpq_archive)->mpq_block), "(block table)", (*mpq_archive)->mpq_header.block_table_count * 4);
+	libmpq__decrypt_block((uint32_t *)((*mpq_archive)->mpq_block), (*mpq_archive)->mpq_header.block_table_count * 4 * 4, libmpq__hash_string("(block table)", 0x300));
 
 	/* check if extended block table is present, regardless of version 2 it is only present in archives > 4GB. */
 	if ((*mpq_archive)->mpq_header_ex.extended_offset > 0) {

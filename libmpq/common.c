@@ -60,31 +60,6 @@ uint32_t libmpq__hash_string(const char *key, uint32_t offset) {
 	return seed1;
 }
 
-/* function to decrypt hash/block table of mpq archive. */
-int32_t libmpq__decrypt_table(uint32_t *hash, const char *key, uint32_t size) {
-
-	/* some common variables. */
-	uint32_t seed1;
-	uint32_t seed2 = 0xEEEEEEEE;
-
-	/* one key character. */
-	uint32_t ch;
-
-	seed1 = libmpq__hash_string(key, 0x300);
-
-	/* decrypt it. */
-	while (size-- > 0) {
-		seed2   += crypt_buf[0x400 + (seed1 & 0xFF)];
-		ch       = *hash ^ (seed1 + seed2);
-		seed1    = ((~seed1 << 0x15) + 0x11111111) | (seed1 >> 0x0B);
-		seed2    = ch + seed2 + (seed2 << 5) + 3;
-		*hash++  = ch;
-	}
-
-	/* if no error was found, return zero. */
-	return LIBMPQ_SUCCESS;
-}
-
 /* function to detect decryption key. */
 int32_t libmpq__decrypt_key(uint8_t *in_buf, uint32_t in_size, uint32_t block_size) {
 
