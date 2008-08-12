@@ -123,7 +123,6 @@ int32_t libmpq__decrypt_block(uint32_t *in_buf, uint32_t in_size, uint32_t seed)
 	/* some common variables. */
 	uint32_t seed2 = 0xEEEEEEEE;
 	uint32_t ch;
-	uint32_t out_size = in_size;
 
 	/* we're processing the data 4 bytes at a time. */
 	for (; in_size >= 4; in_size -= 4) {
@@ -135,7 +134,7 @@ int32_t libmpq__decrypt_block(uint32_t *in_buf, uint32_t in_size, uint32_t seed)
 	}
 
 	/* if no error was found, return decrypted bytes. */
-	return out_size;
+	return LIBMPQ_SUCCESS;
 }
 
 /* function to decompress or explode a block from mpq archive. */
