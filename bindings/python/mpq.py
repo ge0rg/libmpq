@@ -73,7 +73,7 @@ libmpq.libmpq__block_read.errcheck = check_error
 __version__ = libmpq.libmpq__version()
 
 
-class Reader:
+class Reader(object):
     
     def __init__(self, file, libmpq=libmpq):
         self._file = file
@@ -130,7 +130,7 @@ class Reader:
         libmpq.libmpq__block_close_offset(self._file._archive._mpq, self._file.number)
 
 
-class File:
+class File(object):
     
     def __init__(self, archive, number, ctypes=ctypes, libmpq=libmpq):
         self._archive = archive
@@ -163,7 +163,7 @@ class File:
         return Reader(self)
 
 
-class Archive:
+class Archive(object):
     
     def __init__(self, filename, ctypes=ctypes, File=File, libmpq=libmpq):
         if isinstance(filename, File):
