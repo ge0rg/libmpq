@@ -39,11 +39,13 @@
 
 /* initializes libmpq. returns < 0 on failure, 0 on success. */
 int32_t libmpq__init(void) {
+        printf("warning: libmpq__init is depreciated");
 	return LIBMPQ_SUCCESS;
 }
 
 /* shuts down libmpq. */
 int32_t libmpq__shutdown(void) {
+        printf("warning: libmpq__shutdown is depreciated");
 	return LIBMPQ_SUCCESS;
 }
 
