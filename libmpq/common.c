@@ -60,6 +60,47 @@ uint32_t libmpq__hash_string(const char *key, uint32_t offset) {
 	return seed1;
 }
 
+/* function to encrypt a block. */
+int32_t libmpq__encrypt_block(uint32_t *in_buf, uint32_t in_size, uint32_t seed) {
+
+	/* some common variables. */
+	uint32_t seed2 = 0xEEEEEEEE;
+	uint32_t ch;
+
+	/* we're processing the data 4 bytes at a time. */
+	for (; in_size >= 4; in_size -= 4) {
+		seed2    += crypt_buf[0x400 + (seed & 0xFF)];
+		ch        = *in_buf ^ (seed + seed2);
+		seed      = ((~seed << 0x15) + 0x11111111) | (seed >> 0x0B);
+		seed2     = *in_buf + seed2 + (seed2 << 5) + 3;
+		*in_buf++ = ch;
+	}
+
+	/* if no error was found, return decrypted bytes. */
+	return LIBMPQ_SUCCESS;
+}
+
+
+/* function to decrypt a block. */
+int32_t libmpq__decrypt_block(uint32_t *in_buf, uint32_t in_size, uint32_t seed) {
+
+	/* some common variables. */
+	uint32_t seed2 = 0xEEEEEEEE;
+	uint32_t ch;
+
+	/* we're processing the data 4 bytes at a time. */
+	for (; in_size >= 4; in_size -= 4) {
+		seed2    += crypt_buf[0x400 + (seed & 0xFF)];
+		ch        = *in_buf ^ (seed + seed2);
+		seed      = ((~seed << 0x15) + 0x11111111) | (seed >> 0x0B);
+		seed2     = ch + seed2 + (seed2 << 5) + 3;
+		*in_buf++ = ch;
+	}
+
+	/* if no error was found, return decrypted bytes. */
+	return LIBMPQ_SUCCESS;
+}
+
 /* function to detect decryption key. */
 int32_t libmpq__decrypt_key(uint8_t *in_buf, uint32_t in_size, uint32_t block_size) {
 
@@ -117,31 +158,11 @@ int32_t libmpq__decrypt_key(uint8_t *in_buf, uint32_t in_size, uint32_t block_si
 	return LIBMPQ_ERROR_DECRYPT;
 }
 
-/* function to decrypt a block. */
-int32_t libmpq__decrypt_block(uint32_t *in_buf, uint32_t in_size, uint32_t seed) {
-
-	/* some common variables. */
-	uint32_t seed2 = 0xEEEEEEEE;
-	uint32_t ch;
-
-	/* we're processing the data 4 bytes at a time. */
-	for (; in_size >= 4; in_size -= 4) {
-		seed2    += crypt_buf[0x400 + (seed & 0xFF)];
-		ch        = *in_buf ^ (seed + seed2);
-		seed      = ((~seed << 0x15) + 0x11111111) | (seed >> 0x0B);
-		seed2     = ch + seed2 + (seed2 << 5) + 3;
-		*in_buf++ = ch;
-	}
-
-	/* if no error was found, return decrypted bytes. */
-	return LIBMPQ_SUCCESS;
-}
-
 /* function to decompress or explode a block from mpq archive. */
 int32_t libmpq__decompress_block(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t compression_type) {
 
 	/* some common variables. */
-	int32_t tb = 0;
+	int32_t tb;
 
 	/* check if buffer is not compressed. */
 	if (compression_type == LIBMPQ_FLAG_COMPRESS_NONE) {
@@ -154,7 +175,7 @@ int32_t libmpq__decompress_block(uint8_t *in_buf, uint32_t in_size, uint8_t *out
 	}
 
 	/* check if one compression mode is used. */
-	if (compression_type == LIBMPQ_FLAG_COMPRESS_PKWARE ||
+	else if (compression_type == LIBMPQ_FLAG_COMPRESS_PKWARE ||
 	    compression_type == LIBMPQ_FLAG_COMPRESS_MULTI) {
 
 		/* check if block is really compressed, some blocks have set the compression flag, but are not compressed. */
@@ -172,7 +193,7 @@ int32_t libmpq__decompress_block(uint8_t *in_buf, uint32_t in_size, uint8_t *out
 			}
 
 			/* check if we are using multiple compression algorithm. */
-			if (compression_type == LIBMPQ_FLAG_COMPRESS_MULTI) {
+			else if (compression_type == LIBMPQ_FLAG_COMPRESS_MULTI) {
 
 				/*
 				 *  check if it is a file compressed by blizzard's multiple compression, note that storm.dll
@@ -191,7 +212,7 @@ int32_t libmpq__decompress_block(uint8_t *in_buf, uint32_t in_size, uint8_t *out
 			memcpy(out_buf, in_buf, out_size);
 
 			/* save the number of transferred bytes. */
-			tb += in_size;
+			tb = in_size;
 		}
 	}
 
