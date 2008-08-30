@@ -27,11 +27,11 @@ uint32_t libmpq__hash_string(
 	uint32_t	offset
 );
 
-/* function to detect decryption key. */
-int32_t libmpq__decrypt_key(
-	uint8_t		*in_buf,
+/* function to encrypt a block. */
+int32_t libmpq__encrypt_block(
+	uint32_t	*in_buf,
 	uint32_t	in_size,
-	uint32_t	block_size
+	uint32_t	seed
 );
 
 /* function to decrypt a block. */
@@ -39,6 +39,13 @@ int32_t libmpq__decrypt_block(
 	uint32_t	*in_buf,
 	uint32_t	in_size,
 	uint32_t	seed
+);
+
+/* function to detect decryption key. */
+int32_t libmpq__decrypt_key(
+	uint8_t		*in_buf,
+	uint32_t	in_size,
+	uint32_t	block_size
 );
 
 /* function to decompress or explode block from archive. */
