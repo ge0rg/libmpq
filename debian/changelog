@@ -1,0 +1,8 @@
+libmpq (0.4.2-svn270-1) unstable; urgency=low
+
+  * First debian package
+  * compatible to new libmpq API (post 0.4.2)
+  * contains preliminary python-mpq package
+
+ -- Georg Lukas <georg@op-co.de>  Tue, 07 Oct 2008 14:38:58 +0200
+
