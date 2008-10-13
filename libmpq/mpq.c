@@ -554,24 +554,18 @@ int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename, ui
 	/* if the list of file names doesn't include this one, we'll have
 	 * to figure out the file number the "hard" way.
 	 */
-	hash1 = libmpq__hash_string (filename, 0x0);
+	ht_count = mpq_archive->mpq_header.hash_table_count;
+
+	hash1 = libmpq__hash_string (filename, 0x0) & (ht_count - 1);
 	hash2 = libmpq__hash_string (filename, 0x100);
 	hash3 = libmpq__hash_string (filename, 0x200);
-
-	ht_count = mpq_archive->mpq_header.hash_table_count;
 
 	/* loop through all files in mpq archive.
 	 * hash1 gives us a clue about the starting position of this
 	 * search.
 	 */
-	for (i = hash1 & (ht_count - 1); i < ht_count; i++) {
-
-		/* check if hashtable is valid for this file. */
-		if (mpq_archive->mpq_hash[i].block_table_index == LIBMPQ_HASH_FREE) {
-
-			/* continue because this is an empty hash entry. */
-			continue;
-		}
+	for (i = hash1; mpq_archive->mpq_hash[i].block_table_index != LIBMPQ_HASH_FREE;
+			i = (i + 1) & (ht_count -1)) {
 
 		/* if the other two hashes match, we found our file number. */
 		if (mpq_archive->mpq_hash[i].hash_a == hash2 &&
@@ -594,6 +588,10 @@ int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename, ui
 			/* we found our file, return zero. */
 			return LIBMPQ_SUCCESS;
 		}
+
+		/* check if we have cycled through the whole hash table */
+		if (((i + 1) & (ht_count - 1)) == hash1)
+			break;
 	}
 
 	/* if no matching entry found, so return error. */
