@@ -547,7 +547,6 @@ int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename, ui
 
 	/* some common variables. */
 	uint32_t i, j, hash1, hash2, hash3, ht_count;
-	uint32_t count = 0;
 
 	CHECK_IS_INITIALIZED();
 
@@ -571,19 +570,8 @@ int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename, ui
 		if (mpq_archive->mpq_hash[i].hash_a == hash2 &&
 		    mpq_archive->mpq_hash[i].hash_b == hash3) {
 
-			/* loop through files in mpq archive until block table index from hash and check if they are valid. */
-			for (j = 0; j < mpq_archive->mpq_hash[i].block_table_index; j++) {
-
-				/* check if file exists, sizes and offsets are correct. */
-				if ((mpq_archive->mpq_block[j].flags & LIBMPQ_FLAG_EXISTS) == 0) {
-
-					/* file does not exist, so increase counter. */
-					count++;
-				}
-			}
-
 			/* return the file number. */
-			*number = mpq_archive->mpq_hash[i].block_table_index - count;
+			*number = mpq_archive->mpq_hash[i].block_table_index;
 
 			/* we found our file, return zero. */
 			return LIBMPQ_SUCCESS;
