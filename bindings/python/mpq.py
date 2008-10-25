@@ -82,6 +82,9 @@ class Reader(object):
         self._cur_block = 0
         libmpq.libmpq__block_open_offset(self._file._archive._mpq, self._file.number)
     
+    def __iter__(self): 
+        return self
+    
     def seek(self, offset, whence=0):
         if whence == 0:
             pass
@@ -126,6 +129,20 @@ class Reader(object):
         self._pos += len(ret)
         return ret
     
+    def next(self):
+        l = []
+        while True:
+            next = self.read(1)
+            if next == "":
+                break
+            if next not in '\r\n' and l[-1] in '\r\n':
+                self.seek(-1, 1)
+                break
+            l.append(next)
+        if not l:
+            raise StopIteration
+        return ''.join(l)
+    
     def __del__(self, libmpq=libmpq):
         libmpq.libmpq__block_close_offset(self._file._archive._mpq, self._file.number)
 
@@ -159,6 +176,9 @@ class File(object):
         libmpq.libmpq__file_read(self._archive._mpq, self.number, data, ctypes.c_longlong(len(data)), None)
         return data.raw
     
+    def __repr__(self):
+        return "mpq.File(%s, %s)" % (repr(self._archive), self.number)
+    
     def __iter__(self, Reader=Reader):
         return Reader(self)
 
@@ -178,17 +198,17 @@ class Archive(object):
         libmpq.libmpq__archive_open(ctypes.byref(self._mpq), self.filename, ctypes.c_longlong(offset))
         self._opened = True
         
-        for name, type in [
+        for field_name, field_type in [
                     ("packed_size", ctypes.c_longlong),
                     ("unpacked_size", ctypes.c_longlong),
                     ("offset", ctypes.c_longlong),
                     ("version", ctypes.c_int),
                     ("files", ctypes.c_int),
                 ]:
-            data = type()
-            func = getattr(libmpq, "libmpq__archive_"+name)
+            data = field_type()
+            func = getattr(libmpq, "libmpq__archive_" + field_name)
             func(self._mpq, ctypes.byref(data))
-            setattr(self, name, data.value)
+            setattr(self, field_name, data.value)
     
     def __del__(self, libmpq=libmpq):
         if getattr(self, "_opened", False):
@@ -200,5 +220,8 @@ class Archive(object):
             libmpq.libmpq__file_number(self._mpq, item, ctypes.byref(data))
             item = data.value
         return File(self, item)
+    
+    def __repr__(self):
+        return "mpq.Archive(%s)" % repr(self.filename)
 
 del check_error, ctypes, errors, File, libmpq, Reader # everything except Error and Archive
