@@ -28,6 +28,8 @@
 #ifndef _MPQ_H
 #define _MPQ_H
 
+#include "mpq_revision.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
