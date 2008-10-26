@@ -23,4 +23,11 @@ EXTRA_DIST =			\
 	NEWS			\
 	README			\
 	THANKS			\
-	TODO
+	TODO			\
+	mpq_revision.sh		\
+	mpq_revision.h
+
+.PHONY: mpq_revision.h
+
+mpq_revision.h: mpq_revision.sh
+	sh mpq_revision.sh
