@@ -510,7 +510,7 @@ int32_t libmpq__file_imploded(mpq_archive_s *mpq_archive, uint32_t file_number, 
 	}
 
 	/* return the implosion status of file. */
-	*imploded = (mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number]].flags & LIBMPQ_FLAG_COMPRESS_PKWARE) != 0 ? TRUE : FALSE;
+	*imploded = (mpq_archive->mpq_block[mpq_archive->block_table_indices[file_number]].flags & LIBMPQ_FLAG_COMPRESS_PKZIP) != 0 ? TRUE : FALSE;
 
 	/* if no error was found, return zero. */
 	return LIBMPQ_SUCCESS;
@@ -1052,7 +1052,7 @@ int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint32_t file_number, uin
 	if (imploded == 1) {
 
 		/* explode block. */
-		if ((tb = libmpq__decompress_block(in_buf, in_size, out_buf, out_size, LIBMPQ_FLAG_COMPRESS_PKWARE)) < 0) {
+		if ((tb = libmpq__decompress_block(in_buf, in_size, out_buf, out_size, LIBMPQ_FLAG_COMPRESS_PKZIP)) < 0) {
 
 			/* free temporary buffer. */
 			free(in_buf);
