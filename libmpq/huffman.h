@@ -39,7 +39,7 @@
 #define INSERT_ITEM				1		/* insert item into huffman tree. */
 #define SWITCH_ITEMS				2		/* switch items isnide huffman tree. */
 
-/* input stream for huffmann decompression. */
+/* input stream for huffman decompression. */
 struct huffman_input_stream_s {
 	uint8_t		*in_buf;				/* 00 - input data. */
 	uint32_t	bit_buf;				/* 04 - input bit buffer. */
