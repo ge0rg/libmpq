@@ -22,7 +22,7 @@
 #define _EXTRACT_H
 
 /* define compression types for multilpe compressions. */
-#define LIBMPQ_COMPRESSION_HUFFMANN		0x01		/* huffmann compression. (used on wave files only and introduced in starcraft) */
+#define LIBMPQ_COMPRESSION_HUFFMAN		0x01		/* huffman compression. (used on wave files only and introduced in starcraft) */
 #define LIBMPQ_COMPRESSION_ZLIB			0x02		/* zlib compression. (introduced in warcraft 3) */
 #define LIBMPQ_COMPRESSION_PKWARE		0x08		/* pkware dcl compression. (first used compression algorithm) */
 #define LIBMPQ_COMPRESSION_BZIP2		0x10		/* bzip compression. (introduced in warcraft 3 - the frozen throne) */
@@ -43,7 +43,7 @@ typedef struct {
 } decompress_table_s;
 
 /*
- *  huffmann decompression routine, the in_size parameter is not used,
+ *  huffman decompression routine, the in_size parameter is not used,
  *  but needs to be specified due to compatibility reasons.
  *
  *  1500F5F0
