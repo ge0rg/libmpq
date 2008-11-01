@@ -950,7 +950,7 @@ int32_t libmpq__do_decompress_huffman(struct huffman_tree_s *ht, struct huffman_
 	/* thats needed to replace the goto stuff from original source. :) */
 	uint32_t found;
 
-	/* can we use quick decompressionﬂ */
+	/* can we use quick decompression */
 	uint32_t has_qd;
 
 	/* test the output length, must not be non zero. */

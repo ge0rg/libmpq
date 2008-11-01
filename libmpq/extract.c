@@ -38,12 +38,12 @@
 
 /* table with decompression bits and functions. */
 static decompress_table_s dcmp_table[] = {
-	{0x01, libmpq__decompress_huffman},	/* decompression using huffman trees. */
-	{0x02, libmpq__decompress_zlib},	/* decompression with the zlib library. */
-	{0x08, libmpq__decompress_pkzip},	/* decompression with pkware data compression library. */
-	{0x10, libmpq__decompress_bzip2},	/* decompression with bzip2 library. */
-	{0x40, libmpq__decompress_wave_mono},	/* decompression for mono waves. */
-	{0x80, libmpq__decompress_wave_stereo}	/* decompression for stereo waves. */
+	{LIBMPQ_COMPRESSION_HUFFMAN, libmpq__decompress_huffman},	/* decompression using huffman trees. */
+	{LIBMPQ_COMPRESSION_ZLIB, libmpq__decompress_zlib},	/* decompression with the zlib library. */
+	{LIBMPQ_COMPRESSION_PKZIP, libmpq__decompress_pkzip},	/* decompression with pkware data compression library. */
+	{LIBMPQ_COMPRESSION_BZIP2, libmpq__decompress_bzip2},	/* decompression with bzip2 library. */
+	{LIBMPQ_COMPRESSION_WAVE_MONO, libmpq__decompress_wave_mono},	/* decompression for mono waves. */
+	{LIBMPQ_COMPRESSION_WAVE_STEREO, libmpq__decompress_wave_stereo}	/* decompression for stereo waves. */
 };
 
 /* this function decompress a stream using huffman algorithm. */
