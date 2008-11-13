@@ -111,6 +111,12 @@ typedef struct {
 	uint32_t	*packed_offset;		/* position of each file block (only for packed files). */
 } __attribute__ ((packed)) mpq_file_s;
 
+/* map structure for valid blocks and hashes (first seen in warcraft 3 archives). */
+typedef struct {
+	uint32_t	block_table_indices;	/* real mapping for file number to block entry. */
+	uint32_t	block_table_diff;	/* block table difference between valid blocks and invalid blocks before. */
+} __attribute__ ((packed)) mpq_map_s;
+
 /* archive structure used since diablo 1.00 by blizzard. */
 struct mpq_archive {
 
@@ -130,7 +136,7 @@ struct mpq_archive {
 	mpq_file_s	**mpq_file;		/* pointer to the file pointers which are opened. */
 
 	/* non archive structure related members. */
-	uint32_t	*block_table_indices;	/* pointer which stores the mapping for file number to block entry. */
+	mpq_map_s	*mpq_map;		/* map table between valid blocks and hashes. */
 	uint32_t	files;			/* number of files in archive, which could be extracted. */
 };
 
