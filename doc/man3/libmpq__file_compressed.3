@@ -40,9 +40,6 @@ Call \fBlibmpq__file_compressed\fP() to get the compression status of the given 
 The \fBlibmpq__file_compressed\fP() function takes as first argument the archive structure \fImpq_archive\fP which have to be allocated first and opened by \fBlibmpq__archive_open\fP(). The second argument \fIfile_number\fP is the number of file and the third argument is a reference to the compression status \fIcompressed\fP of the file.
 .SH RETURN VALUE
 On success, a zero is returned and on error one of the following constants.
-.TP
-.B LIBMPQ_ERROR_NOT_INITIALIZED
-libmpq wasn't initialized by calling \fBlibmpq__initialize\fP(), or it was shut down by an \fBlibmpq__shutdown\fP() call.
 .TP 
 .B LIBMPQ_ERROR_EXIST
 File does not exist in archive.

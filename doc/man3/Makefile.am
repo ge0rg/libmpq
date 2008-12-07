@@ -25,7 +25,6 @@ man_MANS =				\
 	libmpq__file_compressed.3	\
 	libmpq__file_encrypted.3	\
 	libmpq__file_imploded.3		\
-	libmpq__file_name.3		\
 	libmpq__file_number.3		\
 	libmpq__file_offset.3		\
 	libmpq__file_packed_size.3	\
