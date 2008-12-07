@@ -27,10 +27,6 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 .B
 #include <mpq.h>
 .sp
-.BI "int32_t libmpq__init();"
-.sp
-.BI "int32_t libmpq__shutdown();"
-.sp
 .BI "const char *libmpq__version();"
 .sp
 .BI "int32_t libmpq__archive_open("
@@ -110,13 +106,6 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 .BI "        off_t          *" "imploded"
 .BI ");"
 .sp
-.BI "int32_t libmpq__file_name("
-.BI "        mpq_archive_s  *" "mpq_archive",
-.BI "        uint32_t        " "file_number",
-.BI "        char           *" "filename",
-.BI "        size_t          " "filename_size"
-.BI ");"
-.sp
 .BI "int32_t libmpq__file_number("
 .BI "        mpq_archive_s  *" "mpq_archive",
 .BI "        const char     *" "filename",
@@ -182,8 +171,6 @@ libmpq \- cross-platform C library for manipulating mpq archives.
 .PP
 The \fIlibmpq\fP library supports decrypting, decompressing, exploding and various manipulations of the MoPaQ archive files. It uses \fIzlib(3)\fP and \fIbzip2(1)\fP compression library. At this moment \fIlibmpq\fP is not able to create MoPaQ archives, this limitation will be removed in a future version.
 .SH SEE ALSO
-.BR libmpq__init (3),
-.BR libmpq__shutdown (3),
 .BR libmpq__version (3),
 .BR libmpq__archive_open (3),
 .BR libmpq__archive_close (3),
@@ -199,7 +186,6 @@ The \fIlibmpq\fP library supports decrypting, decompressing, exploding and vario
 .BR libmpq__file_encrypted (3),
 .BR libmpq__file_compressed (3),
 .BR libmpq__file_imploded (3),
-.BR libmpq__file_name (3),
 .BR libmpq__file_number (3),
 .BR libmpq__file_read (3),
 .BR libmpq__block_open_offset (3),
