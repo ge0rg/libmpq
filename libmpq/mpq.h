@@ -60,10 +60,6 @@ extern "C" {
 /* internal data structure. */
 typedef struct mpq_archive mpq_archive_s;
 
-/* initialization and shut down. */
-extern LIBMPQ_API int32_t libmpq__init(void);
-extern LIBMPQ_API int32_t libmpq__shutdown(void);
-
 /* generic information about library. */
 extern LIBMPQ_API const char *libmpq__version(void);
 
@@ -84,7 +80,6 @@ extern LIBMPQ_API int32_t libmpq__file_blocks(mpq_archive_s *mpq_archive, uint32
 extern LIBMPQ_API int32_t libmpq__file_encrypted(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t *encrypted);
 extern LIBMPQ_API int32_t libmpq__file_compressed(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t *compressed);
 extern LIBMPQ_API int32_t libmpq__file_imploded(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t *imploded);
-extern LIBMPQ_API int32_t libmpq__file_name(mpq_archive_s *mpq_archive, uint32_t file_number, char *filename, size_t filename_size);
 extern LIBMPQ_API int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename, uint32_t *number);
 extern LIBMPQ_API int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint32_t file_number, uint8_t *out_buf, off_t out_size, off_t *transferred);
 
