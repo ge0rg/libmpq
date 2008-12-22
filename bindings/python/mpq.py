@@ -61,7 +61,6 @@ libmpq.libmpq__file_blocks.errcheck = check_error
 libmpq.libmpq__file_encrypted.errcheck = check_error
 libmpq.libmpq__file_compressed.errcheck = check_error
 libmpq.libmpq__file_imploded.errcheck = check_error
-libmpq.libmpq__file_name.errcheck = check_error
 libmpq.libmpq__file_number.errcheck = check_error
 libmpq.libmpq__file_read.errcheck = check_error
 
@@ -154,22 +153,18 @@ class File(object):
         self.number = number
         
         for name, atype in [
-                    ("packed_size", ctypes.c_longlong),
-                    ("unpacked_size", ctypes.c_longlong),
-                    ("offset", ctypes.c_longlong),
-                    ("blocks", ctypes.c_int),
-                    ("encrypted", ctypes.c_int),
-                    ("compressed", ctypes.c_int),
-                    ("imploded", ctypes.c_int),
-                ]:
+            ("packed_size", ctypes.c_longlong),
+            ("unpacked_size", ctypes.c_longlong),
+            ("offset", ctypes.c_longlong),
+            ("blocks", ctypes.c_int),
+            ("encrypted", ctypes.c_int),
+            ("compressed", ctypes.c_int),
+            ("imploded", ctypes.c_int),
+        ]:
             data = atype()
             func = getattr(libmpq, "libmpq__file_"+name)
             func(self._archive._mpq, self.number, ctypes.byref(data))
             setattr(self, name, data.value)
-        
-        buf = ctypes.create_string_buffer(1024)
-        libmpq.libmpq__file_name(self._archive._mpq, self.number, buf, len(buf))
-        self.name = buf.value
     
     def __str__(self, ctypes=ctypes, libmpq=libmpq):
         data = ctypes.create_string_buffer(self.unpacked_size)
@@ -187,24 +182,24 @@ class Archive(object):
     
     def __init__(self, filename, ctypes=ctypes, File=File, libmpq=libmpq):
         if isinstance(filename, File):
-          assert not filename.encrypted and not filename.compressed and not filename.imploded
-          self.filename = filename._archive.filename
-          offset = filename._archive.offset + filename.offset
+            assert not filename.encrypted and not filename.compressed and not filename.imploded
+            self.filename = filename._archive.filename
+            offset = filename._archive.offset + filename.offset
         else:
-          self.filename = filename
-          offset = -1
+            self.filename = filename
+            offset = -1
         
         self._mpq = ctypes.c_void_p()
         libmpq.libmpq__archive_open(ctypes.byref(self._mpq), self.filename, ctypes.c_longlong(offset))
         self._opened = True
         
         for field_name, field_type in [
-                    ("packed_size", ctypes.c_longlong),
-                    ("unpacked_size", ctypes.c_longlong),
-                    ("offset", ctypes.c_longlong),
-                    ("version", ctypes.c_int),
-                    ("files", ctypes.c_int),
-                ]:
+            ("packed_size", ctypes.c_longlong),
+            ("unpacked_size", ctypes.c_longlong),
+            ("offset", ctypes.c_longlong),
+            ("version", ctypes.c_int),
+            ("files", ctypes.c_int),
+        ]:
             data = field_type()
             func = getattr(libmpq, "libmpq__archive_" + field_name)
             func(self._mpq, ctypes.byref(data))
@@ -223,5 +218,6 @@ class Archive(object):
     
     def __repr__(self):
         return "mpq.Archive(%s)" % repr(self.filename)
+
 
 del check_error, ctypes, errors, File, libmpq, Reader # everything except Error and Archive
