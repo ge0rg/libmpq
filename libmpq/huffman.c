@@ -624,10 +624,11 @@ void libmpq__huffman_call_1500E820(struct huffman_tree_s *ht, struct huffman_tre
 }
 
 /* this function initialize a huffman tree. */
-void libmpq__huffman_tree_init(struct huffman_tree_s *ht, struct huffman_tree_item_s *hi, uint32_t cmp) {
+void libmpq__huffman_tree_init(struct huffman_tree_s *ht, uint32_t cmp) {
 
 	/* some common variables. */
 	uint32_t count;
+	struct huffman_tree_item_s *hi;
 
 	/* clear links for all the items in the tree. */
 	for (hi = ht->items0008, count = 0x203; count != 0; hi++, count--) {

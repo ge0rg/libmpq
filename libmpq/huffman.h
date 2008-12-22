@@ -131,7 +131,6 @@ void libmpq__huffman_call_1500E820(
 /* initialize the huffman tree. */
 void libmpq__huffman_tree_init(
 	struct		huffman_tree_s *ht,
-	struct		huffman_tree_item_s *hi,
 	uint32_t	cmp
 );
 

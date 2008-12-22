@@ -59,7 +59,6 @@ int32_t libmpq__decompress_huffman(uint8_t *in_buf, uint32_t in_size, uint8_t *o
 
 	/* allocate memory for the huffman tree. */
 	if ((ht = malloc(sizeof(struct huffman_tree_s))) == NULL ||
-	    (hi = malloc(sizeof(struct huffman_tree_item_s))) == NULL ||
 	    (is = malloc(sizeof(struct huffman_input_stream_s))) == NULL) {
 
 		/* memory allocation problem. */
@@ -68,7 +67,6 @@ int32_t libmpq__decompress_huffman(uint8_t *in_buf, uint32_t in_size, uint8_t *o
 
 	/* cleanup structures. */
 	memset(ht, 0, sizeof(struct huffman_tree_s));
-	memset(hi, 0, sizeof(struct huffman_tree_item_s));
 	memset(is, 0, sizeof(struct huffman_input_stream_s));
 
 	/* initialize input stream. */
@@ -78,21 +76,20 @@ int32_t libmpq__decompress_huffman(uint8_t *in_buf, uint32_t in_size, uint8_t *o
 	is->bits     = 32;
 
 // TODO: add all the mallocs to init function and add function libmpq__huffman_tree_free() */
-//	if ((result = libmpq__huffman_tree_init(ht, hi, LIBMPQ_HUFF_DECOMPRESS)) < 0) {
+//	if ((result = libmpq__huffman_tree_init(ht, LIBMPQ_HUFF_DECOMPRESS)) < 0) {
 //
 //		/* something on zlib initialization failed. */
 //		return LIBMPQ_ERROR_UNPACK;
 //	}
 
 	/* initialize the huffman tree for decompression. */
-	libmpq__huffman_tree_init(ht, hi, LIBMPQ_HUFF_DECOMPRESS);
+	libmpq__huffman_tree_init(ht, LIBMPQ_HUFF_DECOMPRESS);
 
 	/* save the number of copied bytes. */
 	tb = libmpq__do_decompress_huffman(ht, is, out_buf, out_size);
 
 	/* free structures. */
 	free(is);
-	free(hi);
 	free(ht);
 
 	/* return transferred bytes. */
