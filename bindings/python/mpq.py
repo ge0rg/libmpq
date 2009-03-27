@@ -15,8 +15,9 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 import ctypes
+import ctypes.util
 
-libmpq = ctypes.CDLL("libmpq.so")
+libmpq = ctypes.CDLL(ctypes.util.find_library("mpq"))
 
 class Error(Exception):
     pass
