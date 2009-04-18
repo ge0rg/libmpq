@@ -210,6 +210,19 @@ class Archive(object):
         if getattr(self, "_opened", False):
             libmpq.libmpq__archive_close(self._mpq)
     
+    def __len__(self):
+        return self.files
+    
+    def __contains__(self, item):
+        if isinstance(item, str):
+            data = ctypes.c_int()
+            try:
+                libmpq.libmpq__file_number(self._mpq, item, ctypes.byref(data))
+            except IndexError:
+                return False
+            return True
+        return 0 <= item < self.files
+    
     def __getitem__(self, item, ctypes=ctypes, File=File, libmpq=libmpq):
         if isinstance(item, str):
             data = ctypes.c_int()
@@ -222,3 +235,23 @@ class Archive(object):
 
 
 del check_error, ctypes, errors, File, libmpq, Reader # everything except Error and Archive
+
+if __name__ == "__main__":
+    import sys
+    archive = Archive(sys.argv[1])
+    print "Archive", archive.filename
+    for k, v in archive.__dict__.iteritems():
+        if k[0] == '_': continue
+        print " "*(4-1), k, v
+    for key in sys.argv[2:] if sys.argv[2:] else xrange(archive.files):
+        try:
+            if int(key) in archive and key not in archive:
+            key = int(key)
+        except ValueError:
+            pass
+        file = archive[key]
+        print
+        print " "*(4-1), "File", key
+        for k, v in file.__dict__.iteritems():
+            if k[0] == '_': continue
+            print " "*(8-1), k, v
