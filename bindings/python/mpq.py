@@ -246,7 +246,7 @@ if __name__ == "__main__":
     for key in sys.argv[2:] if sys.argv[2:] else xrange(archive.files):
         try:
             if int(key) in archive and key not in archive:
-            key = int(key)
+                key = int(key)
         except ValueError:
             pass
         file = archive[key]
