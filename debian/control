@@ -33,6 +33,12 @@ Description: A library for extracting and manipulating MoPaQ mpq archives
  Warcraft 2: BNE, a newer version in Warcraft 3 and World of
  Warcraft (WoW).
 
+Package: libmpq0-dbg
+Section: libdevel
+Architecture: any
+Depends: libmpq0 (= ${binary:Version})
+Description: Debug symbols for libmpq0 library package
+
 Package: python-mpq
 Architecture: all
 Depends: ${python:Depends}
