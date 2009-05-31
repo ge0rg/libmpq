@@ -27,8 +27,7 @@ module mpq;
  * GDC/Linux and has not been tested on Windows. Commented out for now. */
 // pragma(lib, "libmpq");
 
-import std.format; // for format()
-import std.string; // for toStringz()
+import std.string; // for format() and toStringz()
 import std.traits; // for ParameterTypeTuple!()
 
 /* XXX: this assumes that libmpq is compiled with Large File Support on */
@@ -73,17 +72,13 @@ int libmpq__file_blocks(mpq_archive_s *mpq_archive, uint file_number, uint *bloc
 int libmpq__file_encrypted(mpq_archive_s *mpq_archive, uint file_number, uint *encrypted);
 int libmpq__file_compressed(mpq_archive_s *mpq_archive, uint file_number, uint *compressed);
 int libmpq__file_imploded(mpq_archive_s *mpq_archive, uint file_number, uint *imploded);
-int libmpq__file_name(mpq_archive_s *mpq_archive, uint file_number, char *filename, size_t filename_size);
 int libmpq__file_number(mpq_archive_s *mpq_archive, char *filename, uint *number);
 int libmpq__file_read(mpq_archive_s *mpq_archive, uint file_number, ubyte *out_buf, off_t out_size, off_t *transferred);
 
 /* libmpq__generic block processing functions. */
 int libmpq__block_open_offset(mpq_archive_s *mpq_archive, uint file_number);
 int libmpq__block_close_offset(mpq_archive_s *mpq_archive, uint file_number);
-int libmpq__block_packed_size(mpq_archive_s *mpq_archive, uint file_number, uint block_number, off_t *packed_size);
 int libmpq__block_unpacked_size(mpq_archive_s *mpq_archive, uint file_number, uint block_number, off_t *unpacked_size);
-int libmpq__block_offset(mpq_archive_s *mpq_archive, uint file_number, uint block_number, off_t *offset);
-int libmpq__block_seed(mpq_archive_s *mpq_archive, uint file_number, uint block_number, uint *seed);
 int libmpq__block_read(mpq_archive_s *mpq_archive, uint file_number, uint block_number, ubyte *out_buf, off_t out_size, off_t *transferred);
 
 }
@@ -112,7 +107,7 @@ class MPQException : Exception {
 		this.errno = errno;
 		if (-errno >= Errors.length)
 			errno = 0;
-		super(std.format.format("Error in %s(): %s (%d)",
+		super(std.string.format("Error in %s(): %s (%d)",
 					fnname, Errors[-errno], errno));
 	}
 }
@@ -167,15 +162,11 @@ mixin(MPQ_FUNC!("file_blocks"));
 mixin(MPQ_FUNC!("file_encrypted"));
 mixin(MPQ_FUNC!("file_compressed"));
 mixin(MPQ_FUNC!("file_imploded"));
-mixin(MPQ_FUNC!("file_name"));
 mixin(MPQ_FUNC!("file_number"));
 mixin(MPQ_FUNC!("file_read"));
 mixin(MPQ_FUNC!("block_open_offset"));
 mixin(MPQ_FUNC!("block_close_offset"));
-mixin(MPQ_FUNC!("block_packed_size"));
 mixin(MPQ_FUNC!("block_unpacked_size"));
-mixin(MPQ_FUNC!("block_offset"));
-mixin(MPQ_FUNC!("block_seed"));
 mixin(MPQ_FUNC!("block_read"));
 
 /** getter function named name for returning archive_* single values:
