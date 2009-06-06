@@ -43,7 +43,7 @@ const char *libmpq__version(void) {
 }
 
 /* this function read a file and verify if it is a valid mpq archive, then it read and decrypt the hash table. */
-int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filename, off_t archive_offset) {
+int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filename, libmpq__off_t archive_offset) {
 
 	/* some common variables. */
 	uint32_t rb             = 0;
@@ -52,7 +52,7 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 	int32_t result          = 0;
 	uint32_t header_search	= FALSE;
 
-	if (archive_offset == (off_t) -1) {
+	if (archive_offset == -1) {
 		archive_offset = 0;
 		header_search = TRUE;
 	}
@@ -299,7 +299,7 @@ int32_t libmpq__archive_close(mpq_archive_s *mpq_archive) {
 }
 
 /* this function return the packed size of all files in the archive. */
-int32_t libmpq__archive_packed_size(mpq_archive_s *mpq_archive, off_t *packed_size) {
+int32_t libmpq__archive_packed_size(mpq_archive_s *mpq_archive, libmpq__off_t *packed_size) {
 
 	/* some common variables. */
 	uint32_t i;
@@ -314,7 +314,7 @@ int32_t libmpq__archive_packed_size(mpq_archive_s *mpq_archive, off_t *packed_si
 }
 
 /* this function return the unpacked size of all files in the archive. */
-int32_t libmpq__archive_unpacked_size(mpq_archive_s *mpq_archive, off_t *unpacked_size) {
+int32_t libmpq__archive_unpacked_size(mpq_archive_s *mpq_archive, libmpq__off_t *unpacked_size) {
 
 	/* some common variables. */
 	uint32_t i;
@@ -329,7 +329,7 @@ int32_t libmpq__archive_unpacked_size(mpq_archive_s *mpq_archive, off_t *unpacke
 }
 
 /* this function return the archive offset (beginning of archive in file). */
-int32_t libmpq__archive_offset(mpq_archive_s *mpq_archive, off_t *offset) {
+int32_t libmpq__archive_offset(mpq_archive_s *mpq_archive, libmpq__off_t *offset) {
 
 	/* return archive offset. */
 	*offset = mpq_archive->archive_offset;
@@ -359,7 +359,7 @@ int32_t libmpq__archive_files(mpq_archive_s *mpq_archive, uint32_t *files) {
 }
 
 /* this function return the packed size of the given files in the archive. */
-int32_t libmpq__file_packed_size(mpq_archive_s *mpq_archive, uint32_t file_number, off_t *packed_size) {
+int32_t libmpq__file_packed_size(mpq_archive_s *mpq_archive, uint32_t file_number, libmpq__off_t *packed_size) {
 
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
@@ -376,7 +376,7 @@ int32_t libmpq__file_packed_size(mpq_archive_s *mpq_archive, uint32_t file_numbe
 }
 
 /* this function return the unpacked size of the given file in the archive. */
-int32_t libmpq__file_unpacked_size(mpq_archive_s *mpq_archive, uint32_t file_number, off_t *unpacked_size) {
+int32_t libmpq__file_unpacked_size(mpq_archive_s *mpq_archive, uint32_t file_number, libmpq__off_t *unpacked_size) {
 
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
@@ -393,7 +393,7 @@ int32_t libmpq__file_unpacked_size(mpq_archive_s *mpq_archive, uint32_t file_num
 }
 
 /* this function return the file offset (beginning of file in archive). */
-int32_t libmpq__file_offset(mpq_archive_s *mpq_archive, uint32_t file_number, off_t *offset) {
+int32_t libmpq__file_offset(mpq_archive_s *mpq_archive, uint32_t file_number, libmpq__off_t *offset) {
 
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
@@ -521,16 +521,16 @@ int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename, ui
 }
 
 /* this function read the given file from archive into a buffer. */
-int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint32_t file_number, uint8_t *out_buf, off_t out_size, off_t *transferred) {
+int32_t libmpq__file_read(mpq_archive_s *mpq_archive, uint32_t file_number, uint8_t *out_buf, libmpq__off_t out_size, libmpq__off_t *transferred) {
 
 	/* some common variables. */
 	uint32_t i;
 	uint32_t blocks         = 0;
 	int32_t result          = 0;
-	off_t file_offset       = 0;
-	off_t unpacked_size     = 0;
-	off_t transferred_block = 0;
-	off_t transferred_total = 0;
+	libmpq__off_t file_offset       = 0;
+	libmpq__off_t unpacked_size     = 0;
+	libmpq__off_t transferred_block = 0;
+	libmpq__off_t transferred_total = 0;
 
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
@@ -762,7 +762,7 @@ int32_t libmpq__block_close_offset(mpq_archive_s *mpq_archive, uint32_t file_num
 }
 
 /* this function return the unpacked size of the given file and block in the archive. */
-int32_t libmpq__block_unpacked_size(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, off_t *unpacked_size) {
+int32_t libmpq__block_unpacked_size(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, libmpq__off_t *unpacked_size) {
 
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
@@ -845,7 +845,7 @@ int32_t libmpq__block_seed(mpq_archive_s *mpq_archive, uint32_t file_number, uin
 }
 
 /* this function read the given block from archive into a buffer. */
-int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, uint8_t *out_buf, off_t out_size, off_t *transferred) {
+int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint32_t file_number, uint32_t block_number, uint8_t *out_buf, libmpq__off_t out_size, libmpq__off_t *transferred) {
 
 	/* some common variables. */
 	uint8_t *in_buf;
@@ -856,7 +856,7 @@ int32_t libmpq__block_read(mpq_archive_s *mpq_archive, uint32_t file_number, uin
 	int32_t tb          = 0;
 	off_t block_offset  = 0;
 	off_t in_size       = 0;
-	off_t unpacked_size = 0;
+	libmpq__off_t unpacked_size = 0;
 
 	/* check if given file number is not out of range. */
 	if (file_number < 0 || file_number > mpq_archive->files - 1) {
