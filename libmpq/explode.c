@@ -126,7 +126,7 @@ static const uint16_t pkzip_code_asc[] = {
 };
 
 /* local unused variables. */
-static char copyright[] = "PKWARE Data Compression Library for Win32\r\n"
+char pkware_copyright[] = "PKWARE Data Compression Library for Win32\r\n"
 			  "Copyright 1989-1995 PKWARE Inc.  All Rights Reserved\r\n"
 			  "Patent No. 5,051,745\r\n"
 			  "PKWARE Data Compression Library Reg. U.S. Pat. and Tm. Off.\r\n"
