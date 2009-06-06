@@ -27,6 +27,7 @@ module mpq;
  * GDC/Linux and has not been tested on Windows. Commented out for now. */
 // pragma(lib, "libmpq");
 
+version(Tango) import std.compat;
 import std.string; // for format() and toStringz()
 import std.traits; // for ParameterTypeTuple!()
 
