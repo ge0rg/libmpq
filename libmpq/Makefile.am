@@ -9,7 +9,7 @@ noinst_HEADERS			= common.h explode.h extract.h huffman.h mpq-internal.h wave.h
 libmpq_includedir		= $(includedir)/libmpq
 
 # header files to install.
-libmpq_include_HEADERS		= mpq.h
+libmpq_include_HEADERS		= mpq.h ../mpq_revision.h
 
 libmpq_la_SOURCES		= $(GENERAL_SRCS)
 libmpq_la_LDFLAGS		= -release $(PACKAGE_VERSION)

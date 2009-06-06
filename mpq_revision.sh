@@ -9,7 +9,7 @@ if [ -d .svn ]; then
 	ver=$(svnversion -nc . | sed -e 's/^[^:]*://;s/[A-Za-z]//')
 elif [ -d .git ]; then
 	#ver=$(git-svn find-rev HEAD)
-	ver=$(git-svn log --limit 1 --oneline | sed 's/^r\([0-9]*\).*/\1/')
+	ver=$(git svn log --limit 1 --oneline | sed 's/^r\([0-9]*\).*/\1/')
 elif [ -f $DEST ]; then
 	echo "Not updating LIBMPQ_REVISION..."
 	exit 0
