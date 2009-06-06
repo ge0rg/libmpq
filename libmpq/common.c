@@ -162,7 +162,7 @@ int32_t libmpq__decrypt_key(uint8_t *in_buf, uint32_t in_size, uint32_t block_si
 int32_t libmpq__decompress_block(uint8_t *in_buf, uint32_t in_size, uint8_t *out_buf, uint32_t out_size, uint32_t compression_type) {
 
 	/* some common variables. */
-	int32_t tb;
+	int32_t tb = 0;
 
 	/* check if buffer is not compressed. */
 	if (compression_type == LIBMPQ_FLAG_COMPRESS_NONE) {

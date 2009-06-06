@@ -51,10 +51,8 @@ int32_t libmpq__decompress_huffman(uint8_t *in_buf, uint32_t in_size, uint8_t *o
 
 	/* TODO: make typdefs of this structs? */
 	/* some common variables. */
-	int32_t result = 0;
 	int32_t tb     = 0;
 	struct huffman_tree_s *ht;
-	struct huffman_tree_item_s *hi;
 	struct huffman_input_stream_s *is;
 
 	/* allocate memory for the huffman tree. */
@@ -268,7 +266,7 @@ int32_t libmpq__decompress_multi(uint8_t *in_buf, uint32_t in_size, uint8_t *out
 	uint32_t count    = 0;
 	uint32_t entries  = (sizeof(dcmp_table) / sizeof(decompress_table_s));
 	uint8_t *temp_buf = NULL;
-	uint8_t *work_buf;
+	uint8_t *work_buf = 0;
 	uint8_t decompress_flag, decompress_unsupp;
 	uint32_t i;
 

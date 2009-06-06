@@ -481,8 +481,7 @@ int32_t libmpq__file_imploded(mpq_archive_s *mpq_archive, uint32_t file_number, 
 int32_t libmpq__file_number(mpq_archive_s *mpq_archive, const char *filename, uint32_t *number) {
 
 	/* some common variables. */
-	uint32_t i, j, hash1, hash2, hash3, ht_count;
-	uint32_t count = 0;
+	uint32_t i, hash1, hash2, hash3, ht_count;
 
 	/* if the list of file names doesn't include this one, we'll have
 	 * to figure out the file number the "hard" way.
