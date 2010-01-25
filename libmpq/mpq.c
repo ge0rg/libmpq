@@ -614,6 +614,13 @@ int32_t libmpq__block_open_offset(mpq_archive_s *mpq_archive, uint32_t file_numb
 		return LIBMPQ_ERROR_EXIST;
 	}
 
+	if (mpq_archive->mpq_file[file_number]) {
+
+		/* file already opened, so increment counter */
+		mpq_archive->mpq_file[file_number]->open_count++;
+		return LIBMPQ_SUCCESS;
+	}
+
 	/* check if file is not stored in a single sector. */
 	if ((mpq_archive->mpq_block[mpq_archive->mpq_map[file_number].block_table_indices].flags & LIBMPQ_FLAG_SINGLE) == 0) {
 
@@ -647,6 +654,9 @@ int32_t libmpq__block_open_offset(mpq_archive_s *mpq_archive, uint32_t file_numb
 		result = LIBMPQ_ERROR_MALLOC;
 		goto error;
 	}
+
+	/* initialize counter to one opening */
+	mpq_archive->mpq_file[file_number]->open_count = 1;
 
 	/* check if we need to load the packed block offset table, we will maintain this table for unpacked files too. */
 	if ((mpq_archive->mpq_block[mpq_archive->mpq_map[file_number].block_table_indices].flags & LIBMPQ_FLAG_COMPRESSED) != 0 &&
@@ -752,9 +762,26 @@ int32_t libmpq__block_close_offset(mpq_archive_s *mpq_archive, uint32_t file_num
 		return LIBMPQ_ERROR_EXIST;
 	}
 
+	if (mpq_archive->mpq_file[file_number] == NULL) {
+
+		/* packed block offset table is not opened. */
+		return LIBMPQ_ERROR_OPEN;
+	}
+
+	mpq_archive->mpq_file[file_number]->open_count--;
+
+	if (mpq_archive->mpq_file[file_number]->open_count != 0) {
+
+		/* still in use */
+		return LIBMPQ_SUCCESS;
+	}
+
 	/* free packed block offset table and file pointer. */
 	free(mpq_archive->mpq_file[file_number]->packed_offset);
 	free(mpq_archive->mpq_file[file_number]);
+
+	/* mark it as unopened - libmpq__block_open_offset checks for this to decide whether to increment the counter */
+	mpq_archive->mpq_file[file_number] = NULL;
 
 	/* if no error was found, return zero. */
 	return LIBMPQ_SUCCESS;

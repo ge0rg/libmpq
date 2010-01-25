@@ -109,6 +109,7 @@ typedef struct {
 typedef struct {
 	uint32_t	seed;			/* seed used for file decrypt. */
 	uint32_t	*packed_offset;		/* position of each file block (only for packed files). */
+	uint32_t	open_count;		/* number of times it has been opened - used for freeing */
 } __attribute__ ((packed)) mpq_file_s;
 
 /* map structure for valid blocks and hashes (first seen in warcraft 3 archives). */
