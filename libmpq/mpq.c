@@ -34,6 +34,9 @@
 #include <string.h>
 #include <sys/stat.h>
 
+/* support for platform specific things */
+#include "platform.h"
+
 /* this function returns the library version information. */
 const char *libmpq__version(void) {
 
