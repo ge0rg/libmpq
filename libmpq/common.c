@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 /* libmpq main includes. */
 #include "mpq.h"

@@ -25,7 +25,6 @@
 /* generic includes. */
 #include <stdint.h>
 #include <stdio.h>
-#include <unistd.h>
 
 /* define return value if nothing failed. */
 #define LIBMPQ_SUCCESS				0		/* return value for all functions which success. */

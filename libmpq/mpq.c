@@ -33,7 +33,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 /* this function returns the library version information. */
 const char *libmpq__version(void) {
