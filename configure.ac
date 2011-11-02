@@ -1,5 +1,5 @@
 # the autoconf initilization.
-AC_INIT(libmpq, 0.4.2, [mbroemme@plusserver.de], [libmpq])
+AC_INIT(libmpq, 0.4.2, [mbroemme@libmpq.org], [libmpq])
 
 # detect the canonical host and target build environment.
 AC_CANONICAL_SYSTEM
