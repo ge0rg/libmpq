@@ -1,7 +1,7 @@
 /*
  *  mpq.c -- functions for developers using libmpq.
  *
- *  Copyright (c) 2003-2008 Maik Broemme <mbroemme@plusserver.de>
+ *  Copyright (c) 2003-2008 Maik Broemme <mbroemme@libmpq.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
