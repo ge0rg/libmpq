@@ -37,6 +37,14 @@
 /* support for platform specific things */
 #include "platform.h"
 
+#if defined(_WIN64) || defined(_WIN32)
+// Suppress definitions of `min` and `max` macros by <windows.h>:
+#define NOMINMAX 1
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <shlwapi.h>
+#endif
+
 /* this function returns the library version information. */
 const char *libmpq__version(void) {
 
@@ -70,6 +78,26 @@ const char *libmpq__strerror(int32_t returncode) {
 	return __libmpq_error_strings[-returncode];
 }
 
+#if defined(_WIN64) || defined(_WIN32)
+wchar_t *to_wide_char(const char *str) {
+	const size_t size = strlen(str);
+	const uint32_t flags = MB_ERR_INVALID_CHARS;
+	const int wide_size = MultiByteToWideChar(CP_UTF8, flags, str, size, NULL, 0);
+	if (wide_size == 0)
+		return NULL;
+	wchar_t *result = malloc(sizeof(wchar_t) * (wide_size + 1));
+	if (result == NULL) {
+		return NULL;
+	}
+	if (MultiByteToWideChar(CP_UTF8, flags, str, size, result, wide_size) != wide_size) {
+		free(result);
+		return NULL;
+	}
+	result[wide_size] = L'\0';
+	return result;
+}
+#endif
+
 /* this function read a file and verify if it is a valid mpq archive, then it read and decrypt the hash table. */
 int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filename, libmpq__off_t archive_offset) {
 
@@ -90,8 +118,21 @@ int32_t libmpq__archive_open(mpq_archive_s **mpq_archive, const char *mpq_filena
 		return LIBMPQ_ERROR_MALLOC;
 	}
 
+#if defined(_WIN64) || defined(_WIN32)
+	wchar_t *mpq_filename_wide = to_wide_char(mpq_filename);
+	if (mpq_filename_wide == NULL) {
+		result = LIBMPQ_ERROR_OPEN;
+		goto error;
+	}
+	(*mpq_archive)->fp = _wfopen(mpq_filename_wide, L"rb");
+	free(mpq_filename_wide);
+	mpq_filename_wide = NULL;
+#else
+	(*mpq_archive)->fp = fopen(mpq_filename, "rb");
+#endif
+
 	/* check if file exists and is readable */
-	if (((*mpq_archive)->fp = fopen(mpq_filename, "rb")) == NULL) {
+	if ((*mpq_archive)->fp == NULL) {
 
 		/* file could not be opened. */
 		result = LIBMPQ_ERROR_OPEN;
