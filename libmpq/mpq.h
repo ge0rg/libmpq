@@ -52,7 +52,7 @@ extern "C" {
 #define LIBMPQ_ERROR_FORMAT			-7		/* format errror. */
 #define LIBMPQ_ERROR_NOT_INITIALIZED		-8		/* libmpq__init() wasn't called. */
 #define LIBMPQ_ERROR_SIZE			-9		/* buffer size is to small. */
-#define LIBMPQ_ERROR_EXIST			-10		/* file or block does not exist in archive. */
+#define LIBMPQ_ERROR_EXIST			-10		/* archive does not exist, or file or block does not exist in archive. */
 #define LIBMPQ_ERROR_DECRYPT			-11		/* we don't know the decryption seed. */
 #define LIBMPQ_ERROR_UNPACK			-12		/* error on unpacking file. */
 
