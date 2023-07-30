@@ -63,7 +63,7 @@ static const char *__libmpq_error_strings[] = {
 /* this function returns a string message for a return code. */
 const char *libmpq__strerror(int32_t returncode) {
 	/* check for array bounds */
-	if (-returncode < 0 || -returncode > sizeof(__libmpq_error_strings)/sizeof(char*))
+	if (-returncode < 0 || -returncode >= sizeof(__libmpq_error_strings)/sizeof(char*))
 		return NULL;
 
 	/* return appropriate string */
